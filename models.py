@@ -1,0 +1,2 @@
+class Devices(object):
+	pass
