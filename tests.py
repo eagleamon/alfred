@@ -1,8 +1,8 @@
-from nose.tools import raises, timed
+from nose.tools import raises
 from alfred import parseArgs
 from tools import Bus
 
-requiredArgs = ['--db_host', 'host']
+requiredArgs = ['--db_host', 'host', '--broker_host', 'host']
 
 
 @raises(SystemExit)
@@ -22,26 +22,36 @@ def test_arg_types():
 
 
 def test_conf_file():
-    args = parseArgs(['-c', 'conf_test.ini'])
-    assert args.db_host == 'test'
+    from ConfigParser import ConfigParser
+    c = ConfigParser()
+    c.read('test.ini')
+    args = parseArgs(['-c', 'test.ini'])
+    assert args.db_host == c.get('db', 'host')
 
 
-def test_bus_connection():
-    Bus('hal', 1883)
+class TestBusConnection(object):
 
+    def setup(self):
+        # Using the config file, easier to adapt tests to environrment tests
+        from ConfigParser import ConfigParser
+        self.config = ConfigParser()
+        self.config.read('test.ini')
 
-def test_publish():
-    passed=False
-    def on_message(msg):
-        assert msg.topic == '/test'
-        assert msg.message == 'test message'
-        passed = True
-        print "passed=True"
+    def test_bus_connection(self):
+        Bus(self.config.get('broker', 'host'), 1883)
 
-    b = Bus('hal', 1883)
-    b.subscribe('#')
-    b.on_message = on_message
-    b.publish("/test", "test message")
-    print "cool"
-    while not passed:
-        b.client.loop()
+    def test_publish(self):
+        self.passed = False
+
+        def on_message(msg):
+            assert msg.topic == '/'.join([b.base_topic,'test'])
+            assert msg.payload == 'test message'
+            self.passed = True
+
+        b = Bus(self.config.get('broker', 'host'), 1883)
+        b.subscribe('#')
+        b.on_message = on_message
+        b.publish("test", "test message")
+
+        while not self.passed:
+            b.client.loop_start()
