@@ -1,0 +1,2 @@
+class Binding(object):
+	pass

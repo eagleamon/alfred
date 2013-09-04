@@ -44,7 +44,7 @@ class TestBusConnection(object):
         self.passed = False
 
         def on_message(msg):
-            assert msg.topic == '/'.join([b.base_topic,'test'])
+            assert msg.topic == '/'.join([b.base_topic, 'test'])
             assert msg.payload == 'test message'
             self.passed = True
 

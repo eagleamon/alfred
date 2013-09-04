@@ -3,6 +3,8 @@ __author__ = 'Joseph Piron'
 import argparse
 import ConfigParser
 import logging
+import multiprocessing
+from tools import Bus
 
 
 def parseArgs(sysArgs=''):
@@ -34,14 +36,20 @@ def parseArgs(sysArgs=''):
 
     return parser.parse_args(remainging_args)
 
-
 def main():
     import sys
 
     # First parse the required options
-    args = parseArgs(sys.argv[1:])
+    config = parseArgs(sys.argv[1:])
 
-    # Then create the plugins
+    # Connect to the bus to get all updates and create central repository
+    bus = Bus(config.broker_host, config.broker_port)
+    bus.subscribe('#')
+
+    # Then register all available plugins and create/read their configuration
+    bindings = []
+
+
 
 
 if __name__ == '__main__':
