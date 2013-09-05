@@ -58,7 +58,6 @@ class TestBusConnection(object):
         while not self.passed:
             b.client.loop_start()
 
-
 def testGetSomePlugins():
     from alfred.alfred import getAvailableBindings
     bindings = getAvailableBindings()
@@ -71,3 +70,18 @@ def testImportBindings():
     __import__('alfred.bindings.swap')
     import alfred
     assert len(alfred.bindings.Binding.plugins) == 2
+
+def testBindingInterface():
+    from ConfigParser import ConfigParser
+    config = ConfigParser()
+    config.read('test.ini')
+    config.broker_host = config.get('broker', 'host')
+    config.broker_port = 1883
+
+    from alfred.bindings import bluetooth
+    import alfred
+    assert len(bluetooth.Binding.plugins) >= 1
+    b = alfred.bindings.Binding.plugins[0](config)
+
+    assert 'start' in dir(b)
+    assert 'stopEvent' in dir(b)
