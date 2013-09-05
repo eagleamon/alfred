@@ -1,6 +1,6 @@
 from nose.tools import raises
-from alfred import parseArgs
-from tools import Bus
+from alfred.alfred import parseArgs
+from alfred.tools import Bus
 
 requiredArgs = ['--db_host', 'host', '--broker_host', 'host']
 
@@ -55,3 +55,8 @@ class TestBusConnection(object):
 
         while not self.passed:
             b.client.loop_start()
+
+
+def testPluginBelonging():
+    # from alfred.bindings import Binding
+    pass

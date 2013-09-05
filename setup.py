@@ -1,5 +1,5 @@
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 # Utility function to read the README file.
 # Used for the long_description.  It's nice, because now 1) we have a top level
@@ -17,7 +17,7 @@ setup(
     license = "BSD",
     keywords = "domotic, openhab, domogik, mqtt, event, bus",
     url = "http://github.com/eagleamon/alfred",
-    # packages=['an_example_pypi_project', 'tests'],
+    packages=find_packages(),
     long_description=read('README.md'),
     classifiers=[
         "Development Status :: 2 - PreAlpha",

@@ -1,2 +1,0 @@
-class Binding(object):
-	pass
