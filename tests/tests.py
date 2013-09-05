@@ -1,6 +1,7 @@
 from nose.tools import raises
 from alfred.alfred import parseArgs
 from alfred.tools import Bus
+from os import chdir, path
 
 requiredArgs = ['--db_host', 'host', '--broker_host', 'host']
 
@@ -33,6 +34,7 @@ class TestBusConnection(object):
 
     def setup(self):
         # Using the config file, easier to adapt tests to environrment tests
+        chdir(path.dirname(__file__))
         from ConfigParser import ConfigParser
         self.config = ConfigParser()
         self.config.read('test.ini')
@@ -57,6 +59,15 @@ class TestBusConnection(object):
             b.client.loop_start()
 
 
-def testPluginBelonging():
-    # from alfred.bindings import Binding
-    pass
+def testGetSomePlugins():
+    from alfred.alfred import getAvailableBindings
+    bindings = getAvailableBindings()
+    print bindings
+    assert 'swap' in  bindings
+    assert 'bluetooth' in bindings
+
+def testImportBindings():
+    __import__('alfred.bindings.bluetooth')
+    __import__('alfred.bindings.swap')
+    import alfred
+    assert len(alfred.bindings.Binding.plugins) == 2

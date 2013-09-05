@@ -3,8 +3,21 @@ __author__ = 'Joseph Piron'
 import argparse
 import ConfigParser
 import logging
+import os
 
 from tools import Bus
+
+
+def getAvailableBindings():
+    """
+    Check for all bindings available
+    TODO: make this more robust
+    """
+    res, bindingPath = [], __import__('alfred.bindings').bindings.__path__[0]
+    for d in os.listdir(bindingPath):
+        if os.path.isdir(os.path.join(bindingPath,d)):
+            res.append(d)
+    return res
 
 
 def parseArgs(sysArgs=''):
@@ -48,8 +61,12 @@ def main():
     bus.subscribe('#')
 
     # Then register all available plugins and create/read their configuration
-    bindings = []
+    bindings = getAvailableBindings()
+    # for binding in bindings:
+    #     get in db if activated at start
 
+
+    # Fetch item configuration and use it
 
 if __name__ == '__main__':
     main()
