@@ -1,6 +1,6 @@
-# Structure of a binding
+### Structure of a binding
 
-# Gestion of dependencies
+### Gestion of dependencies
 A binding is a python package with a requirements.txt file.
 Requirements will be installed when the binding is installed
 
