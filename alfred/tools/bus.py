@@ -11,7 +11,7 @@ class Bus(object):
     """
 
     def __init__(self, broker_host, broker_port, base_topic='alfred', client_id=None):
-        self.logger = logging.getLogger(__file__)
+        self.logger = logging.getLogger(__name__)
         self.broker_port = broker_port
         self.broker_host = broker_host
         self.base_topic = base_topic
@@ -32,6 +32,8 @@ class Bus(object):
         if rc == 0:
             self.logger.debug("Connected to broker (%s:%d)" % (self.broker_host, self.broker_port))
             self.on_connect(rc)
+        else:
+            self.logger.error("Cannot connect: %s" % rc)
 
     def _on_disconnect(self, mosq, userData, rc):
         self.logger.warn("Disconnected from broker: %s" % rc)

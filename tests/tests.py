@@ -1,13 +1,16 @@
 from nose.tools import raises
-from alfred.alfred import parseArgs
+from alfred.daemon import parseArgs
 from alfred.tools import Bus
 from os import chdir, path
+from ConfigParser import ConfigParser
 
 requiredArgs = ['--db_host', 'host', '--broker_host', 'host']
 
 
 @raises(SystemExit)
 def test_no_arguments():
+    import sys
+    sys.stderr = sys.stdout
     parseArgs()
 
 
@@ -23,7 +26,6 @@ def test_arg_types():
 
 
 def test_conf_file():
-    from ConfigParser import ConfigParser
     c = ConfigParser()
     c.read('test.ini')
     args = parseArgs(['-c', 'test.ini'])
@@ -35,7 +37,7 @@ class TestBusConnection(object):
     def setup(self):
         # Using the config file, easier to adapt tests to environrment tests
         chdir(path.dirname(__file__))
-        from ConfigParser import ConfigParser
+
         self.config = ConfigParser()
         self.config.read('test.ini')
 
@@ -59,7 +61,7 @@ class TestBusConnection(object):
             b.client.loop_start()
 
 def testGetSomePlugins():
-    from alfred.alfred import getAvailableBindings
+    from alfred.daemon import getAvailableBindings
     bindings = getAvailableBindings()
     print bindings
     assert 'swap' in  bindings

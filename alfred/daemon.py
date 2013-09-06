@@ -4,8 +4,11 @@ import argparse
 import ConfigParser
 import logging
 import os
+import sys
 
 from tools import Bus
+from alfred import bindings
+from pymongo import MongoClient
 
 
 def getAvailableBindings():
@@ -13,14 +16,18 @@ def getAvailableBindings():
     Check for all bindings available
     TODO: make this more robust
     """
-    res, bindingPath = [], __import__('alfred.bindings').bindings.__path__[0]
+
+    res, bindingPath = [], bindings.__path__[0]
     for d in os.listdir(bindingPath):
-        if os.path.isdir(os.path.join(bindingPath,d)):
+        if os.path.isdir(os.path.join(bindingPath, d)):
             res.append(d)
     return res
 
 
 def parseArgs(sysArgs=''):
+    """
+    Parse arguments from command line and config file and returns a config object
+    """
     conf_parser = argparse.ArgumentParser(add_help=False)
     conf_parser.add_argument('-d', '--debug', action='store_true', help='Activate debug logging for the application')
     conf_parser.add_argument('-c', '--conf-file', help="Specify configuration file to be used")
@@ -51,19 +58,32 @@ def parseArgs(sysArgs=''):
 
 
 def main():
-    import sys
-
     # First parse the required options
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(name)s] %(levelname)s %(message)s')
     config = parseArgs(sys.argv[1:])
 
     # Connect to the bus to get all updates and create central repository
     bus = Bus(config.broker_host, config.broker_port)
     bus.subscribe('#')
 
+    # Connection to the Database
+    db = MongoClient(config.db_host, config.db_port).alfred
+
     # Then register all available plugins and create/read their configuration
     bindings = getAvailableBindings()
-    # for binding in bindings:
-    #     get in db if activated at start
+    logging.info("Available bindings: %s" % bindings)
+
+    for bindingName in bindings:
+        bindingDef = db.bindings.find_one({'name': bindingName})
+        if not bindingDef:
+            db.bindings.insert(dict(
+                name=bindingName,
+                installed=False,
+                config={}
+            ))
+        else:
+            if bindingDef.get('installed'):
+                logging.info("Starting binding %s" % bindingDef.get('name'))
 
 
     # Fetch item configuration and use it
