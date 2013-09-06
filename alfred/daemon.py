@@ -5,6 +5,7 @@ import ConfigParser
 import logging
 import os
 import sys
+import signal
 
 from tools import Bus
 from alfred import bindings
@@ -26,53 +27,56 @@ def getAvailableBindings():
 
 def parseArgs(sysArgs=''):
     """
-    Parse arguments from command line and config file and returns a config object
+    Parse arguments from command line and and returns a arg object, everything else comes from the db
     """
-    conf_parser = argparse.ArgumentParser(add_help=False)
-    conf_parser.add_argument('-d', '--debug', action='store_true', help='Activate debug logging for the application')
-    conf_parser.add_argument('-c', '--conf-file', help="Specify configuration file to be used")
-    args, remainging_args = conf_parser.parse_known_args(sysArgs)
 
-    if args.debug:
-        logging.getLogger('').setLevel(logging.DEBUG)
-
-    parser = argparse.ArgumentParser(parents=[conf_parser])
-    # group = parser.add_argument_group('Broker')
-    # parser.add_argument('--broker_host', help='Message broker address', default='localhost')
-    # parser.add_argument('--broker_port', help='Message broker port (1883)', default=1883, type=int)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--debug', action='store_true',
+                        help='Activate debug logging for the application')
 
     group = parser.add_argument_group('Database')
     parser.add_argument('--db_host', help='Database server address', default='localhost')
     parser.add_argument('--db_port', help='Database server port (27017)', default=27017, type=int)
     parser.add_argument('--db_name', help='Database environment name', default='alfred')
 
-    if args.conf_file:
-        logging.debug('Parsing config file: %s' % args.conf_file)
-        config = ConfigParser.SafeConfigParser()
-        config.read(args.conf_file)
-        for section in config.sections():
-            for k, v in config.items(section):
-                if '--%s_%s' % (section, k) not in remainging_args:
-                    remainging_args.extend(['--%s_%s' % (section, k), v])
+    return parser.parse_args(sysArgs)
 
-    return parser.parse_args(remainging_args)
-
+def stop():
+    [x.stop() for x in activeBindings]
 
 def main():
-    # First parse the required options
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(name)s] %(levelname)s %(message)s')
-    config = parseArgs(sys.argv[1:])
+    """
+    """
 
-    # Connect to the bus to get all updates and create central repository
-    bus = Bus(config.broker_host, config.broker_port)
-    bus.subscribe('#')
+    # First parse the required options
+    args = parseArgs(sys.argv[1:])
+    if args.debug:
+        logging.getLogger('').setLevel(logging.DEBUG)
+
+    logging.basicConfig(
+        level=logging.__getattribute__(args.debug and 'DEBUG' or 'INFO'),
+        format='%(asctime)s [%(name)s] %(levelname)s %(message)s')
 
     # Connection to the Database
-    db = MongoClient(config.db_host, config.db_port).alfred
+    db = MongoClient(args.db_host, args.db_port)[args.db_name]
+
+    # Get/create general config
+    config = db.config.find_one()
+    if not config:
+        db.config.insert({'brokerHost': 'test-gw', 'brokerPort': 1883})
+    config = db.config.find_one()
+
+    # Connect to the bus to get all updates and create central repository
+    bus = Bus(config.get('brokerHost'), config.get('brokerPort'))
+    bus.subscribe('#')
 
     # Then register all available plugins and create/read their configuration
     bindingDirs = getAvailableBindings()
     logging.info("Available bindings: %s" % bindingDirs)
+
+    activeBindings = []
+
+    signal.signal(signal.SIGINT, stop())
 
     for bindingName in bindingDirs:
         bindingDef = db.bindings.find_one({'name': bindingName})
@@ -86,14 +90,15 @@ def main():
             if bindingDef.get('installed'):
                 logging.info("Starting binding %s" % bindingName)
                 __import__('alfred.bindings.%s' % bindingName)
-                b=bindings.Binding.plugins[bindingName](config)
-
+                b = bindings.Binding.plugins[bindingName](db)
+                activeBindings.append(b)
                 b.start()
-                import time
-                time.sleep(3)
-                b.stop()
 
-    # Fetch item configuration and use it
+    # Then fetch item definition
+    items = db.items.find()
+    logging.info('Available items: %s' % list(items))
+
+    b.stop()
 
 if __name__ == '__main__':
     main()

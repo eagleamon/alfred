@@ -13,7 +13,7 @@ class PluginMount(type):
     """ MetaClass to define plugins """
 
     def __init__(cls, name, bases, attrs):
-        cls.logger = logging.getLogger(attrs.get('__module__'.split))
+        cls.logger = logging.getLogger(attrs.get('__module__').split('.')[-1])
 
         if not hasattr(cls, 'plugins'):
             cls.plugins = {}
@@ -24,9 +24,11 @@ class PluginMount(type):
 class Binding(Thread):
     __metaclass__ = PluginMount
 
-    def __init__(self, config):
+    def __init__(self, db):
         self.stopEvent = Event()
-        self.bus = Bus(config.broker_host, config.broker_port)
+        self.db = db
+        config = db.config.find_one()
+        self.bus = Bus(config.get('brokerHost'), config.get('brokerPort'))
 
         Thread.__init__(self)
 

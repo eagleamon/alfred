@@ -52,4 +52,4 @@ class Bus(object):
         self.client.subscribe('/'.join([self.base_topic, topic]))
 
     def publish(self, topic, message):
-        self.client.publish('/'.join([self.base_topic,topic]), message)
+        self.client.publish('/'.join([self.base_topic, topic]), message)

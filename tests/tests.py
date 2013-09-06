@@ -4,38 +4,26 @@ from alfred.tools import Bus
 from os import chdir, path
 from ConfigParser import ConfigParser
 
-requiredArgs = ['--db_host', 'host', '--broker_host', 'host']
+
+def testNoArguments():
+    args = parseArgs()
+    assert args.db_host == 'localhost'
 
 
-@raises(SystemExit)
-def test_no_arguments():
-    import sys
-    sys.stderr = sys.stdout
-    parseArgs()
+def testWithHosts():
+    assert parseArgs(['--db_host', 'test']).db_host == 'test'
 
 
-def test_with_hosts():
-    parseArgs(requiredArgs)
-
-
-def test_arg_types():
-    requiredArgs.extend(['--db_port', '1900'])
-    args = parseArgs(requiredArgs)
+def testArgTypes():
+    args = parseArgs(['--db_port', '1900'])
     assert isinstance(args.db_port, int)
     assert args.db_port == 1900
-
-
-def test_conf_file():
-    c = ConfigParser()
-    c.read('test.ini')
-    args = parseArgs(['-c', 'test.ini'])
-    assert args.db_host == c.get('db', 'host')
 
 
 class TestBusConnection(object):
 
     def setup(self):
-        # Using the config file, easier to adapt tests to environrment tests
+    # Using the config file, easier to adapt tests to environrment tests
         chdir(path.dirname(__file__))
 
         self.config = ConfigParser()
@@ -60,12 +48,14 @@ class TestBusConnection(object):
         while not self.passed:
             b.client.loop_start()
 
+
 def testGetSomePlugins():
     from alfred.daemon import getAvailableBindings
     bindings = getAvailableBindings()
     print bindings
-    assert 'swap' in  bindings
+    assert 'swap' in bindings
     assert 'bluetooth' in bindings
+
 
 def testImportBindings():
     __import__('alfred.bindings.bluetooth')
@@ -73,17 +63,23 @@ def testImportBindings():
     import alfred
     assert len(alfred.bindings.Binding.plugins) == 2
 
+
 def testBindingInterface():
+    class mock():
+        pass
+    m = mock()
+    m.config = mock()
+    m.config.find_one = lambda : {'brokerHost':'localhost', 'brokerPort': 'localhost'}
+
     from ConfigParser import ConfigParser
     config = ConfigParser()
     config.read('test.ini')
     config.broker_host = config.get('broker', 'host')
     config.broker_port = 1883
 
-    from alfred.bindings import bluetooth
-    import alfred
+    import alfred, alfred.bindings.bluetooth as bluetooth
     assert len(bluetooth.Binding.plugins) >= 1
-    b = alfred.bindings.Binding.plugins['bluetooth'](config)
+    b = alfred.bindings.Binding.plugins['bluetooth']
 
     assert 'start' in dir(b)
-    assert 'stopEvent' in dir(b)
+    assert 'stop' in dir(b)
