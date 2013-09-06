@@ -83,7 +83,7 @@ def testBindingInterface():
     from alfred.bindings import bluetooth
     import alfred
     assert len(bluetooth.Binding.plugins) >= 1
-    b = alfred.bindings.Binding.plugins[0](config)
+    b = alfred.bindings.Binding.plugins['bluetooth'](config)
 
     assert 'start' in dir(b)
     assert 'stopEvent' in dir(b)

@@ -3,6 +3,8 @@
 from alfred.bindings import Binding
 
 class Bluetooth(Binding):
-	def run():
+	def run(self):
 		while not self.stopEvent.isSet():
 			self.logger.info("I am here")
+			import time
+			time.sleep(.5)

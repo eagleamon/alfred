@@ -37,13 +37,14 @@ def parseArgs(sysArgs=''):
         logging.getLogger('').setLevel(logging.DEBUG)
 
     parser = argparse.ArgumentParser(parents=[conf_parser])
-    group = parser.add_argument_group('Broker')
-    parser.add_argument('--broker_host', help='Message broker address', required=True)
-    parser.add_argument('--broker_port', help='Message broker port (1883)', default=1883, type=int)
+    # group = parser.add_argument_group('Broker')
+    # parser.add_argument('--broker_host', help='Message broker address', default='localhost')
+    # parser.add_argument('--broker_port', help='Message broker port (1883)', default=1883, type=int)
 
     group = parser.add_argument_group('Database')
-    parser.add_argument('--db_host', help='Database server address', required=True)
+    parser.add_argument('--db_host', help='Database server address', default='localhost')
     parser.add_argument('--db_port', help='Database server port (27017)', default=27017, type=int)
+    parser.add_argument('--db_name', help='Database environment name', default='alfred')
 
     if args.conf_file:
         logging.debug('Parsing config file: %s' % args.conf_file)
@@ -70,10 +71,10 @@ def main():
     db = MongoClient(config.db_host, config.db_port).alfred
 
     # Then register all available plugins and create/read their configuration
-    bindings = getAvailableBindings()
-    logging.info("Available bindings: %s" % bindings)
+    bindingDirs = getAvailableBindings()
+    logging.info("Available bindings: %s" % bindingDirs)
 
-    for bindingName in bindings:
+    for bindingName in bindingDirs:
         bindingDef = db.bindings.find_one({'name': bindingName})
         if not bindingDef:
             db.bindings.insert(dict(
@@ -83,8 +84,14 @@ def main():
             ))
         else:
             if bindingDef.get('installed'):
-                logging.info("Starting binding %s" % bindingDef.get('name'))
+                logging.info("Starting binding %s" % bindingName)
+                __import__('alfred.bindings.%s' % bindingName)
+                b=bindings.Binding.plugins[bindingName](config)
 
+                b.start()
+                import time
+                time.sleep(3)
+                b.stop()
 
     # Fetch item configuration and use it
 
