@@ -87,11 +87,14 @@ def testBindingInterface():
     assert 'stop' in dir(b)
 
 
-def testItemsRegistration():
+def testItemRegistration():
     item = ItemProvider().register(name="Test", type="Number", binding=dict(
         type='random', max=10))
     assert item.name == "Test"
     assert item.type == ItemTypes.Number
+
+def testRegWithBindingString():
+    ItemProvider().register(name="test",type="Number", binding="random")
 
 def testItemWithNonExistentBinding():
     item = ItemProvider().register(name="Test", type="Switch", binding=dict(type="zzzz"))
@@ -99,9 +102,20 @@ def testItemWithNonExistentBinding():
 def testSetItemValue():
     item = ItemProvider().register(name="Test", type="String", binding=dict(type='random'))
     item.value = "Test"
+    assert item.value == 'Test'
 
 
 def testAlreadyDefinedItem():
     item = ItemProvider().register(name="Test", type="String", binding=dict(type='random'))
     item2 = ItemProvider().register(name="Test", type="String", binding=dict(type='random'))
     assert item == item2
+
+def testGetRepoValue():
+    ip = ItemProvider()
+    item = ip.register(name="Test", type="String", binding=dict(type='random'))
+    item.value = 'Test'
+    assert ip.get('Test')
+    assert ip.get('Test').value == 'Test'
+
+def testNonRegisteredItem():
+    assert ItemProvider().get('NonExistent') == None

@@ -28,6 +28,9 @@ class ItemProvider(object):
         else:
             item = ItemTypes.getClass(type)(name=name)
 
+    def get(name):
+        return self.repo.get(name, None)
+
 
 class Item(object):
     __metaclass__ = PluginMount

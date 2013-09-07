@@ -24,7 +24,7 @@ def parseArgs(sysArgs=''):
     group = parser.add_argument_group('Database')
     parser.add_argument('--db_host', help='Database server address', default='localhost')
     parser.add_argument('--db_port', help='Database server port (27017)', default=27017, type=int)
-    parser.add_argument('--db_name', help='Database environment name', default='alfred')
+    parser.add_argument('--db_name', help='Database environment name (alfred)', default='alfred')
 
     return parser.parse_args(sysArgs)
 
