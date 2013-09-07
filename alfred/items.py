@@ -16,8 +16,17 @@ class ItemTypes:
 
 class ItemProvider(object):
 
+    def __init__(self):
+        self.repo = {}
+
     def register(self, name, type, binding):
-        return ItemTypes.getClass(type)(name=name)
+        if name in self.repo:
+            if self.repo[name].type == type:
+                return self.repo[name]
+            else:
+                raise Exception()
+        else:
+            item = ItemTypes.getClass(type)(name=name)
 
 
 class Item(object):

@@ -102,4 +102,6 @@ def testSetItemValue():
 
 
 def testAlreadyDefinedItem():
-    pass
+    item = ItemProvider().register(name="Test", type="String", binding=dict(type='random'))
+    item2 = ItemProvider().register(name="Test", type="String", binding=dict(type='random'))
+    assert item == item2
