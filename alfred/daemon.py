@@ -115,7 +115,7 @@ if __name__ == '__main__':
     args = parseArgs(sys.argv[1:])
 
     logging.basicConfig(
-        level=logging.__getattribute__(args.debug and 'DEBUG' or 'INFO'),
+        level=logging.__dict__[args.debug and 'DEBUG' or 'INFO'],
         format='%(asctime)s [%(name)s] %(levelname)s %(message)s')
 
     # Connection to the Database

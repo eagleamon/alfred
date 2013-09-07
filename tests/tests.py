@@ -1,5 +1,6 @@
 from nose.tools import raises
 from alfred.daemon import parseArgs
+from alfred.items import ItemTypes, ItemProvider
 from alfred.tools import Bus
 from os import chdir, path
 from ConfigParser import ConfigParser
@@ -69,7 +70,7 @@ def testBindingInterface():
         pass
     m = mock()
     m.config = mock()
-    m.config.find_one = lambda : {'brokerHost':'localhost', 'brokerPort': 'localhost'}
+    m.config.find_one = lambda: {'brokerHost': 'localhost', 'brokerPort': 'localhost'}
 
     from ConfigParser import ConfigParser
     config = ConfigParser()
@@ -77,12 +78,28 @@ def testBindingInterface():
     config.broker_host = config.get('broker', 'host')
     config.broker_port = 1883
 
-    import alfred, alfred.bindings.bluetooth as bluetooth
+    import alfred
+    import alfred.bindings.bluetooth as bluetooth
     assert len(bluetooth.Binding.plugins) >= 1
     b = alfred.bindings.Binding.plugins['bluetooth']
 
     assert 'start' in dir(b)
     assert 'stop' in dir(b)
 
-def testItemsType():
-    raise Exception()
+
+def testItemsRegistration():
+    item = ItemProvider().register(name="Test", type="Number", binding=dict(
+        type='random', max=10))
+    assert item.name == "Test"
+    assert item.type == ItemTypes.Number
+
+def testItemWithNonExistentBinding():
+    item = ItemProvider().register(name="Test", type="Switch", binding=dict(type="zzzz"))
+
+def testSetItemValue():
+    item = ItemProvider().register(name="Test", type="String", binding=dict(type='random'))
+    item.value = "Test"
+
+
+def testAlreadyDefinedItem():
+    pass
