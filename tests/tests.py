@@ -83,3 +83,6 @@ def testBindingInterface():
 
     assert 'start' in dir(b)
     assert 'stop' in dir(b)
+
+def testItemsType():
+    raise Exception()

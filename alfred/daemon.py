@@ -1,15 +1,15 @@
 __author__ = 'Joseph Piron'
 
 import argparse
-import ConfigParser
 import logging
 import os
 import sys
 import signal
 
+from pymongo import MongoClient
+
 from tools import Bus
 from alfred import bindings
-from pymongo import MongoClient
 
 
 def parseArgs(sysArgs=''):
@@ -45,7 +45,7 @@ def getAvailableBindings():
 class Alfred(object):
 
     def __init__(self, db):
-        self.activeBindings = []
+        self.activeBindings = {}
         self.logger = logging.getLogger(__name__)
         self.db = db
 
@@ -53,7 +53,8 @@ class Alfred(object):
         self.stop()
 
     def stop(self):
-        [x.stop() for x in self.activeBindings]
+        [x.stop() for x in self.activeBindings.values()]
+        self.logger.info('Bye!')
 
     def main(self):
         """
@@ -62,40 +63,52 @@ class Alfred(object):
         # Get/create general config
         config = self.db.config.find_one()
         if not config:
-            self.db.config.insert({'brokerHost': 'test-gw', 'brokerPort': 1883})
+            self.db.config.insert({'brokerHost': 'localhost', 'brokerPort': 1883})
         config = self.db.config.find_one()
 
         # Connect to the bus to get all updates and create central repository
         bus = Bus(config.get('brokerHost'), config.get('brokerPort'))
         bus.subscribe('#')
 
-        # Then register all available plugins and create/read their configuration
-        bindingDirs = getAvailableBindings()
-        logging.info("Available bindings: %s" % bindingDirs)
-
         signal.signal(signal.SIGINT, self.signalHandler)
 
-        for bindingName in bindingDirs:
-            bindingDef = self.db.bindings.find_one({'name': bindingName})
-            if not bindingDef:
-                self.db.bindings.insert(dict(
-                    name=bindingName,
-                    installed=False,
-                    config={}
-                ))
-            else:
-                if bindingDef.get('installed'):
-                    logging.info("Starting binding %s" % bindingName)
-                    __import__('alfred.bindings.%s' % bindingName)
-                    b = bindings.Binding.plugins[bindingName](self.db)
-                    self.activeBindings.append(b)
-                    b.start()
+        # Then register all available plugins and create/read their configuration
+        logging.info("Available bindings: %s" % getAvailableBindings())
+
+        for bindingDef in db.bindings.find({'autoStart': True}):
+            self.startBinding(bindingDef.get('name'))
 
         # Then fetch item definition
-        items = self.db.items.find()
-        logging.info('Available items: %s' % list(items))
+        logging.info('Available items: %s' % [x.get('name') for x in self.db.items.find()])
 
         signal.pause()
+
+    def installBinding(self, bindingName):
+        __import__('alfred.bindings.%s' % bindingName)
+
+        self.db.bindings.insert(dict(
+            name=bindingName,
+            autoStart=False,
+            config={}
+        ))
+
+    def uninstallBinding(self, bindingName):
+        if bindingName in self.activeBindings:
+            self.stopBinding(bindingName)
+        self.db.bindings.remove({'name': bindingName})
+
+    def startBinding(self, bindingName):
+        logging.info("Starting binding %s" % bindingName)
+        __import__('alfred.bindings.%s' % bindingName)
+        instance = bindings.Binding.plugins[bindingName](self.db)
+        self.activeBindings[bindingName] = instance
+        instance.start()
+
+    def stopBinding(self, bindingName):
+        logging.info('Stopping binding %s' % bindingName)
+        b = self.activeBindings[bindingName]
+        self.activeBindings.remove(b)
+        b.stop()
 
 if __name__ == '__main__':
     # First parse the required options
