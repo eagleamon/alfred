@@ -16,8 +16,9 @@ class ItemTypes:
 
 class ItemProvider(object):
 
-    def __init__(self):
+    def __init__(self, db):
         self.repo = {}
+        self.db = db
 
     def register(self, name, type, binding):
         if name in self.repo:
@@ -27,8 +28,10 @@ class ItemProvider(object):
                 raise Exception()
         else:
             item = ItemTypes.getClass(type)(name=name)
+            self.repo[name] = item
+            return item
 
-    def get(name):
+    def get(self, name):
         return self.repo.get(name, None)
 
 

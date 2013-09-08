@@ -50,20 +50,20 @@ class TestBusConnection(object):
             b.client.loop_start()
 
 
-def testGetSomePlugins():
-    from alfred.daemon import getAvailableBindings
-    bindings = getAvailableBindings()
+def testGetSomeBindings():
+    from alfred.bindings import BindingProvider
+    bindings = BindingProvider(None).getAvailableBindings()
     print bindings
     assert 'swap' in bindings
     assert 'bluetooth' in bindings
 
 
 def testImportBindings():
-    __import__('alfred.bindings.bluetooth')
+    __import__('alfred.bindings.random')
     __import__('alfred.bindings.swap')
     import alfred
-    assert len(alfred.bindings.Binding.plugins) == 2
-
+    assert 'random' in alfred.bindings.Binding.plugins
+    assert 'swap' in alfred.bindings.Binding.plugins
 
 def testBindingInterface():
     class mock():
@@ -79,43 +79,44 @@ def testBindingInterface():
     config.broker_port = 1883
 
     import alfred
-    import alfred.bindings.bluetooth as bluetooth
-    assert len(bluetooth.Binding.plugins) >= 1
-    b = alfred.bindings.Binding.plugins['bluetooth']
+    import alfred.bindings.random as random
+    assert len(random.Binding.plugins) >= 1
+    b = alfred.bindings.Binding.plugins['random']
 
     assert 'start' in dir(b)
     assert 'stop' in dir(b)
 
 
 def testItemRegistration():
-    item = ItemProvider().register(name="Test", type="Number", binding=dict(
+    item = ItemProvider(None).register(name="Test", type="Number", binding=dict(
         type='random', max=10))
     assert item.name == "Test"
     assert item.type == ItemTypes.Number
 
 def testRegWithBindingString():
-    ItemProvider().register(name="test",type="Number", binding="random")
+    ItemProvider(None).register(name="test",type="Number", binding="random")
 
 def testItemWithNonExistentBinding():
-    item = ItemProvider().register(name="Test", type="Switch", binding=dict(type="zzzz"))
+    item = ItemProvider(None).register(name="Test", type="Switch", binding=dict(type="zzzz"))
 
 def testSetItemValue():
-    item = ItemProvider().register(name="Test", type="String", binding=dict(type='random'))
+    item = ItemProvider(None).register(name="Test", type="String", binding=dict(type='random'))
     item.value = "Test"
     assert item.value == 'Test'
 
 
 def testAlreadyDefinedItem():
-    item = ItemProvider().register(name="Test", type="String", binding=dict(type='random'))
-    item2 = ItemProvider().register(name="Test", type="String", binding=dict(type='random'))
+    ip = ItemProvider(None)
+    item = ip.register(name="Test", type="String", binding=dict(type='random'))
+    item2 = ip.register(name="Test", type="String", binding=dict(type='random'))
     assert item == item2
 
 def testGetRepoValue():
-    ip = ItemProvider()
+    ip = ItemProvider(None)
     item = ip.register(name="Test", type="String", binding=dict(type='random'))
     item.value = 'Test'
     assert ip.get('Test')
     assert ip.get('Test').value == 'Test'
 
 def testNonRegisteredItem():
-    assert ItemProvider().get('NonExistent') == None
+    assert ItemProvider(None).get('NonExistent') == None
