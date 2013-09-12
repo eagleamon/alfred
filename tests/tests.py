@@ -1,7 +1,7 @@
 from nose.tools import raises
 from alfred.daemon import parseArgs
-from alfred.items import ItemTypes, ItemProvider
-from alfred.tools import Bus
+from alfred.items import ItemProvider
+from alfred.utils import Bus
 from os import chdir, path
 from ConfigParser import ConfigParser
 
@@ -65,6 +65,7 @@ def testImportBindings():
     assert 'random' in alfred.bindings.Binding.plugins
     assert 'swap' in alfred.bindings.Binding.plugins
 
+
 def testBindingInterface():
     class mock():
         pass
@@ -91,13 +92,16 @@ def testItemRegistration():
     item = ItemProvider(None).register(name="Test", type="Number", binding=dict(
         type='random', max=10))
     assert item.name == "Test"
-    assert item.type == ItemTypes.Number
+    assert item.__class__.__name__ == "NumberItem"
+
 
 def testRegWithBindingString():
-    ItemProvider(None).register(name="test",type="Number", binding="random")
+    ItemProvider(None).register(name="test", type="Number", binding="random")
+
 
 def testItemWithNonExistentBinding():
     item = ItemProvider(None).register(name="Test", type="Switch", binding=dict(type="zzzz"))
+
 
 def testSetItemValue():
     item = ItemProvider(None).register(name="Test", type="String", binding=dict(type='random'))
@@ -111,12 +115,14 @@ def testAlreadyDefinedItem():
     item2 = ip.register(name="Test", type="String", binding=dict(type='random'))
     assert item == item2
 
+
 def testGetRepoValue():
     ip = ItemProvider(None)
     item = ip.register(name="Test", type="String", binding=dict(type='random'))
     item.value = 'Test'
     assert ip.get('Test')
     assert ip.get('Test').value == 'Test'
+
 
 def testNonRegisteredItem():
     assert ItemProvider(None).get('NonExistent') == None

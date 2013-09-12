@@ -2,7 +2,7 @@ __author__ = 'Joseph Piron'
 
 import os
 import logging
-from alfred.tools import Bus, PluginMount
+from alfred.utils import Bus, PluginMount
 from threading import Thread, Event
 # Going on with Thread, if stop needed will switch to Process, but should look at Concurrrence of Gevent
 # for better concurrency
@@ -21,6 +21,10 @@ class Binding(Thread):
 
     def stop(self):
         self.stopEvent.set()
+
+    @property
+    def config(self):
+        return NotImplemented()
 
 
 class BindingProvider(object):

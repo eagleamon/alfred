@@ -1,17 +1,8 @@
 import logging
 mLog = logging.getLogger(__name__)
 
-from alfred.tools import PluginMount
-
-
-class ItemTypes:
-    Number = 'Number'
-    String = 'String'
-    Switch = 'Switch'
-
-    @staticmethod
-    def getClass(name):
-        return {'Number': NumberItem, 'String': StringItem, 'Switch': SwitchItem}.get(name)
+from alfred.utils import PluginMount
+__author__ = 'Joseph Piron'
 
 
 class ItemProvider(object):
@@ -22,17 +13,22 @@ class ItemProvider(object):
 
     def register(self, name, type, binding):
         if name in self.repo:
-            if self.repo[name].type == type:
+            if self.repo[name].__class__.__name__[:-4] == type:
                 return self.repo[name]
             else:
-                raise Exception()
+                raise Exception("Item with name %s already defined with type %s" %
+                               (name, self.repo[name].type))
         else:
-            item = ItemTypes.getClass(type)(name=name)
+            item = self.getClass(type)(name=name)
             self.repo[name] = item
             return item
 
     def get(self, name):
         return self.repo.get(name, None)
+
+    def getClass(self, type):
+        " Return class according to string type "
+        return Item.plugins.get(type.lower()+'item')
 
 
 class Item(object):
@@ -54,18 +50,19 @@ class Item(object):
 class StringItem(Item):
 
     def __init__(self, name):
-        self.type = ItemTypes.String
+        # self.type = ItemTypes.String
         super(StringItem, self).__init__(name)
 
 
 class NumberItem(Item):
 
     def __init__(self, name):
-        self.type = ItemTypes.Number
+        # self.type = ItemTypes.Number
         super(NumberItem, self).__init__(name)
+
 
 class SwitchItem(Item):
 
     def __init__(self, name):
-        self.type = ItemTypes.Switch
+        # self.type = ItemTypes.Switch
         super(SwitchItem, self).__init__(name)

@@ -2,13 +2,12 @@ __author__ = 'Joseph Piron'
 
 import argparse
 import logging
-import os
 import sys
 import signal
 
 from pymongo import MongoClient
 
-from tools import Bus
+from utils import Bus
 from alfred.items import ItemProvider
 from alfred.bindings import BindingProvider
 
@@ -40,7 +39,8 @@ class Alfred(object):
         self.db = db
 
     def signalHandler(self, signum, frame):
-        self.stop()
+        if signum == signal.SIGINT:
+            self.stop()
 
     def stop(self):
         [x.stop() for x in self.bindingProvider.activeBindings.values()]
@@ -48,6 +48,7 @@ class Alfred(object):
 
     def main(self):
         """
+        Create all required interfaces and start the application.
         """
 
         # Get/create general config
