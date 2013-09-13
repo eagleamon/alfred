@@ -8,7 +8,6 @@ import signal
 from pymongo import MongoClient
 
 from utils import Bus
-from alfred.items import ItemProvider
 from alfred.bindings import BindingProvider
 
 
@@ -33,7 +32,6 @@ class Alfred(object):
 
     def __init__(self, db):
         self.bindingProvider = BindingProvider(db)
-        self.itemProvider = ItemProvider(db)
 
         self.logger = logging.getLogger(__name__)
         self.db = db
@@ -43,7 +41,7 @@ class Alfred(object):
             self.stop()
 
     def stop(self):
-        [x.stop() for x in self.bindingProvider.activeBindings.values()]
+        self.bindingProvider.stop()
         self.logger.info('Bye!')
 
     def main(self):

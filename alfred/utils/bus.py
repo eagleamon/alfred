@@ -17,6 +17,7 @@ class Bus(object):
         self.base_topic = base_topic
 
         self.client = mosquitto.Mosquitto(client_id)
+        self.connected = False
         self.client.on_message = self._on_message
         self.client.on_connect = self._on_connect
         self.client.on_disconnect = self._on_disconnect
@@ -31,12 +32,14 @@ class Bus(object):
     def _on_connect(self, mosq, userData, rc):
         if rc == 0:
             self.logger.debug("Connected to broker (%s:%d)" % (self.broker_host, self.broker_port))
+            self.connected = True
             self.on_connect(rc)
         else:
             self.logger.error("Cannot connect: %s" % rc)
 
     def _on_disconnect(self, mosq, userData, rc):
         self.logger.warn("Disconnected from broker: %s" % rc)
+        self.connected = False
         self.on_disconnect(rc)
 
     def on_message(self, msg):

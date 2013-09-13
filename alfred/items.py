@@ -5,30 +5,31 @@ from alfred.utils import PluginMount
 __author__ = 'Joseph Piron'
 
 
-class ItemProvider(object):
+# class ItemProvider(object):
 
-    def __init__(self, db):
-        self.repo = {}
-        self.db = db
+#     def __init__(self):
+#         self.repo = {}
 
-    def register(self, name, type, binding):
-        if name in self.repo:
-            if self.repo[name].__class__.__name__[:-4] == type:
-                return self.repo[name]
-            else:
-                raise Exception("Item with name %s already defined with type %s" %
-                               (name, self.repo[name].type))
-        else:
-            item = self.getClass(type)(name=name)
-            self.repo[name] = item
-            return item
+#     def register(self, name, type, binding):
+#         if name in self.repo:
+#             if self.repo[name].__class__.__name__[:-4] == type:
+#                 return self.repo[name]
+#             else:
+#                 raise Exception("Item with name %s already defined with type %s" %
+#                                (name, self.repo[name].type))
+#         else:
+#             if not self.getClass(type):
+#                 raise Exception("No %s type item available" % type)
+#             item = self.getClass(type)(name=name)
+#             self.repo[name] = item
+#             return item
 
-    def get(self, name):
-        return self.repo.get(name, None)
+#     def get(self, name):
+#         return self.repo.get(name, None)
 
-    def getClass(self, type):
-        " Return class according to string type "
-        return Item.plugins.get(type.lower()+'item')
+#     def getClass(self, type):
+#         " Return class according to string type "
+#         return Item.plugins.get(type.lower() + 'item')
 
 
 class Item(object):
@@ -48,21 +49,12 @@ class Item(object):
 
 
 class StringItem(Item):
-
-    def __init__(self, name):
-        # self.type = ItemTypes.String
-        super(StringItem, self).__init__(name)
+    pass
 
 
 class NumberItem(Item):
-
-    def __init__(self, name):
-        # self.type = ItemTypes.Number
-        super(NumberItem, self).__init__(name)
+    pass
 
 
 class SwitchItem(Item):
-
-    def __init__(self, name):
-        # self.type = ItemTypes.Switch
-        super(SwitchItem, self).__init__(name)
+    pass
