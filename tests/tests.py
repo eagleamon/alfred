@@ -89,54 +89,6 @@ def testBindingInterface():
     assert 'start' in dir(b)
     assert 'stop' in dir(b)
 
-
-# Test items
-
-def testItemRegistration():
-    item = BindingProvider(None).register(name="Test", type="Number", binding=dict(
-        type='random', max=10))
-    assert item.name == "Test"
-    assert item.__class__.__name__ == "NumberItem"
-
-
-@raises(Exception)
-def testBadItemType():
-    item = BindingProvider(None).register(name="test", type="zzz", binding=dict())
-
-
-def testRegWithBindingString():
-    BindingProvider(None).register(name="test", type="Number", binding="random")
-
-
-def testItemWithNonExistentBinding():
-    item = BindingProvider(None).register(name="Test", type="Switch", binding=dict(type="zzzz"))
-
-
-def testSetItemValue():
-    item = BindingProvider(None).register(name="Test", type="String", binding=dict(type='random'))
-    item.value = "Test"
-    assert item.value == 'Test'
-
-
-def testAlreadyDefinedItem():
-    ip = BindingProvider(None)
-    item = ip.register(name="Test", type="String", binding=dict(type='random'))
-    item2 = ip.register(name="Test", type="String", binding=dict(type='random'))
-    assert item == item2
-
-
-def testGetRepoValue():
-    ip = BindingProvider(None)
-    item = ip.register(name="Test", type="String", binding=dict(type='random'))
-    item.value = 'Test'
-    assert ip.get('Test')
-    assert ip.get('Test').value == 'Test'
-
-
-def testNonRegisteredItem():
-    assert BindingProvider(None).get('NonExistent') == None
-
-
 class TestItemBindings:
 
     def setup(self):
@@ -149,8 +101,64 @@ class TestItemBindings:
     def teardown(self):
         self.bp.stopBinding('random')
 
+    # Test items
+
+    def testItemRegistration(self):
+        item = self.bp.register(name="Test", type="number", binding='random:10')
+        assert item.name == "Test"
+        assert item.__class__.__name__ == "NumberItem"
+
+    def testItemGroups(self):
+        item = self.bp.register('test', 'string', 'random')
+        assert item.groups == set()
+        item2 = self.bp.register('test2', 'string', 'random', groups=['Hello', 'All'])
+        assert len(item2.groups) == 2
+        item3 = self.bp.register('test3', 'string', 'random', groups=['Hello', 'All', 'All'])
+        assert len(item3.groups) == 2
+
+
+    @raises(Exception)
+    def testBadItemType(self):
+        item = self.bp.register(name="test", type="zzz", binding='random')
+
+
+    def testRegWithBindingString(self):
+        self.bp.register(name="test", type="number", binding="random")
+
+
+    @raises(Exception)
+    def testItemWithNonExistentBinding(self):
+        item = self.bp.register(name="Test", type="switch", binding="zzzz")
+
+
+    def testSetItemValue(self):
+        item = self.bp.register(name="Test", type="string", binding='random')
+        item.value = "Test"
+        assert item.value == 'Test'
+
+
+    def testAlreadyDefinedItem(self):
+        ip = self.bp
+        item = ip.register(name="Test", type="string", binding='random')
+        item2 = ip.register(name="Test", type="string", binding='random')
+        assert item == item2
+
+
+    def testGetRepoValue(self):
+        ip = self.bp
+        item = ip.register(name="Test", type="string", binding='random')
+        item.value = 'Test'
+        assert ip.get('Test')
+        assert ip.get('Test').value == 'Test'
+
+
+    def testNonRegisteredItem(self):
+        assert self.bp.get('NonExistent') == None
+
+
     def testCreateItemWithBinding(self):
-        test = self.bp.register(name='test', type='number', binding='random:')
+        test = self.bp.register(name='test', type='number', binding='random')
         test2 = self.bp.register(name='test2', type='string', binding='random:60')
         assert "test" in self.bp.activeBindings['random'].items
         assert "test2" in self.bp.activeBindings['random'].items
+

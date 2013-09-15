@@ -26,7 +26,7 @@ class Bus(object):
         self.client.loop_start()
 
     def _on_message(self, mosq, userData, msg):
-        self.logger.debug("Received message: %s -> %s" % (msg.topic, msg.payload))
+        # self.logger.debug("Received message: %s -> %s" % (msg.topic, msg.payload))
         self.on_message(msg)
 
     def _on_connect(self, mosq, userData, rc):

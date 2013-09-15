@@ -5,38 +5,18 @@ from alfred.utils import PluginMount
 __author__ = 'Joseph Piron'
 
 
-# class ItemProvider(object):
-
-#     def __init__(self):
-#         self.repo = {}
-
-#     def register(self, name, type, binding):
-#         if name in self.repo:
-#             if self.repo[name].__class__.__name__[:-4] == type:
-#                 return self.repo[name]
-#             else:
-#                 raise Exception("Item with name %s already defined with type %s" %
-#                                (name, self.repo[name].type))
-#         else:
-#             if not self.getClass(type):
-#                 raise Exception("No %s type item available" % type)
-#             item = self.getClass(type)(name=name)
-#             self.repo[name] = item
-#             return item
-
-#     def get(self, name):
-#         return self.repo.get(name, None)
-
-#     def getClass(self, type):
-#         " Return class according to string type "
-#         return Item.plugins.get(type.lower() + 'item')
-
-
 class Item(object):
     __metaclass__ = PluginMount
 
-    def __init__(self, name):
+    def __init__(self, name, groups=None):
         self.name = name
+        self._value = None
+        self.bus = None
+       	self.groups = set(groups) if groups else set()
+
+    @property
+    def type(self):
+        return self.__class__.__name__[:-4].lower()
 
     @property
     def value(self):
@@ -44,8 +24,13 @@ class Item(object):
 
     @value.setter
     def value(self, value):
-        self.logger.debug("Value of %s changed: %s" % (self.name, value))
-        self._value = value
+    	self._value = value
+        self.logger.debug("Value of '%s' changed: %s" % (self.name, value))
+        if self.bus:
+        	self.bus.publish('items/%s' % self.name, value)
+        	if self.groups:
+        		for g in self.groups:
+        			self.bus.publish('%s/%s'%(g, self.name), value)
 
 
 class StringItem(Item):

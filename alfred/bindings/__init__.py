@@ -20,13 +20,21 @@ class Binding(Thread):
         self.items = {}
 
         Thread.__init__(self)
+        self.setDaemon(True)
 
     def stop(self):
         self.stopEvent.set()
 
+    def register(self, name, type, config, groups):
+        raise NotImplementedError()
+
+    def getClass(self, type):
+        " Return class according to string defining type"
+        return Item.plugins.get(type.lower() + 'item')
+
     @property
     def config(self):
-        return NotImplemented()
+        return NotImplementedError()
 
 
 class BindingProvider(object):
@@ -35,7 +43,12 @@ class BindingProvider(object):
         self.itemRepo = {}
         self.activeBindings = {}
         self.db = db
+        self.bus = None
         self.logger = logging.getLogger(__name__)
+
+    def stop(self):
+        for b in self.activeBindings:
+            self.activeBindings[b].stop()
 
     def getAvailableBindings(self):
         """
@@ -52,6 +65,10 @@ class BindingProvider(object):
     def startInstalled(self):
         for bindingDef in self.db.bindings.find({'autoStart': True}):
             self.startBinding(bindingDef.get('name'))
+
+        for itemDef in self.db.items.find():
+            self.register(itemDef.get('name'), itemDef.get('type'), itemDef.get('binding'),
+                itemDef.get('groups'))
 
     def installBinding(self, bindingName):
         __import__('alfred.bindings.%s' % bindingName)
@@ -81,29 +98,23 @@ class BindingProvider(object):
         b.stop()
         del self.activeBindings[bindingName]
 
-    def register(self, name, type, binding):
+    def register(self, name, type, binding, groups=None):
         if name in self.itemRepo:
-            if self.itemRepo[name].__class__.__name__[:-4] == type:
+            if self.itemRepo[name].type == type:
                 return self.itemRepo[name]
             else:
                 raise Exception("Item with name %s already defined with type %s" %
                                (name, self.itemRepo[name].type))
         else:
-            # if not self.getClass(type):
-            #     raise Exception("No %s type item available" % type)
             bind = binding.split(':')[0]
             if bind not in self.activeBindings:
-                raise Exception('Binding %s not installed ord started' % bind)
+                raise Exception('Binding %s not installed or started' % bind)
             else:
-                self.activeBindings[bind].register(name, type, binding.split(':')[1:])
+                item =self.activeBindings[bind].register(name, type, binding.split(':')[1:], groups)
+                item.bus = self.bus
 
-            item = self.getClass(type)(name=name)
             self.itemRepo[name] = item
             return item
 
     def get(self, name):
         return self.itemRepo.get(name, None)
-
-    def getClass(self, type):
-        " Return class according to string type "
-        return Item.plugins.get(type.lower() + 'item')

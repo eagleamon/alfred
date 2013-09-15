@@ -58,6 +58,7 @@ class Alfred(object):
         # Connect to the bus to get all updates and create central repository
         bus = Bus(config.get('brokerHost'), config.get('brokerPort'))
         bus.subscribe('#')
+        self.bindingProvider.bus = bus
 
         signal.signal(signal.SIGINT, self.signalHandler)
 
