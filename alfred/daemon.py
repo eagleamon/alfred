@@ -2,12 +2,13 @@ __author__ = 'Joseph Piron'
 
 import argparse
 import logging
-import sys
+import sys, os
 import signal
 
 from pymongo import MongoClient
 
 from utils import Bus
+from utils.rules import RuleHandler
 from alfred.bindings import BindingProvider
 
 
@@ -41,6 +42,7 @@ class Alfred(object):
             self.stop()
 
     def stop(self):
+        self.ruleHandler.stop()
         self.bindingProvider.stop()
         self.logger.info('Bye!')
 
@@ -68,6 +70,10 @@ class Alfred(object):
 
         # Then fetch item definition
         logging.info('Available items: %s' % [x.get('name') for x in self.db.items.find()])
+
+        # Import all the rules
+        self.ruleHandler = RuleHandler()
+        self.ruleHandler.loadRules(os.path.join(os.path.dirname(__file__), 'rules')).start()
 
         signal.pause()
 

@@ -12,7 +12,7 @@ class Item(object):
         self.name = name
         self._value = None
         self.bus = None
-       	self.groups = set(groups) if groups else set()
+        self.groups = set(groups) if groups else set()
 
     @property
     def type(self):
@@ -24,13 +24,13 @@ class Item(object):
 
     @value.setter
     def value(self, value):
-    	self._value = value
+        self._value = value
         self.logger.debug("Value of '%s' changed: %s" % (self.name, value))
         if self.bus:
-        	self.bus.publish('items/%s' % self.name, value)
-        	if self.groups:
-        		for g in self.groups:
-        			self.bus.publish('%s/%s'%(g, self.name), value)
+            self.bus.publish('items/%s' % self.name, value)
+            if self.groups:
+                for g in self.groups:
+                    self.bus.publish('groups/%s/%s'%(g, self.name), value)
 
 
 class StringItem(Item):

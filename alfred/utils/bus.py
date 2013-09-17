@@ -48,7 +48,7 @@ class Bus(object):
     def on_connect(self, rc):
         pass
 
-    def on_dictonnect(self, rc):
+    def on_distonnect(self, rc):
         pass
 
     def subscribe(self, topic):

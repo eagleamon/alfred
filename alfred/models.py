@@ -1,2 +1,0 @@
-class Devices(object):
-	pass
