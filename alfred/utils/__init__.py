@@ -14,3 +14,4 @@ class PluginMount(type):
             cls.plugins = {}
         else:
             cls.plugins[name.lower()] = cls
+

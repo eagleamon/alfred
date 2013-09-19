@@ -43,7 +43,9 @@ class BindingProvider(object):
         self.itemRepo = {}
         self.activeBindings = {}
         self.db = db
-        self.bus = None
+        import alfred.config as config
+        print config.db , "cool"
+        self.bus = Bus(config.get('brokerHost'), config.get('brokerPort'))
         self.logger = logging.getLogger(__name__)
 
     def stop(self):
@@ -63,9 +65,12 @@ class BindingProvider(object):
         return res
 
     def startInstalled(self):
+        self.logger.info("Available bindings: %s" % self.getAvailableBindings())
         for bindingDef in self.db.bindings.find({'autoStart': True}):
             self.startBinding(bindingDef.get('name'))
 
+        # Then fetch item definition
+        self.logger.info('Available items: %s' % [x.get('name') for x in self.db.items.find()])
         for itemDef in self.db.items.find():
             self.register(itemDef.get('name'), itemDef.get('type'), itemDef.get('binding'),
                 itemDef.get('groups'))

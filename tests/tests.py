@@ -10,6 +10,8 @@ from ConfigParser import ConfigParser
 config = ConfigParser()
 config.read('tests/test.ini')
 
+import alfred.config as c
+c.inTest = True
 
 # Test arguments
 

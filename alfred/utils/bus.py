@@ -21,6 +21,7 @@ class Bus(object):
         self.client.on_message = self._on_message
         self.client.on_connect = self._on_connect
         self.client.on_disconnect = self._on_disconnect
+        self.client.on_subscribe = self._on_subscribe
 
         self.client.connect(self.broker_host, self.broker_port)
         self.client.loop_start()
@@ -42,6 +43,9 @@ class Bus(object):
         self.connected = False
         self.on_disconnect(rc)
 
+    def _on_subscribe(self, mosq, userData, mid, granted_qos):
+    	self.on_subscribe()
+
     def on_message(self, msg):
         pass
 
@@ -49,6 +53,9 @@ class Bus(object):
         pass
 
     def on_distonnect(self, rc):
+        pass
+
+    def on_subscribe(self):
         pass
 
     def subscribe(self, topic):

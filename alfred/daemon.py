@@ -2,7 +2,8 @@ __author__ = 'Joseph Piron'
 
 import argparse
 import logging
-import sys, os
+import sys
+import os
 import signal
 
 from pymongo import MongoClient
@@ -57,6 +58,7 @@ class Alfred(object):
             self.db.config.insert({'brokerHost': 'localhost', 'brokerPort': 1883})
         config = self.db.config.find_one()
 
+
         # Connect to the bus to get all updates and create central repository
         bus = Bus(config.get('brokerHost'), config.get('brokerPort'))
         bus.subscribe('#')
@@ -65,14 +67,10 @@ class Alfred(object):
         signal.signal(signal.SIGINT, self.signalHandler)
 
         # Then register all available plugins and create/read their configuration
-        logging.info("Available bindings: %s" % self.bindingProvider.getAvailableBindings())
         self.bindingProvider.startInstalled()
 
-        # Then fetch item definition
-        logging.info('Available items: %s' % [x.get('name') for x in self.db.items.find()])
-
         # Import all the rules
-        self.ruleHandler = RuleHandler()
+        self.ruleHandler = RuleHandler(self.db)
         self.ruleHandler.loadRules(os.path.join(os.path.dirname(__file__), 'rules')).start()
 
         signal.pause()
@@ -81,11 +79,29 @@ if __name__ == '__main__':
     # First parse the required options
     args = parseArgs(sys.argv[1:])
 
+    from colorlog import ColoredFormatter
+    formatter = ColoredFormatter(
+        "%(log_color)s%(levelname)-8s%(reset)s %(blue)s%(message)s",
+        datefmt=None,
+        reset=True,
+        log_colors={
+                'DEBUG':    'cyan',
+                'INFO':     'green',
+                'WARNING':  'yellow',
+                'ERROR':    'red',
+                'CRITICAL': 'red',
+        }
+)
+
     logging.basicConfig(
         level=logging.__dict__[args.debug and 'DEBUG' or 'INFO'],
         format='%(asctime)s [%(name)s] %(levelname)s %(message)s')
 
     # Connection to the Database
     db = MongoClient(args.db_host, args.db_port)[args.db_name]
+
+    # Set up the configuration repository (maybe should go to a pure python module..)
+    from alfred import config
+    config.db = db
 
     Alfred(db).main()
