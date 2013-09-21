@@ -2,3 +2,4 @@ configparser==3.3.0r2
 mosquitto==1.2
 pymongo==2.6.1
 crython==0.0.1
+colorlog==2.0.0

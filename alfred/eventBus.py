@@ -2,6 +2,7 @@ __author__ = 'Joseph Piron'
 
 import mosquitto
 import logging
+import config
 
 
 class Bus(object):
@@ -10,10 +11,10 @@ class Bus(object):
     Handy class to provide message queue functionnalities to all plugins
     """
 
-    def __init__(self, broker_host, broker_port, base_topic='alfred', client_id=None):
+    def __init__(self, brokerHost, brokerPort, base_topic='alfred', client_id=None):
         self.logger = logging.getLogger(__name__)
-        self.broker_port = broker_port
-        self.broker_host = broker_host
+        self.brokerPort = brokerPort
+        self.brokerHost = brokerHost
         self.base_topic = base_topic
 
         self.client = mosquitto.Mosquitto(client_id)
@@ -23,7 +24,7 @@ class Bus(object):
         self.client.on_disconnect = self._on_disconnect
         self.client.on_subscribe = self._on_subscribe
 
-        self.client.connect(self.broker_host, self.broker_port)
+        self.client.connect(self.brokerHost, self.brokerPort)
         self.client.loop_start()
 
     def _on_message(self, mosq, userData, msg):
@@ -32,7 +33,7 @@ class Bus(object):
 
     def _on_connect(self, mosq, userData, rc):
         if rc == 0:
-            self.logger.debug("Connected to broker (%s:%d)" % (self.broker_host, self.broker_port))
+            self.logger.debug("Connected to broker (%s:%d)" % (self.brokerHost, self.brokerPort))
             self.connected = True
             self.on_connect(rc)
         else:
@@ -44,7 +45,7 @@ class Bus(object):
         self.on_disconnect(rc)
 
     def _on_subscribe(self, mosq, userData, mid, granted_qos):
-    	self.on_subscribe()
+        self.on_subscribe()
 
     def on_message(self, msg):
         pass
@@ -63,3 +64,14 @@ class Bus(object):
 
     def publish(self, topic, message):
         self.client.publish('/'.join([self.base_topic, topic]), message)
+
+
+def publish(topic, message):
+    bus.publish(topic, message)
+
+
+def create():
+    """ Factory function for future upgrades.. """
+    return Bus(config.get('broker', 'host'), config.get('broker', 'port'))
+
+bus = create()
