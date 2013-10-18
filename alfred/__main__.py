@@ -6,6 +6,7 @@ import sys
 import logging
 import argparse
 
+
 def parseArgs(sysArgs=''):
     """
     Parse arguments from command line and and returns a arg object, everything else comes from the db
@@ -16,12 +17,12 @@ def parseArgs(sysArgs=''):
                         help='Activate debug logging for the application')
 
     group = parser.add_argument_group('Database')
-    parser.add_argument('--db_host', help='Database server address', default='localhost')
-    parser.add_argument('--db_port', help='Database server port (27017)', default=27017, type=int)
-    parser.add_argument('--db_name', help='Database environment name (alfred)', default='alfred')
+    group.add_argument('--db_host', help='Database server address', default='localhost')
+    group.add_argument('--db_port', help='Database server port (27017)', default=27017, type=int)
+    group.add_argument('--db_name', help='Database environment name (alfred)', default='alfred')
 
     group = parser.add_argument_group('Config file')
-    parser.add_argument('-c', '--conf_file', help='Config file', default='dev.conf')
+    group.add_argument('-c', '--conf_file', help='Config file', default='dev.conf')
 
     return parser.parse_args(sysArgs)
 

@@ -4,8 +4,6 @@ import logging
 import os
 import signal
 import config
-import ruleHandler
-import bindingProvider
 
 log = logging.getLogger(__name__)
 
@@ -15,6 +13,8 @@ def signalHandler(signum, frame):
         stop()
 
 def stop():
+    import ruleHandler
+    import bindingProvider
     ruleHandler.stop()
     bindingProvider.stop()
     log.info('Bye!')
@@ -27,6 +27,9 @@ def start():
     # Get/create general config
     if not config.localConfig:
         raise ValueError('Config is not set')
+
+    import ruleHandler
+    import bindingProvider
 
     signal.signal(signal.SIGINT, signalHandler)
 

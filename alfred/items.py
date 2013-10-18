@@ -36,6 +36,8 @@ class Item(object):
             if self.groups:
                 for g in self.groups:
                     self.bus.publish('groups/%s/%s' % (g, self.name), value)
+        else:
+        	log.warn("No bus defined")
 
 
 class StringItem(Item):

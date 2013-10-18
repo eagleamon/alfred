@@ -31,7 +31,7 @@ class Binding(Thread):
         return self.items[name]
 
     def getClass(self, type):
-        " Return class according to string defining type"
+        " Return item class according to string defining type"
         return Item.plugins.get(type.lower() + 'item')
 
     @property

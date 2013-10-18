@@ -3,3 +3,4 @@ mosquitto==1.2
 pymongo==2.6.1
 crython==0.0.1
 colorlog==2.0.0
+python-boxcar==0.1.2

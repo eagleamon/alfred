@@ -1,8 +1,5 @@
 import logging
 
-from bus import Bus
-
-
 class PluginMount(type):
 
     """ MetaClass to define plugins """

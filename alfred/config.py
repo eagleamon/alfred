@@ -2,11 +2,13 @@
 
 import json
 
-db = None
+# Integrate db afterwards ?
+# db = None
 
 # Is it necessary to keep config in the db ?
 # maybe a file to read at start depending on environment ?
 localConfig = dict(
+    boxcar=dict(key='oSjf5jGzkDvgSE01i3Ag', secret='GVaIflSm9VrbQYE1j8V9Uk5VEjUQjOErlYYOlVi1'),
     mail=dict(server='smtp.scarlet.be', fromAddress='alfred@miom.be'),
     broker=dict(host='hal', port=1883),
     bindings=dict(
@@ -25,12 +27,9 @@ localConfig = dict(
     ],
     groups=dict(
         sensors=['Temperature', 'Humidity', 'Light'],
-        all=['sensors']
+        # all=['sensors']	not needed actually
     )
 )
-
-# Integrate db afterwards ?
-
 
 def save(config):
     raise NotImplementedError()

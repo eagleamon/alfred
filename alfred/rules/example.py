@@ -3,31 +3,41 @@ from alfred.utils.notifications import sendMail
 
 log = logging.getLogger(__name__)
 
+import pymongo, datetime
+db = pymongo.MongoClient('hal').alfred
+
+@busEvent('items/#')
+def toDatabase(topic, msg):
+	db.values.save(dict(
+		item = topic.split('/')[-1],
+		time = datetime.datetime.now(),
+		data = msg
+	))
 
 # @timeEvent(second='*/2')
-# def myTimeFunction(ctx):
-#     log.info("timeEvent")
-#     ctx.bus.publish('test', 'ok')
+# def myTimeFunction():
+#     log.info("timeEvent de myTimeFunction")
+#     eventBus.publish('test', 'ok')
 
 
 # @busEvent('+/group1/*')
-# def myEventFunction(ctx, topic, msg):
+# def myEventFunction(topic, msg):
 #     log.info('msg %s received from topic %s' % (msg, topic))
 
 
 # @busEvent('+')
-# def myTestFunction(ctx, topic, msg):
+# def myTestFunction(topic, msg):
 #     log.info('And from the myTimeFunction... %s ' % msg)
 
 
 # @busEvent('items/#')
-# def random_is_over_50(ctx, topic, msg):
+# def random_is_over_50(topic, msg):
 #     if float(msg) > .5:
 #         log.info('Value is over .5: %s' % msg)
 
 
 # @busEvent('items/#')
-# def mail_over_50(ctx, topic, msg):
+# def mail_over_50(topic, msg):
 #     if float(msg) > .5:
 #         sendMail('joseph.piron@gmail.com', "%s: %s" % (topic, msg))
 

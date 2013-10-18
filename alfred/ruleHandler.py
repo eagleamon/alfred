@@ -22,7 +22,7 @@ def busEvent(topic):
 
         def handle_message(msg):
             try:
-                f(context, '/'.join(msg.topic.split('/')[1:]), msg.payload)
+                f('/'.join(msg.topic.split('/')[1:]), msg.payload)
             except Exception, E:
                 log.exception('Exception while executing rule: %s' % E.message)
 

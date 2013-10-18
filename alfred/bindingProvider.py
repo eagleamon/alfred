@@ -1,6 +1,6 @@
 import logging
 import os
-from alfred import eventBus
+import eventBus
 from alfred.bindings import Binding
 from alfred import config
 
@@ -8,7 +8,7 @@ items = {}
 activeBindings = {}
 db = None
 
-bus = None
+bus = eventBus.create()
 log = logging.getLogger(__name__)
 
 def stop():
@@ -30,7 +30,7 @@ def getAvailableBindings():
 
 def startInstalled():
     log.info("Available bindings: %s" % getAvailableBindings())
-    bus = eventBus.create()
+    # bindingProvider.bus = eventBus.create()
     for i in filter(lambda i: i[1]['autoStart'], config.get('bindings').items()):
         startBinding(i[0])
 
@@ -38,6 +38,9 @@ def startInstalled():
     log.info('Available items: %s' % [x.get('name') for x in config.get('items')])
     for itemDef in config.get('items'):
         register(**itemDef)
+
+    for k,v in activeBindings.items():
+    	log.debug('%s items: %s' %(k, v.items))
 
 def installBinding(bindingName):
     __import__('alfred.bindings.%s' % bindingName)
