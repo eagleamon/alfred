@@ -3,6 +3,13 @@ from alfred.utils.notifications import sendMail
 
 log = logging.getLogger(__name__)
 
+"""
+This file is an example of how a rule file should be structured with the 3
+first lines on top and the different rules below:
+
+- functions with @busEvent or @timeEvent decorator
+"""
+
 import pymongo, datetime
 db = pymongo.MongoClient('hal').alfred
 

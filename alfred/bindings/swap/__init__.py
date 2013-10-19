@@ -12,7 +12,7 @@ class Swap(Binding):
     def run(self):
         ctx = zmq.Context()
         self.client = ctx.socket(zmq.SUB)
-        self.client.setsockopt(zmq.SUBSCRIBE, config.getBindingConfig('swap').get('topics'))
+        self.client.setsockopt_string(zmq.SUBSCRIBE, unicode(config.getBindingConfig('swap').get('topics')))
 
         if not config.getBindingConfig('swap'):
             config.setBindingConfig('swap',

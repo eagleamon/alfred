@@ -1,4 +1,5 @@
 __author__ = 'Joseph Piron'
+__version__ = "0.0.4"
 
 import logging
 import os
@@ -28,6 +29,7 @@ def start():
     if not config.localConfig:
         raise ValueError('Config is not set')
 
+    log.info('Starting alfred %s' % __version__ )
     import ruleHandler
     import bindingProvider
 

@@ -17,12 +17,12 @@ def parseArgs(sysArgs=''):
                         help='Activate debug logging for the application')
 
     group = parser.add_argument_group('Database')
-    group.add_argument('--db_host', help='Database server address', default='localhost')
+    group.add_argument('--db_host', help='Database server address')
     group.add_argument('--db_port', help='Database server port (27017)', default=27017, type=int)
     group.add_argument('--db_name', help='Database environment name (alfred)', default='alfred')
 
     group = parser.add_argument_group('Config file')
-    group.add_argument('-c', '--conf_file', help='Config file', default='dev.conf')
+    group.add_argument('-c', '--conf_file', help='Config file')
 
     return parser.parse_args(sysArgs)
 
@@ -50,10 +50,12 @@ try:
 except:
     pass
 
-# Connection to the Database
-# from pymongo import MongoClient
+# Load the configuration from required source
 import config
-# config.load(args.conf_file)
+if (args.db_host):
+    config.load(args.db_host, args.db_port, args.db_name)
+elif (args.conf_file):
+    config.load(filePath=args.conf_file)
 
 # Start the daemon
 import alfred

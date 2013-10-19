@@ -72,6 +72,6 @@ def publish(topic, message):
 
 def create():
     """ Factory function for future upgrades.. """
-    return Bus(config.get('broker', 'host'), config.get('broker', 'port'))
+    return Bus(config.get('broker', 'host'), int(config.get('broker', 'port')))
 
 bus = create()

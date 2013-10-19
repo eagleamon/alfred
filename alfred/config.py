@@ -1,12 +1,20 @@
-""" Handy module to keep a coherent interface in case of future changes """
+"""
+Handy module to keep a coherent interface in case of future changes
+
+If db configuration is given, try to connect and fetch config. Otherwise,
+read local file.
+"""
 
 import json
+import pymongo
+import socket
+import logging
 
-# Integrate db afterwards ?
-# db = None
+log = logging.getLogger(__file__)
 
-# Is it necessary to keep config in the db ?
-# maybe a file to read at start depending on environment ?
+db = None
+path = None
+
 localConfig = dict(
     boxcar=dict(key='oSjf5jGzkDvgSE01i3Ag', secret='GVaIflSm9VrbQYE1j8V9Uk5VEjUQjOErlYYOlVi1'),
     mail=dict(server='smtp.scarlet.be', fromAddress='alfred@miom.be'),
@@ -27,16 +35,33 @@ localConfig = dict(
     ],
     groups=dict(
         sensors=['Temperature', 'Humidity', 'Light'],
-        # all=['sensors']	not needed actually
+        # all=['sensors']   not needed actually
     )
 )
+
 
 def save(config):
     raise NotImplementedError()
 
 
-def load(path='dev.conf'):
-    localConfig = json.load(path)
+def load(dbHost=None, dbPort=None, dbName=None, filePath=None):
+    global db, localConfig, path
+    if all([dbHost, dbPort, dbName]):
+        filePath = None
+        if not db:
+            db = getattr(pymongo.MongoClient(dbHost, dbPort), dbName)
+        name = socket.gethostname().split('.')[0]
+        localConfig = db.config.find_one(dict(name=name)).get('config')
+        log.info("Fetched configuration from database for '%s'" % name)
+
+    elif filePath:
+        db = None
+        if not path:
+            path = filePath
+        localConfig = json.load(open(path))
+        log.info('Fetched configuration from file %s' % path)
+
+    log.debug("localConfig: %s " % localConfig)
 
 
 def get(section, value=None):
