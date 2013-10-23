@@ -1,5 +1,6 @@
-from tornado.web import RequestHandler
+from tornado.web import RequestHandler, HTTPError
 from tornado.websocket import WebSocketHandler
+from bson import json_util
 import logging, json
 
 
@@ -15,9 +16,9 @@ class WSHandler(BaseHandler, WebSocketHandler):
     clients=set()
 
     @classmethod
-    def dispatch(cls, topic, message):
+    def dispatch(cls, msg):
         for c in WSHandler.clients:
-            c.write_message(topic + ":" + str(message))
+            c.write_message(msg.topic + msg.payload)
 
     def open(self):
         self.log.debug("WebSocket opened")
@@ -35,4 +36,12 @@ class WSHandler(BaseHandler, WebSocketHandler):
 
 class RestHandler(BaseHandler):
     def get(self, *args):
-        args
+        self.log.info("cool meme")
+        if args[0] == "items":
+            from alfred import bindingProvider
+            result = []
+            for x,y in bindingProvider.items.items():
+                result.append(dict(value=y.value, time=y.lastUpdate and y.lastUpdate.isoformat(), type=y.type, name=x))
+            self.write(json.dumps(result, default=json_util.default))
+        else:
+            raise HTTPError(404, "%s not available in API" % args[0])

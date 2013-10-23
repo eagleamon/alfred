@@ -15,6 +15,8 @@ def parseArgs(sysArgs=''):
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--debug', action='store_true',
                         help='Activate debug logging for the application')
+    parser.add_argument('--log_file', help='Path to log file (needs write access on directory - /tmp/alfred.log)',
+                        default='/tmp/alfred.log')
 
     group = parser.add_argument_group('Database')
     group.add_argument('--db_host', help='Database server address')
@@ -28,12 +30,13 @@ def parseArgs(sysArgs=''):
 
 args = parseArgs(sys.argv[1:])
 
-logging.basicConfig(
-    level=logging.__dict__[args.debug and 'DEBUG' or 'INFO'],
-    format='%(asctime)s [%(name)s] %(levelname)s %(message)s')
-try:
-    from colorlog import ColoredFormatter
-    formatter = ColoredFormatter(
+# Configure logging
+from logging.handlers import RotatingFileHandler
+from colorlog import ColoredFormatter
+root = logging.getLogger()
+root.setLevel(logging.__dict__[args.debug and 'DEBUG' or 'INFO'])
+root.addHandler(logging.StreamHandler())
+root.handlers[0].setFormatter(ColoredFormatter(
         "%(log_color)s%(asctime)s [%(name)s] %(message)s%(reset)s",
         datefmt=None,
         reset=True,
@@ -44,11 +47,9 @@ try:
             'ERROR':    'red',
             'CRITICAL': 'red',
         }
-    )
-
-    logging.getLogger().handlers[0].setFormatter(formatter)
-except:
-    pass
+    ))
+root.addHandler(RotatingFileHandler(args.log_file, maxBytes=1024 * 10, backupCount=3))
+root.handlers[1].setFormatter(logging.Formatter('%(asctime)s [%(name)s] %(levelname)s %(message)s'))
 
 # Load the configuration from required source
 import config

@@ -1,0 +1,16 @@
+<table class="table table-striped table-hover">
+    <thead>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Value</th>
+        <th>Time</th>
+    </thead>
+    <tbody>
+        <tr ng-repeat="item in items">
+            <td>{{item.name}}</td>
+            <td>{{item.type}}</td>
+            <td>{{item.value|number}}</td>
+            <td>{{item.time}}</td>
+        </tr>
+    </tbody>
+</table>

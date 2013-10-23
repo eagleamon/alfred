@@ -24,6 +24,7 @@ setup(
     packages=find_packages(),
     install_requires=reqs(),
     long_description=read('README.md'),
+    data_files=[('/etc/init', ['data/alfred.conf'])],
     classifiers=[
         "Development Status :: 2 - PreAlpha",
        	"Topic :: Home Automation",

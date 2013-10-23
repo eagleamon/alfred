@@ -10,15 +10,18 @@ import pymongo
 import socket
 import logging
 
-log = logging.getLogger(__file__)
+log = logging.getLogger(__name__)
 
 db = None
 path = None
+
+# TODO: update localConfig, do not replace -> default in case nothing is ready
 
 localConfig = dict(
     boxcar=dict(key='oSjf5jGzkDvgSE01i3Ag', secret='GVaIflSm9VrbQYE1j8V9Uk5VEjUQjOErlYYOlVi1'),
     mail=dict(server='smtp.scarlet.be', fromAddress='alfred@miom.be'),
     broker=dict(host='hal', port=1883),
+    http=dict(port=8000, debug=True),
     bindings=dict(
         random=dict(autoStart=True, config={}),
         swap=dict(autoStart=True, config=
