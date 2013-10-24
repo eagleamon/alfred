@@ -20,10 +20,10 @@ def build():
     local('python setup.py sdist')
 
 
-@hosts('pi@raspbmc')
+# @hosts('pi@raspbmc')
 def publish():
     clean()
     build()
     f = os.listdir('dist')[0]
     put('dist/%s' % f, '/tmp/%s' % f)
-    sudo('pip install /tmp/%s' % f)
+    sudo('pip install -U /tmp/%s' % f)

@@ -9,3 +9,17 @@ alfred = angular.module('alfred', []).config(['$routeProvider', function($route
         }).
         otherwise({redirectTo: '/items'})
 }])
+
+alfred.factory('socket', function($rootScope){
+    var socket = new WebSocket('ws://' + location.host + '/live');
+    return {
+        on: function(callback) {
+            socket.onmessage = function(msg){
+                console.log(msg)
+                $rootScope.$apply(function(){
+                    callback(msg)
+                });
+            };
+        },
+    }
+})

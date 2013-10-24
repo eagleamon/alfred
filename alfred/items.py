@@ -3,6 +3,7 @@ __author__ = 'Joseph Piron'
 import logging
 from alfred.utils import PluginMount
 from datetime import datetime
+import json
 
 log = logging.getLogger(__name__)
 
@@ -32,10 +33,12 @@ class Item(object):
         self.lastUpdate = datetime.now()
         log.debug("Value of '%s' changed: %s" % (self.name, value))
         if self.bus:
-            self.bus.publish('items/%s' % self.name, value)
+            self.bus.publish('items/%s' % self.name,
+            	json.dumps(dict(value=value, time=self.lastUpdate.isoformat())))
             if self.groups:
                 for g in self.groups:
-                    self.bus.publish('groups/%s/%s' % (g, self.name), value)
+                    self.bus.publish('groups/%s/%s' % (g, self.name),
+                    	json.dumps(dict(value=value, time = self.lastUpdate.isoformat())))
         else:
         	log.warn("No bus defined")
 

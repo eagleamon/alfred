@@ -42,6 +42,17 @@ def startInstalled():
     for k,v in activeBindings.items():
     	log.debug('%s items: %s' %(k, v.items))
 
+    from pymongo import MongoClient
+    from datetime import datetime
+
+    # Fetch last values/updateTime for each item
+    db = MongoClient('hal').alfred
+    for rec in db.lastValues.find():
+    	if rec.get('item') in items:
+    		items[rec.get('item')].value = rec.get('value')
+    		items[rec.get('item')].lastUpdate = \
+    			datetime.strptime(rec.get('time'),'%Y-%m-%dT%H:%M:%S.%f')
+
 def installBinding(bindingName):
     __import__('alfred.bindings.%s' % bindingName)
 

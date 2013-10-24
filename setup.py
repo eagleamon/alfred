@@ -1,4 +1,4 @@
-import os, alfred
+import os
 from setuptools import setup, find_packages
 from pip.req import parse_requirements as pr
 
@@ -12,19 +12,28 @@ def read(fname):
 def reqs():
 	return [str(i.req) for i in pr(os.path.join(os.path.dirname(__file__), 'requirements.txt'))]
 
+def version():
+	fd = open('alfred/__init__.py')
+	fd.readline()
+	return fd.readline().split('=')[1].strip().strip("'")
+
 setup(
     name = "alfred",
-    version = alfred.__version__,
-    author = alfred.__author__,
+    version = version(),
+    author = "Joseph Piron",
     author_email = "joseph.piron@gmail.com",
     description = ("An interpretation of OpenHab, Domogik, and other great domotic projects."),
     license = "BSD",
     keywords = "domotic, openhab, domogik, mqtt, event, bus",
     url = "http://github.com/eagleamon/alfred",
     packages=find_packages(),
+    package_data={'alfred/webServer': ['alfred/webServer/webClient']},
     install_requires=reqs(),
     long_description=read('README.md'),
-    data_files=[('/etc/init', ['data/alfred.conf'])],
+    data_files=[
+    	('/etc/init', ['data/alfred.conf'])
+    ],
+    include_package_data=True,
     classifiers=[
         "Development Status :: 2 - PreAlpha",
        	"Topic :: Home Automation",

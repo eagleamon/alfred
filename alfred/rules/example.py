@@ -1,5 +1,6 @@
 from alfred.ruleHandler import timeEvent, busEvent, logging, eventBus
 from alfred.utils.notifications import sendMail
+import json
 
 log = logging.getLogger(__name__)
 
@@ -10,16 +11,27 @@ first lines on top and the different rules below:
 - functions with @busEvent or @timeEvent decorator
 """
 
-import pymongo, datetime
+import pymongo
+import datetime
 db = pymongo.MongoClient('hal').alfred
+
 
 @busEvent('items/#')
 def toDatabase(topic, msg):
-	db.values.save(dict(
-		item = topic.split('/')[-1],
-		time = datetime.datetime.now(),
-		data = msg
-	))
+    msg = json.loads(msg)
+    db.values.save(dict(
+        item=topic.split('/')[-1],
+        time=msg.get('time'),
+        value=msg.get('value')
+    ))
+
+    db.lastValues.update(
+        dict(item=topic.split('/')[-1]),
+        {'$set': {'time': msg.get('time'), 'value': msg.get('value')}},
+        upsert=True
+    )
+
+
 
 # @timeEvent(second='*/2')
 # def myTimeFunction():

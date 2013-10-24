@@ -6,8 +6,9 @@ __author__ = 'joseph'
 from tornado import web, httpserver, ioloop
 # import zmq
 import logging
-from alfred import config
 import os
+from alfred import config
+from alfred import eventBus
 import handlers as h
 
 
@@ -18,7 +19,7 @@ class WebServer(web.Application):
         settings = dict(
             # debug=config.get('http', 'debug'),
             debug=True,
-            static_path=os.path.join(os.path.dirname(__file__), 'webclient/')
+            static_path=os.path.join(os.path.dirname(__file__), 'webClient/')
         )
 
         handlers = [
@@ -28,6 +29,7 @@ class WebServer(web.Application):
             (r'/', web.RedirectHandler, dict(url='/index.html')),
             (r'/(.*)$', web.StaticFileHandler, dict(path=settings.get('static_path')))
         ]
+        self.log.debug('Static path: %s' % settings.get('static_path'))
 
         web.Application.__init__(self, handlers, **settings)
 
@@ -41,7 +43,7 @@ class WebServer(web.Application):
         self.log.info("Starting webserver on port: %s" % config.get('http', 'port'))
         self.server = httpserver.HTTPServer(self)
         self.server.listen(config.get('http', 'port'))
-        from alfred import eventBus
+
         self.bus = eventBus.create()
         self.bus.subscribe('items/#')
         self.bus.on_message = self.on_message
@@ -54,7 +56,7 @@ class WebServer(web.Application):
         inst.add_callback_from_signal(lambda x: x.stop(), inst)
 
     def on_message(self, msg):
-    	h.WSHandler.dispatch(msg)
+        h.WSHandler.dispatch(msg)
 
     # def on_message(self, msg):
     #     try:

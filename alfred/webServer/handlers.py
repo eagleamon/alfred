@@ -6,7 +6,7 @@ import logging, json
 
 class BaseHandler(RequestHandler):
     def initialize(self):
-        self.log = logging.getLogger(str(self.__class__))
+        self.log = logging.getLogger(__name__)
 
     @property
     def zmq(self):
@@ -22,26 +22,28 @@ class WSHandler(BaseHandler, WebSocketHandler):
                 dict(topic=msg.topic, payload=msg.payload)))
 
     def open(self):
-        self.log.debug("WebSocket opened: %s user(s) online" % len(WSHandler.clients))
         WSHandler.clients.add(self)
+        self.log.debug("WebSocket opened: %s user(s) online" % len(WSHandler.clients))
 
     def on_message(self, message):
         self.log.debug(message)
         self.write_message(u"You said: " + message)
 
     def on_close(self):
-        self.log.debug("WebSocket closed: %s user(s) online" % len(WSHandler.clients))
         if self in WSHandler.clients:
             WSHandler.clients.remove(self)
+        self.log.debug("WebSocket closed: %s user(s) online" % len(WSHandler.clients))
 
 
 class RestHandler(BaseHandler):
     def get(self, *args):
         if args[0] == "items":
             from alfred import bindingProvider
-            result = []
+            result = {}
             for x,y in bindingProvider.items.items():
-                result.append(dict(value=y.value, time=y.lastUpdate and y.lastUpdate.isoformat(), type=y.type, name=x))
+                result[x] = dict(
+                    value=y.value, time=y.lastUpdate and y.lastUpdate.isoformat(),
+                    type=y.type)
             self.write(json.dumps(result, default=json_util.default))
         else:
             raise HTTPError(404, "%s not available in API" % args[0])
