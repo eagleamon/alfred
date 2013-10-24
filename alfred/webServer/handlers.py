@@ -18,10 +18,11 @@ class WSHandler(BaseHandler, WebSocketHandler):
     @classmethod
     def dispatch(cls, msg):
         for c in WSHandler.clients:
-            c.write_message(msg.topic + msg.payload)
+            c.write_message(json.dumps(
+                dict(topic=msg.topic, payload=msg.payload)))
 
     def open(self):
-        self.log.debug("WebSocket opened")
+        self.log.debug("WebSocket opened: %s user(s) online" % len(WSHandler.clients))
         WSHandler.clients.add(self)
 
     def on_message(self, message):
@@ -29,14 +30,13 @@ class WSHandler(BaseHandler, WebSocketHandler):
         self.write_message(u"You said: " + message)
 
     def on_close(self):
-        self.log.debug("WebSocket closed")
+        self.log.debug("WebSocket closed: %s user(s) online" % len(WSHandler.clients))
         if self in WSHandler.clients:
             WSHandler.clients.remove(self)
 
 
 class RestHandler(BaseHandler):
     def get(self, *args):
-        self.log.info("cool meme")
         if args[0] == "items":
             from alfred import bindingProvider
             result = []
