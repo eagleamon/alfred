@@ -22,10 +22,15 @@ def stop():
     bindingProvider.stop()
     log.info('Bye!')
 
-def start():
+def start(args):
     """
     Create all required interfaces and start the application.
     """
+    # Load the configuration from required source
+    if (args.db_host):
+        config.load(args.db_host, args.db_port, args.db_name)
+    elif (args.conf_file):
+        config.load(filePath=args.conf_file)
 
     # Get/create general config
     if not config.localConfig:

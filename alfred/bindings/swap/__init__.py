@@ -39,7 +39,7 @@ class Swap(Binding):
             except Exception, E:
                 log.exception('Error while parsing message: %s' % E.message)
 
-    def register(self, name, type, binding, groups=None):
+    def register(self, name, type, binding, groups=None, icon=None):
         """ More interesting to register by binding than by name """
 
         if not type in Binding.validTypes:

@@ -3,7 +3,6 @@ import os
 import eventBus
 from alfred.bindings import Binding
 from alfred import config
-
 items = {}
 activeBindings = {}
 db = None
@@ -81,7 +80,7 @@ def stopBinding(bindingName):
     b.stop()
     del b
 
-def register(name, type, binding, groups=None, **kwargs):
+def register(name, type, binding, groups=None, icon=None, **kwargs):
     if name in items:
         if items[name].type == type:
             return items[name]
@@ -93,7 +92,8 @@ def register(name, type, binding, groups=None, **kwargs):
         if bind not in activeBindings:
             raise Exception('Binding %s not installed or started' % bind)
         else:
-            item = activeBindings[bind].register(name, type, binding.split(':')[1:], groups)
+            # item = activeBindings[bind].register(name, type, binding.split(':')[1:], groups)
+            item = activeBindings[bind].register(name, type, binding, groups, icon)
             item.bus = bus
 
         items[name] = item

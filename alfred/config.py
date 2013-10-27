@@ -29,12 +29,12 @@ localConfig = dict(
                   )
     ),
     items=[
-        dict(name='TempBureau', type='number', binding='swap:Bureau/Temperature', groups=['Temperature']),
-        dict(name='HumBureau', type='number', binding='swap:Bureau/Humidity', groups=['Humidity']),
-        dict(name='LightBureau', type='number', binding='swap:Bureau/Light', groups=['Light']),
-        dict(name='TempLiving', type='number', binding='swap:Living/Temperature', groups=['Temperature']),
-        dict(name='HumLiving', type='number', binding='swap:Living/Humidity', groups=['Humidity']),
-        dict(name='LightLiving', type='number', binding='swap:Living/Light', groups=['Light'])
+        # dict(name='TempBureau', type='number', binding='swap:Bureau/Temperature', groups=['Temperature']),
+        # dict(name='HumBureau', type='number', binding='swap:Bureau/Humidity', groups=['Humidity']),
+        # dict(name='LightBureau', type='number', binding='swap:Bureau/Light', groups=['Light']),
+        # dict(name='TempLiving', type='number', binding='swap:Living/Temperature', groups=['Temperature']),
+        # dict(name='HumLiving', type='number', binding='swap:Living/Humidity', groups=['Humidity']),
+        # dict(name='LightLiving', type='number', binding='swap:Living/Light', groups=['Light'])
     ],
     groups=dict(
         sensors=['Temperature', 'Humidity', 'Light'],

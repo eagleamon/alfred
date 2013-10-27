@@ -7,10 +7,10 @@
     </thead>
     <tbody>
         <tr ng-repeat="(name, conf) in items">
-            <td>{{name}}</td>
+            <td class="{{conf.icon}}">{{name}}</td>
             <td>{{conf.type}}</td>
             <td>{{conf.value|number}}</td>
-            <td>{{conf.time|date:'medium'}}</td>
+            <td>{{conf.time}}</td>
         </tr>
     </tbody>
 </table>

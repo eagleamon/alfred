@@ -51,13 +51,9 @@ root.handlers[0].setFormatter(ColoredFormatter(
 root.addHandler(RotatingFileHandler(args.log_file, maxBytes=1024 * 10, backupCount=3))
 root.handlers[1].setFormatter(logging.Formatter('%(asctime)s [%(name)s] %(levelname)s %(message)s'))
 
-# Load the configuration from required source
-import config
-if (args.db_host):
-    config.load(args.db_host, args.db_port, args.db_name)
-elif (args.conf_file):
-    config.load(filePath=args.conf_file)
+# Do not do anything specific here as tornado autoreload will screw up... (config.db etc..)
+# Probably because of the python -m module
 
 # Start the daemon
 import alfred
-alfred.start()
+alfred.start(args)

@@ -27,3 +27,10 @@ def publish():
     f = os.listdir('dist')[0]
     put('dist/%s' % f, '/tmp/%s' % f)
     sudo('pip install -U /tmp/%s' % f)
+
+def run():
+    local('python -m alfred --db_host hal -d')
+
+def test(toTest=''):
+	" Passes argument like -> fab test:tests/items.py "
+	local('nosetests --with-watch %s' % toTest)

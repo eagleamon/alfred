@@ -1,6 +1,7 @@
-alfred.controller('ItemCtrl' , function($scope, $http, socket){
+alfred.controller('ItemCtrl' , function($scope, $http, WebSocket){
 
     // Get first values
+    // TODO: use angular resources
     $http.get('api/items').
         success(function(data){
             $scope.items = data;
@@ -11,11 +12,11 @@ alfred.controller('ItemCtrl' , function($scope, $http, socket){
         })
 
     // Listen on updates (TODO: only for items here)
-    socket.on(function(msg){
+    WebSocket.onmessage = function(msg){
         msg = JSON.parse(msg.data);
         payload = JSON.parse(msg.payload)
         name = msg.topic.split('/').pop();
         $scope.items[name].value = payload.value;
         $scope.items[name].time = new Date(payload.time);
-    })
+    }
 })

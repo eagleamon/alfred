@@ -36,14 +36,13 @@ class WSHandler(BaseHandler, WebSocketHandler):
 
 
 class RestHandler(BaseHandler):
-    def get(self, *args):
+    def get(self, *args,**kwargs):
         if args[0] == "items":
             from alfred import bindingProvider
-            result = {}
+            result={}
             for x,y in bindingProvider.items.items():
-                result[x] = dict(
-                    value=y.value, time=y.lastUpdate and y.lastUpdate.isoformat(),
-                    type=y.type)
-            self.write(json.dumps(result, default=json_util.default))
+            	result[x] = y.jsonable()
+
+            self.write(json.dumps(result))
         else:
             raise HTTPError(404, "%s not available in API" % args[0])

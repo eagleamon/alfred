@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="alfred">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,6 +12,7 @@
     <!-- Bootstrap core CSS -->
     <link href="vendors/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link href="styles/main.css" rel="stylesheet">
+    <link href="styles/animations.css" rel="stylesheet">
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -20,7 +21,7 @@
     <![endif]-->
   </head>
 
-  <body ng-app="alfred">
+  <body>
 
     <nav class="navbar navbar-inverse navbar-top">
       <div class="container">
@@ -34,16 +35,23 @@
         </div>
         <div class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li><a href="#about">Items</a></li>
-            <li><a href="#contact">Cameras</a></li>
+            <li><a href="#items">Items</a></li>
+            <li><a href="#cameras">Cameras</a></li>
+            <li><a href="#bindings">Bindings</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
     </nav>
 
-    <div class="container" ng-view>
+    <div class="container view-animate" ng-view>
 
     </div><!-- /.container -->
+
+    <div class="navbar navbar-fixed-bottom">
+        <div class="container">
+            <span class="pull-right">{{connected}}</span>
+        </div>
+    </div>
 
 
     <!-- Bootstrap core JavaScript
@@ -53,6 +61,8 @@
     <script src="vendors/bootstrap/bootstrap.min.js"></script>
 
     <script src="vendors/angular/angular.min.js"></script>
+    <script src="vendors/angular/angular-route.min.js"></script>
+    <script src="vendors/angular/angular-animate.min.js"></script>
     <script src="scripts/app.js"></script>
     <script src="scripts/controllers.js"></script>
   </body>
