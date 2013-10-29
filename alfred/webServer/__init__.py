@@ -11,6 +11,8 @@ from alfred import config
 from alfred import eventBus
 import handlers as h
 
+from alfred import config
+
 
 class WebServer(web.Application):
 
@@ -19,25 +21,22 @@ class WebServer(web.Application):
         settings = dict(
             # debug=config.get('http', 'debug'),
             debug=True,
-            static_path=os.path.join(os.path.dirname(__file__), 'webClient/')
+            static_path=os.path.join(os.path.dirname(__file__), 'webClient/'),
+            login_url='/auth/login',
+            cookie_secret=config.get('http', 'secret')
         )
 
         handlers = [
-            # (r'/ws', h.WSHandler),
-            (r'/live', h.WSHandler),
             (r'/api/?(.*)', h.RestHandler),
+            (r'/auth/logout', h.AuthLogoutHandler),
+            (r'/auth/login', h.AuthLoginHandler),
+            (r'/live', h.WSHandler),
             (r'/', web.RedirectHandler, dict(url='/index.html')),
             (r'/(.*)$', web.StaticFileHandler, dict(path=settings.get('static_path')))
         ]
         self.log.debug('Static path: %s' % settings.get('static_path'))
 
         web.Application.__init__(self, handlers, **settings)
-
-        # sub = zmq.Context().socket(zmq.SUB)
-        # sub.connect(options.zmq_broker_sub)
-        # sub.setsockopt(zmq.SUBSCRIBE, '')
-        # self.zmqStream = zmqstream.ZMQStream(sub)
-        # self.zmqStream.on_recv(self.on_message)
 
     def start(self):
         self.log.info("Starting webserver on port: %s" % config.get('http', 'port'))
@@ -57,14 +56,3 @@ class WebServer(web.Application):
 
     def on_message(self, msg):
         h.WSHandler.dispatch(msg)
-
-    # def on_message(self, msg):
-    #     try:
-    #         topic, msg = msg[0].lower(), msg[1]
-    #         self.log.info('%s: %s' % (topic, msg))
-    # self.redis.hset(topic.split('/')[1], topic.split('/')[2], msg)
-    # self.plugins ...
-    #         h.WSHandler.dispatch(topic, msg)
-
-    #     except Exception, E:
-    #         self.log.exception("Error while handling message:")

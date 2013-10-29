@@ -18,3 +18,6 @@ def testGroups():
     assert it.groups == set()
     it = Item('it','b', [1,2,3,3])
     assert it.groups == set([1,2,3])
+
+def testUnits():
+    raise "Should get units now"

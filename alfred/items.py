@@ -44,18 +44,18 @@ class Item(object):
         log.debug("Value of '%s' changed: %s" % (self.name, value))
         if self.bus:
             self.bus.publish('items/%s' % self.name,
-                json.dumps(dict(value=value, time=self.lastUpdate.isoformat())))
+                json.dumps(dict(value=value, time=str(self.lastUpdate))))
             if self.groups:
                 for g in self.groups:
                     self.bus.publish('groups/%s/%s' % (g, self.name),
-                        json.dumps(dict(value=value, time = self.lastUpdate.isoformat())))
+                        json.dumps(dict(value=value, time = str(self.lastUpdate))))
         else:
             log.warn("No bus defined")
 
     def jsonable(self):
         return dict(
             name = self.name, value = self.value, type = self.type,
-            time = self.lastUpdate and self.lastUpdate.isoformat() or None,
+            time = self.lastUpdate and str(self.lastUpdate) or None,
             groups = list(self.groups), binding = self.binding,
             icon = self.icon
         )

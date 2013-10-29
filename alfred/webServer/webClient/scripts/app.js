@@ -1,9 +1,13 @@
-alfred = angular.module('alfred', ['ngRoute', 'ngAnimate'])
+alfred = angular.module('alfred', ['ngRoute', 'ngAnimate', 'highcharts-ng'])
     .config(['$routeProvider', function($routeProvider){
         $routeProvider
             .when('/items', {
                 templateUrl: 'views/items.html',
                 controller: 'ItemCtrl'
+            })
+            .when('/graph/:itemName', {
+            	templateUrl: 'views/graph.html',
+            	controller: 'GraphCtrl'
             })
             .when('/cameras', {
                 templateUrl: 'views/cameras.html',

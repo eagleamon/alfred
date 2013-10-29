@@ -4,6 +4,7 @@ import mosquitto
 import logging
 import config
 
+assert config.get('broker'), "No broker configuration provided"
 
 class Bus(object):
 
@@ -53,7 +54,7 @@ class Bus(object):
     def on_connect(self, rc):
         pass
 
-    def on_distonnect(self, rc):
+    def on_disconnect(self, rc):
         pass
 
     def on_subscribe(self):
@@ -72,6 +73,6 @@ def publish(topic, message):
 
 def create():
     """ Factory function for future upgrades.. """
-    return Bus(config.get('broker', 'host'), int(config.get('broker', 'port')))
+    return Bus(config.get('broker', 'host'), int(config.get('broker', 'port', 1883)))
 
 bus = create()

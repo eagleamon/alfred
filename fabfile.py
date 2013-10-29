@@ -28,8 +28,11 @@ def publish():
     put('dist/%s' % f, '/tmp/%s' % f)
     sudo('pip install -U /tmp/%s' % f)
 
-def run():
-    local('python -m alfred --db_host hal -d')
+def run(where='home'):
+    if where=='home':
+    	local('python -m alfred --db_host hal -d')
+    if where=='work':
+    	local('python -m alfred -c workconf.json -d')
 
 def test(toTest=''):
 	" Passes argument like -> fab test:tests/items.py "

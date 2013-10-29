@@ -1,3 +1,18 @@
+div.login {
+    padding:80px;
+    border-width: thick;
+    border-color: black;
+    /*background-color: red;*/
+    margin: 80px auto;
+    width: 700px;
+
+}
+
+
+
+
+Source: http://designmodo.com/create-css3-login-form/#ixzz2j7L2wISv
+
 td.humidity {
     background-image: url(../images/humidity.png);
     background-size: 20px 20px;

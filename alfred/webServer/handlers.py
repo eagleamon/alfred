@@ -1,19 +1,48 @@
-from tornado.web import RequestHandler, HTTPError
+from tornado.web import RequestHandler, HTTPError, authenticated
 from tornado.websocket import WebSocketHandler
-from bson import json_util
-import logging, json
+from alfred import config, persistence
+import logging
+import json
 
 
 class BaseHandler(RequestHandler):
+
     def initialize(self):
         self.log = logging.getLogger(__name__)
 
-    @property
-    def zmq(self):
-        return self.application.zmqStream
+    def get_current_user(self):
+        return self.get_secure_cookie('user')
+
+    # @property
+    # def zmq(self):
+    #     return self.application.zmqStream
+
+
+class AuthLoginHandler(BaseHandler):
+
+    def get(self):
+        self.render('webClient/login.html')
+
+    def post(self):
+        # TODO: abstract this
+        if persistence.verifyUser(self.get_argument('username', ''), self.get_argument('password', '')):
+            self.set_secure_cookie('user', self.get_argument('username'))
+            self.redirect(self.get_argument('next', u'/'))
+            self.log.info('User %s logged in' % self.get_argument('username'))
+        else:
+            self.render('webClient/login.html')
+
+
+class AuthLogoutHandler(BaseHandler):
+
+    def get(self):
+        self.log.info('User %s logged out' % self.current_user)
+        self.clear_cookie('user')
+        self.redirect(self.get_argument('next', '/'))
+
 
 class WSHandler(BaseHandler, WebSocketHandler):
-    clients=set()
+    clients = set()
 
     @classmethod
     def dispatch(cls, msg):
@@ -36,12 +65,14 @@ class WSHandler(BaseHandler, WebSocketHandler):
 
 
 class RestHandler(BaseHandler):
-    def get(self, *args,**kwargs):
+
+    @authenticated
+    def get(self, *args, **kwargs):
         if args[0] == "items":
             from alfred import bindingProvider
-            result={}
-            for x,y in bindingProvider.items.items():
-            	result[x] = y.jsonable()
+            result = {}
+            for x, y in bindingProvider.items.items():
+                result[x] = y.jsonable()
 
             self.write(json.dumps(result))
         else:

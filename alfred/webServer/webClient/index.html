@@ -10,9 +10,9 @@
     <title>Alfred</title>
 
     <!-- Bootstrap core CSS -->
-    <link href="vendors/bootstrap/bootstrap.min.css" rel="stylesheet">
-    <link href="styles/main.css" rel="stylesheet">
-    <link href="styles/animations.css" rel="stylesheet">
+    <link href="/vendors/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="/styles/main.css" rel="stylesheet">
+    <link href="/styles/animations.css" rel="stylesheet">
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -38,6 +38,7 @@
             <li><a href="#items">Items</a></li>
             <li><a href="#cameras">Cameras</a></li>
             <li><a href="#bindings">Bindings</a></li>
+            <li><a class="pull-right" href="/auth/logout">Logout</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
@@ -47,9 +48,10 @@
 
     </div><!-- /.container -->
 
+    <!-- TODO: go to Toastr or bootstrap notifications to notify this -->
     <div class="navbar navbar-fixed-bottom">
         <div class="container">
-            <span class="pull-right">{{connected}}</span>
+            <span class="pull-right label {{connected != 'Connected' && 'label-danger' || 'label-success'}}">{{connected}}</span>
         </div>
     </div>
 
@@ -57,13 +59,16 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="vendors/jquery/jquery.min.js"></script>
-    <script src="vendors/bootstrap/bootstrap.min.js"></script>
+    <script src="/vendors/jquery/jquery.min.js"></script>
+    <script src="/vendors/bootstrap/bootstrap.min.js"></script>
 
-    <script src="vendors/angular/angular.min.js"></script>
-    <script src="vendors/angular/angular-route.min.js"></script>
-    <script src="vendors/angular/angular-animate.min.js"></script>
-    <script src="scripts/app.js"></script>
-    <script src="scripts/controllers.js"></script>
+    <script src="/vendors/angular/angular.min.js"></script>
+    <script src="/vendors/angular/angular-route.min.js"></script>
+    <script src="/vendors/angular/angular-animate.min.js"></script>
+    <script src="http://code.highcharts.com/stock/highstock.src.js"></script>
+    <script src="/vendors/highcharts-ng/src/directives/highcharts-ng.js"></script>
+
+    <script src="/scripts/app.js"></script>
+    <script src="/scripts/controllers.js"></script>
   </body>
 </html>

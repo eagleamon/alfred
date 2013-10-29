@@ -9,8 +9,8 @@
         <tr ng-repeat="(name, conf) in items">
             <td class="{{conf.icon}}">{{name}}</td>
             <td>{{conf.type}}</td>
-            <td>{{conf.value|number}}</td>
-            <td>{{conf.time}}</td>
+            <td><a href='#/graph/{{name}}'>{{conf.value|number}}</a></td>
+            <td>{{conf.time|date:'medium'}}</td>
         </tr>
     </tbody>
 </table>
