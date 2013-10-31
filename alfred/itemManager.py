@@ -50,10 +50,12 @@ def start():
         log.debug('%s items: %s' % (k, v.items.keys()))
 
 
+
+# TODO: migrate to new config form
 def installBinding(bindingName):
     __import__('alfred.bindings.%s' % bindingName)
 
-    if not (db.bindings.find_one({'name': bindingName})):
+    if not (bindings.find_one({'name': bindingName})):
         db.bindings.insert(dict(
             name=bindingName,
             autoStart=False,

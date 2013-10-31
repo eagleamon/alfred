@@ -44,6 +44,8 @@ class Item(object):
 
     @value.setter
     def value(self, value):
+        if value == self._value:
+            return
         self._value = value
         self.time = datetime.now()
         log.debug("Value of '%s' changed: %s" % (self.name, value))

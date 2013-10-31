@@ -54,6 +54,13 @@ td.light {
     background-position: right center;
 }
 
+td.computers {
+    background-image: url(../images/computers.png);
+    background-size: 20px 20px;
+    background-repeat: no-repeat;
+    background-position: right center;
+}
+
 td.actions {
     width: 100px;
 }
