@@ -11,7 +11,8 @@
             <td>{{conf.type}}</td>
             <td><a href='#/graph/{{name}}'>{{conf.value|number}} {{conf.unit}}</a></td>
             <td>
-                <span style='heigth:100px' tooltip="{{conf.time|date:'medium'}}">{{conf.time|date:'medium'}}</span>
+                <span tooltip="{{conf.time|date:'medium'}}" am-time-ago='conf.time'></span>
+                <!-- <span class='label label-danger'>Last Seen</span> -->
             </td>
             <td class='actions'>
                 <span class="pull-right" show-on-hover>

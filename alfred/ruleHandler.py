@@ -1,6 +1,7 @@
 import logging
 import crython
 import os
+import json
 from alfred import eventBus
 
 log = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ def busEvent(topic):
 
         def handle_message(msg):
             try:
-                f('/'.join(msg.topic.split('/')[1:]), msg.payload)
+                f('/'.join(msg.topic.split('/')[1:]), json.loads(msg.payload))
             except Exception, E:
                 log.exception('Exception while executing rule: %s' % E.message)
 

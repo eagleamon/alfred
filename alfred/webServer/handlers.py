@@ -82,8 +82,9 @@ class RestHandler(BaseHandler):
         self.set_header('Content-Type', 'application/json')
         result = []
         if args[0] == "items":
+
             # Get from items collection, in config that's only for the watch of one instance
-            result = list(db.items.find())
+            result = list(db.items.find({'name': args[1]} if len(args)>1 else {}))
 
         elif args[0] == 'values':
             now = datetime.datetime.now()

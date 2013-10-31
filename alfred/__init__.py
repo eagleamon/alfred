@@ -1,5 +1,5 @@
 __author__ = 'Joseph Piron'
-__version__ = '0.0.7'
+__version__ = '0.0.8'
 
 import logging
 import os
@@ -17,10 +17,10 @@ def signalHandler(signum, frame):
 
 def stop():
     import ruleHandler
-    import bindingProvider
+    import itemManager
     server.stop()
     ruleHandler.stop()
-    bindingProvider.stop()
+    itemManager.stop()
     log.info('Bye!')
 
 def start(args):

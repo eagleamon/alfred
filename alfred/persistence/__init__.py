@@ -8,13 +8,6 @@ from alfred import config
 
 log = logging.getLogger(__name__)
 
-if not alfred.db:
-    log.warning("No database defined, cannot persist values!")
-
-
-# def lastValues():
-#     return alfred.db.lastValues.find() if alfred.db else {}
-
 
 def save(collection, data, *args, **kwargs):
     """ Insert new value in persistence """
@@ -27,19 +20,11 @@ def update(collection, who, data, *args, **kwargs):
     if alfred.db:
         getattr(alfred.db, collection).update(who, data, *args, **kwargs)
 
-# def verifyUser(username, password):
-#     """ Check the existence of the user defined by injected credentials """
-#     if alfred.db:
-#         return alfred.db.users.find_one(
-#             dict(username=username.lower(), hash=sha.sha(password).hexdigest()))
-
-# def get(resource, filter, From, To):
-#     filter.update({'time': {'$gt': str(From), '$lt': str(To)}})
-#     return list(alfred.db[resource].find(filter))
-
 
 def start():
     from alfred import eventBus
+    if not alfred.db:
+        log.warning("No database defined, cannot persist values!")
 
     if alfred.db:
         bus = eventBus.create()
@@ -47,7 +32,16 @@ def start():
         bus.subscribe('items/#')
 
         for group in config.get('persistence', 'groups'):
-            bus.subscribe('groups/%s/#' % group)
+            for subGroup in config.get('groups', group):
+                bus.subscribe('groups/%s/#' % subGroup)
+
+
+# def getIncludingGroups(group, grpCfg):
+#     res = set([group])
+#     for k, v in grpCfg.items():
+#         if group in v:
+#             res.add(k)
+#     return res
 
 
 def on_message(msg):
@@ -59,34 +53,18 @@ def on_message(msg):
         item = msg.topic.split('/')[-1]
         update('items', dict(name=item), {'$set': data}, upsert=True)
 
-    # Persist historic if desired from config of items or groups
+    # Persist historic if desired from config of items
         if item in config.get('persistence', 'items'):
             _id = itemManager.items[item]._id
             save('values', dict(item_id=_id, time=data.get('time'), value=data.get('value')))
 
-    if msg.topic.startswith('alfred/groups'):
+    # ... or groups (automatically in persistence -> subcribed )
+    elif msg.topic.startswith('alfred/groups'):
         group = msg.topic.split('/')[2]
-        if group in config.get('persistence', 'groups'):
-            item = msg.topic.split('/')[-1]
-            _id = itemManager.items[item]._id
-            save('values', dict(item_id=_id, time=data.get('time'), value=data.get('value')))
-
-
-# @busEvent('items/#')
-# def toDatabase(topic, msg):
-#     msg = json.loads(msg)
-#     persistence.save('values', dict(
-#         item=topic.split('/')[-1],
-#         time=msg.get('time'),
-#         value=msg.get('value')
-#     ))
-
-#     persistence.update('lastValues', dict(
-#         item=topic.split('/')[-1]),
-#         {'$set': {'time': msg.get('time'), 'value': msg.get('value')}},
-#         upsert=True
-#     )
-
+        # if group in getIncludingGroups(group, config.get('groups')):
+        item = msg.topic.split('/')[-1]
+        _id = itemManager.items[item]._id
+        save('values', dict(item_id=_id, time=data.get('time'), value=data.get('value')))
 
 
 # class Persistence(Thread):

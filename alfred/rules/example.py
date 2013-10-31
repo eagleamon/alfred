@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from alfred.ruleHandler import timeEvent, busEvent, logging, eventBus
 from alfred.utils.notifications import sendMail
 from alfred import persistence
@@ -11,7 +13,14 @@ This file is an example of how a rule file should be structured with the 3
 first lines on top and the different rules below:
 
 - functions with @busEvent or @timeEvent decorator
+- @busEvent parameters: topic (string) and msg (dict)
 """
+
+# @busEvent('items/#')
+# def sendTemp(topic, msg):
+#     if topic.split('/')[-1] == 'TempLiving':
+#         sendMail('vgennen@gmail.com', 'Il fait %.1f °C :)' % msg.get('value'))
+#         sendMail('joseph.piron@gmail.com', 'Il fait %.1f °C :)' % msg.get('value'))
 
 # @timeEvent(second='*/2')
 # def myTimeFunction():

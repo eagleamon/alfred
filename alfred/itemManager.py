@@ -90,6 +90,8 @@ def register(name):
 
     # If not, register it
     itemDef = db.items.find_one(dict(name=name))
+    if not itemDef:
+        raise AttributeError('No definition found for item %s' % name)
     bind = itemDef.get('binding').split(':')[0]
 
     if bind not in activeBindings:

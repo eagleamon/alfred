@@ -7,7 +7,8 @@ alfred.controller('ItemCtrl' , function($scope, $http, WebSocket){
         success(function(data){
             angular.forEach(data, function(item){
                 $scope.items[item.name] = item;
-                item.time = new Date(item.time);
+                if (item.time)
+                    item.time = new Date(item.time);
             })
         })
 
@@ -35,6 +36,7 @@ alfred.controller('ItemCtrl' , function($scope, $http, WebSocket){
         if (item == $scope.item){
             payload = JSON.parse(msg.payload);
 
+            // $scope.chart.series[0].addPoint(payload.value, true, true)
             $scope.data.push(payload.value);
             if ($scope.data.length>50)
                 $scope.data.shift();
@@ -42,24 +44,39 @@ alfred.controller('ItemCtrl' , function($scope, $http, WebSocket){
     }
 
 
-    $scope.item = $routeParams.itemName;
+    $scope.item = {name: $routeParams.itemName};
     $scope.data = [];
     $scope.chart = {
+        animation: {duration:800},
         title: {
-            text: "Last values of " + $scope.item,
+            text: "Last values for " + $scope.item.name,
         },
         series: [{
             data: $scope.data,
-            name: $scope.item
+            name: $scope.item.name,
+            // marker: {enabled:false},
+            animation:{duration:1000}
         }],
+        yAxis:{
+            title:{ text: $scope.item.unit }
+        },
+
         legend: false,
         // useHighStocks: true
+        loading: true
     }
+    $http.get('/api/items/' + $scope.item.name).success(function(data){
+        $scope.item = data
+    })
 
-    $http.get('/api/values/' + $scope.item).success(function(data){
+    $http.get('/api/values/' + $scope.item.name).success(function(data){
+        // $scope.chart.series[0].setVisible(false)
+
         angular.forEach(data, function(p){
             $scope.data.push(p.value)
-        })
+        });
+        $scope.chart.loading=false;
+        // $scope.chart.series[0].setVisible(true, true)
     })
 
 

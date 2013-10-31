@@ -1,4 +1,4 @@
-alfred = angular.module('alfred', ['ngRoute', 'ngAnimate', 'ui.bootstrap', 'highcharts-ng'])
+alfred = angular.module('alfred', ['ngRoute', 'ngAnimate', 'ui.bootstrap', 'highcharts-ng', 'angularMoment'])
     .config(['$routeProvider', '$httpProvider', function($routeProvider, $httpProvider){
         $routeProvider
             .when('/items', {
