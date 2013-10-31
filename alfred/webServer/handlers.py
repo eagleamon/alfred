@@ -1,10 +1,10 @@
 from tornado.web import RequestHandler, HTTPError, authenticated
 from tornado.websocket import WebSocketHandler
-from alfred import config, persistence
+from alfred import config, db, itemManager
 import logging
 import json
 import datetime
-
+import sha
 
 class BaseHandler(RequestHandler):
 
@@ -21,10 +21,13 @@ class BaseHandler(RequestHandler):
 
 class AuthLoginHandler(BaseHandler):
 
+    def verifyUser(self, username, password):
+        phash = sha.sha(password).hexdigest()
+        return db.users.find_one({'username': username, 'hash': phash})
+
     def post(self):
-        # TODO: abstract this
         cred = json.loads(self.request.body)
-        if persistence.verifyUser(cred.get('username'), cred.get('password')):
+        if self.verifyUser(**cred):
             self.set_secure_cookie('user', cred.get('username'))
             # self.redirect(self.get_argument('next', u'/'))
             self.log.info('User %s logged in' % cred.get('username'))
@@ -77,21 +80,21 @@ class RestHandler(BaseHandler):
             raise HTTPError(404, "%s not available in API" % args[0])
 
         self.set_header('Content-Type', 'application/json')
-
         result = []
         if args[0] == "items":
-            result = {}
             # Get from items collection, in config that's only for the watch of one instance
-            from alfred import bindingProvider
-            for x, y in bindingProvider.items.items():
-                result[x] = y.jsonable()
+            result = list(db.items.find())
 
         elif args[0] == 'values':
             now = datetime.datetime.now()
             From = self.get_argument('from', now.replace(day=now.day - 1))
             To = self.get_argument('to', now)
+            filter = {'time': {'$gt': str(From), '$lt': str(To)}}
 
-            result = persistence.get(args[0], dict(item=args[1]) if len(args) > 1 else {}, From, To)
+            if len(args)>1:
+                filter['item_id'] = db.items.find_one({'name': args[1]}).get('_id')
+
+            result = list(db.values.find(filter).limit(100))
 
         from bson import json_util
         self.write(json.dumps(result, default=json_util.default))

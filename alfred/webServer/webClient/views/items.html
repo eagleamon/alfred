@@ -3,7 +3,7 @@
         <th>Name</th>
         <th>Type</th>
         <th>Value</th>
-        <th>Time</th>
+        <th>Last Update</th>
     </thead>
     <tbody>
         <tr ng-repeat="(name, conf) in items">
@@ -12,10 +12,12 @@
             <td><a href='#/graph/{{name}}'>{{conf.value|number}} {{conf.unit}}</a></td>
             <td>
                 <span style='heigth:100px' tooltip="{{conf.time|date:'medium'}}">{{conf.time|date:'medium'}}</span>
-                <!-- <span class="pull-right" show-on-hover>
+            </td>
+            <td class='actions'>
+                <span class="pull-right" show-on-hover>
                     <a class='btn btn-default btn-xs' href='' ng-click='edit(name)'>Edit</a>
                     <a class='btn btn-danger btn-xs' href='' ng-click='delete(name)'>Delete</a>
-                </span>-->
+                </span>
             </td>
         </tr>
     </tbody>

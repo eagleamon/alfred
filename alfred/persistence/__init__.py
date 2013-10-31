@@ -5,7 +5,6 @@ import json
 import sha
 import logging
 from alfred import config
-from alfred import eventBus
 
 log = logging.getLogger(__name__)
 
@@ -40,6 +39,8 @@ def update(collection, who, data, *args, **kwargs):
 
 
 def start():
+    from alfred import eventBus
+
     if alfred.db:
         bus = eventBus.create()
         bus.on_message = on_message
@@ -50,21 +51,25 @@ def start():
 
 
 def on_message(msg):
+    from alfred import itemManager
+
     # Persist last value
     data = json.loads(msg.payload)
     if msg.topic.startswith('alfred/items'):
         item = msg.topic.split('/')[-1]
-        update('lastValues', dict(item=item), {'$set': data}, upsert=True)
+        update('items', dict(name=item), {'$set': data}, upsert=True)
 
     # Persist historic if desired from config of items or groups
         if item in config.get('persistence', 'items'):
-            save('values', dict(item=item, time=data.get('time'), value=data.get('value')))
+            _id = itemManager.items[item]._id
+            save('values', dict(item_id=_id, time=data.get('time'), value=data.get('value')))
 
     if msg.topic.startswith('alfred/groups'):
         group = msg.topic.split('/')[2]
         if group in config.get('persistence', 'groups'):
             item = msg.topic.split('/')[-1]
-            save('values', dict(item=item, time=data.get('time'), value=data.get('value')))
+            _id = itemManager.items[item]._id
+            save('values', dict(item_id=_id, time=data.get('time'), value=data.get('value')))
 
 
 # @busEvent('items/#')

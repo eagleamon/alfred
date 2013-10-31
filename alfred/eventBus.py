@@ -4,8 +4,6 @@ import mosquitto
 import logging
 import config
 
-assert config.get('broker', 'host'), "No broker configuration provided"
-
 class Bus(object):
 
     """
@@ -13,6 +11,8 @@ class Bus(object):
     """
 
     def __init__(self, brokerHost, brokerPort, base_topic='alfred', client_id=None):
+        assert config.get('broker', 'host'), "No broker configuration provided"
+
         self.logger = logging.getLogger(__name__)
         self.brokerPort = brokerPort
         self.brokerHost = brokerHost
@@ -75,4 +75,4 @@ def create():
     """ Factory function for future upgrades.. """
     return Bus(config.get('broker', 'host'), int(config.get('broker', 'port', 1883)))
 
-bus = create()
+# bus = create()

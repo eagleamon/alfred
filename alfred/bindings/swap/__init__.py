@@ -24,14 +24,7 @@ class Swap(Binding):
         while not self.stopEvent.isSet():
             topic, msg = self.client.recv_multipart()
             log.debug('message received: %s:%s' % (topic, msg))
-            # for name, item in self.items.items():
-            #     if item.binding[0] == '/'.join(topic.split('/')[1:]):
-            #         try:
-            #             item.value = json.loads(msg).get('value')
-            #         except Exception, E:
-            #             self.log.exception('Error while parsing message: %s' % E.message)
-            #         finally:
-            #             break
+
             try:
                 link = '/'.join(topic.split('/')[1:])
                 if link in self.items:
@@ -39,11 +32,11 @@ class Swap(Binding):
             except Exception, E:
                 log.exception('Error while parsing message: %s' % E.message)
 
-    def register(self, name, type, binding, groups=None, icon=None, **kwargs):
+    def register(self, **kwargs):
         """ More interesting to register by binding than by name """
 
-        if not type in Binding.validTypes:
+        if not kwargs.get('type') in Binding.validTypes:
             raise AttributeError('Valid types: %s' % Random.validTypes)
 
-        self.items[binding.split(':')[1]] = self.getClass(type)(name=name, binding=binding, groups=groups, **kwargs)
-        return self.items[binding.split(':')[1]]
+        res = self.items[kwargs.get('binding').split(':')[1]] = self.getClass(kwargs.get('type'))(**kwargs)
+        return res

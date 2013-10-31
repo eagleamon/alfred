@@ -15,10 +15,10 @@ class Item(object):
     """
     __metaclass__ = PluginMount
 
-    def __init__(**kwargs):
+    def __init__(self, **kwargs):
         self.name = kwargs.get('name')
         self._value = kwargs.get('value', None)
-        self.lastUpdate = kwargs.get('lastUpdate', None)
+        self.time = kwargs.get('time', None)
         self.bus = None
         self.groups = set(kwargs.get('groups')) if kwargs.get('groups') else set()
         self.binding = kwargs.get('binding')
@@ -45,22 +45,22 @@ class Item(object):
     @value.setter
     def value(self, value):
         self._value = value
-        self.lastUpdate = datetime.now()
+        self.time = datetime.now()
         log.debug("Value of '%s' changed: %s" % (self.name, value))
         if self.bus:
             self.bus.publish('items/%s' % self.name,
-                             json.dumps(dict(value=value, time=str(self.lastUpdate))))
+                             json.dumps(dict(value=value, time=str(self.time))))
             if self.groups:
                 for g in self.groups:
                     self.bus.publish('groups/%s/%s' % (g, self.name),
-                                     json.dumps(dict(value=value, time=str(self.lastUpdate))))
+                                     json.dumps(dict(value=value, time=str(self.time))))
         else:
             log.warn("No bus defined")
 
     # def jsonable(self):
     #     return dict(
     #         name=self.name, value=self.value, type=self.type,
-    #         time=self.lastUpdate and str(self.lastUpdate) or None,
+    #         time=self.time and str(self.time) or None,
     #         groups=list(self.groups), binding=self.binding,
     #         icon=self.icon, unit=self.unit
     #     )

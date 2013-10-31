@@ -23,12 +23,12 @@ class Binding(Thread):
     def stop(self):
         self.stopEvent.set()
 
-    def register(self, name, type, binding, groups=None, icon=None, **kwargs):
-        if not type in Binding.validTypes:
-            raise AttributeError('Valid types: %s' % Random.validTypes)
+    def register(self, **kwargs):
+        if not kwargs.get('type') in Binding.validTypes:
+            raise AttributeError('%s not in valid types: %s' % (kwargs.get('type'), Binding.validTypes))
 
-        self.items[name] = self.getClass(type)(name=name, binding=binding, groups=groups, icon=icon, **kwargs)
-        return self.items[name]
+        res = self.items[kwargs.get('name')] = self.getClass(kwargs.get('type'))(**kwargs)
+        return res
 
     def getClass(self, type):
         " Return item class according to string defining type"

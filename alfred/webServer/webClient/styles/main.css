@@ -47,9 +47,13 @@ td.voltage {
     background-position: right center;
 }
 
-.light {
+td.light {
     background-image: url(../images/light.png);
     background-size: 20px 20px;
     background-repeat: no-repeat;
     background-position: right center;
+}
+
+td.actions {
+    width: 100px;
 }
