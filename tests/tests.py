@@ -1,5 +1,5 @@
 from nose.tools import raises
-from alfred.daemon import parseArgs
+from alfred import parseArgs
 from alfred.bindings import BindingProvider
 from alfred.utils import Bus
 from os import chdir, path
@@ -12,23 +12,6 @@ config.read('tests/test.ini')
 
 import alfred.config as c
 c.inTest = True
-
-# Test arguments
-
-def testNoArguments():
-    args = parseArgs()
-    assert args.db_host == 'localhost'
-
-
-def testWithHosts():
-    assert parseArgs(['--db_host', 'test']).db_host == 'test'
-
-
-def testArgTypes():
-    args = parseArgs(['--db_port', '1900'])
-    assert isinstance(args.db_port, int)
-    assert args.db_port == 1900
-
 
 class TestBusConnection(object):
 

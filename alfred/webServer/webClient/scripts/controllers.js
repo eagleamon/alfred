@@ -1,5 +1,6 @@
 alfred.controller('ItemCtrl' , function($scope, $http, WebSocket){
 
+    $scope.items = {}
     // Get first values
     // TODO: use angular resources
     $http.get('api/items').
@@ -16,8 +17,10 @@ alfred.controller('ItemCtrl' , function($scope, $http, WebSocket){
         msg = JSON.parse(msg.data);
         payload = JSON.parse(msg.payload)
         name = msg.topic.split('/').pop();
-        $scope.items[name].value = payload.value;
-        $scope.items[name].time = new Date(payload.time);
+        if (name in $scope.items){
+            $scope.items[name].value = payload.value;
+            $scope.items[name].time = new Date(payload.time);
+        }
     }
 })
 
@@ -45,7 +48,25 @@ alfred.controller('ItemCtrl' , function($scope, $http, WebSocket){
             data: $scope.data,
             name: $scope.item
         }],
-        legend: false
+        legend: false,
         // useHighStocks: true
     }
+})
+
+.controller('LoginCtrl', function($scope, $location, AlertService, Auth){
+    $scope.login = function(){
+        Auth.login($scope.username, $scope.password)
+        .success(function(data){
+            AlertService.add({msg: Auth.username + ", you've been logged in", type:'success', timeout: 2000})
+            $location.path('/')
+        })
+        .error(function(data){
+            AlertService.add({msg: "Bad username and/or password", type:'danger', timeout: 1500})
+        })
+    }
+})
+
+.controller('AlertCtrl', function($scope, AlertService){
+    $scope.alerts = AlertService.alerts;
+    $scope.close = AlertService.close;
 })

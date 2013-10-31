@@ -20,4 +20,9 @@ def testGroups():
     assert it.groups == set([1,2,3])
 
 def testUnits():
-    raise "Should get units now"
+    it = Item('it', 'bi')
+    assert it.unit == None
+    it = Item('it', 'bi', unit='%')
+    assert it.unit == '%'
+    assert 'unit' in it.jsonable()
+    assert it.jsonable()['unit'] == "%"

@@ -20,17 +20,17 @@ class WebServer(web.Application):
         self.log = logging.getLogger(__name__)
         settings = dict(
             # debug=config.get('http', 'debug'),
-            debug=True,
+            debug=config.get('http', 'debug', False),
             static_path=os.path.join(os.path.dirname(__file__), 'webClient/'),
             login_url='/auth/login',
             cookie_secret=config.get('http', 'secret')
         )
 
         handlers = [
-            (r'/api/?(.*)', h.RestHandler),
             (r'/auth/logout', h.AuthLogoutHandler),
             (r'/auth/login', h.AuthLoginHandler),
             (r'/live', h.WSHandler),
+            (r'/api/?(.*)', h.RestHandler),
             (r'/', web.RedirectHandler, dict(url='/index.html')),
             (r'/(.*)$', web.StaticFileHandler, dict(path=settings.get('static_path')))
         ]

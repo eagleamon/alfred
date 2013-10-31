@@ -39,13 +39,51 @@ log = logging.getLogger(__name__)
 db = None
 path = None
 
+# Gist: https://gist.github.com/Xjs/114831
+__author__ = 'jannis@itisme.org (Jannis Andrija Schnitzer)'
+
+class RecursiveDictionary(dict):
+    """RecursiveDictionary provides the methods rec_update and iter_rec_update
+    that can be used to update member dictionaries rather than overwriting
+    them."""
+    def rec_update(self, other, **third):
+        """Recursively update the dictionary with the contents of other and
+        third like dict.update() does - but don't overwrite sub-dictionaries.
+
+        Example:
+        >>> d = RecursiveDictionary({'foo': {'bar': 42}})
+        >>> d.rec_update({'foo': {'baz': 36}})
+        >>> d
+        {'foo': {'baz': 36, 'bar': 42}}
+        """
+        try:
+            iterator = other.iteritems()
+        except AttributeError:
+            iterator = other
+        self.iter_rec_update(iterator)
+        self.iter_rec_update(third.iteritems())
+
+    def iter_rec_update(self, iterator):
+        for (key, value) in iterator:
+            if key in self and \
+               isinstance(self[key], dict) and isinstance(value, dict):
+                self[key] = RecursiveDictionary(self[key])
+                self[key].rec_update(value)
+            else:
+                self[key] = value
+
+    def __repr__(self):
+        return super(self.__class__, self).__repr__()
+
 # TODO: update localConfig, do not replace -> default in case nothing is ready
 
-localConfig = dict(
+localConfig = RecursiveDictionary(
     http=dict(port=8000, debug=True, secret='TODO: Generate Random value'),
+    broker=dict(host=''),
     bindings=dict(
         random=dict(autoStart=True, config=dict())
     ),
+    items=[],
     persistence=dict(items=[], groups=[])
 )
 
@@ -63,14 +101,20 @@ def load(dbToRead=None, filePath=None):
         if not db:
             db = dbToRead
         name = socket.gethostname().split('.')[0]
-        localConfig.update(db.config.find_one(dict(name=name)).get('config'))
+
+        # Test if exists and merge or create
+        dbConf = db.config.find_one(dict(name=name))
+        if dbConf:
+            localConfig.rec_update(db.config.find_one(dict(name=name)).get('config'))
+        else:
+            db.config.save(dict(name=name, config=localConfig))
         log.info("Fetched configuration from database for '%s'" % name)
 
     elif filePath:
         db = None
         if not path:
             path = filePath
-        localConfig.update(json.load(open(path)))
+        localConfig.rec_update(json.load(open(path)))
         log.info('Fetched configuration from file %s' % path)
 
     log.debug("localConfig: %s " % localConfig)

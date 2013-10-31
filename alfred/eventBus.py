@@ -4,7 +4,7 @@ import mosquitto
 import logging
 import config
 
-assert config.get('broker'), "No broker configuration provided"
+assert config.get('broker', 'host'), "No broker configuration provided"
 
 class Bus(object):
 

@@ -13,9 +13,11 @@ activeBindings = {}
 bus = eventBus.create()
 log = logging.getLogger(__name__)
 
+
 def stop():
     for b in activeBindings:
         activeBindings[b].stop()
+
 
 def getAvailableBindings():
     """
@@ -30,27 +32,28 @@ def getAvailableBindings():
             res.append(d)
     return res
 
-def startInstalled():
+
+def start():
     log.info("Available bindings: %s" % getAvailableBindings())
     # bindingProvider.bus = eventBus.create()
     for i in filter(lambda i: i[1]['autoStart'], config.get('bindings').items()):
         startBinding(i[0])
 
     # Then fetch item definition
-    log.info('Available items: %s' % [x.get('name') for x in config.get('items')])
-    for itemDef in config.get('items'):
-        register(**itemDef)
+    log.info('Defined items: %s' % config.get('items'))
+    for name in config.get('items'):
+        register(name)
 
-    for k,v in activeBindings.items():
-        log.debug('%s items: %s' %(k, v.items))
-
+    for k, v in activeBindings.items():
+        log.debug('%s items: %s' % (k, v.items))
 
     # Fetch last values/updateTime for each item
-    for rec in persistence.lastValues():
-        if rec.get('item') in items:
-            items[rec.get('item')].value = rec.get('value')
-            items[rec.get('item')].lastUpdate = \
-                datetime.strptime(rec.get('time'),'%Y-%m-%dT%H:%M:%S.%f')
+    # for rec in persistence.lastValues():
+    #     if rec.get('item') in items:
+    #         items[rec.get('item')].value = rec.get('value')
+    #         items[rec.get('item')].lastUpdate = \
+    #             datetime.strptime(rec.get('time'), '%Y-%m-%d %H:%M:%S.%f')
+
 
 def installBinding(bindingName):
     __import__('alfred.bindings.%s' % bindingName)
@@ -62,10 +65,12 @@ def installBinding(bindingName):
             config={}
         ))
 
+
 def uninstallBinding(bindingName):
     if bindingName in activeBindings:
         stopBinding(bindingName)
     db.bindings.remove({'name': bindingName})
+
 
 def startBinding(bindingName):
     log.info("Starting binding %s" % bindingName)
@@ -74,29 +79,29 @@ def startBinding(bindingName):
     activeBindings[bindingName] = instance
     instance.start()
 
+
 def stopBinding(bindingName):
     log.info('Stopping binding %s' % bindingName)
     b = activeBindings[bindingName]
     b.stop()
     del b
 
-def register(name, type, binding, groups=None, icon=None, **kwargs):
+
+# def register(name, type, binding, groups=None, icon=None, **kwargs):
+def register(name):
+    # Check for a previous registration
     if name in items:
-        if items[name].type == type:
-            return items[name]
-        else:
-            raise Exception("Item with name %s already defined with type %s" %
-                           (name, items[name].type))
+        return items[name]
+
+    # If not, register it
+    itemDef = alfred.db.items.find(dict(name=name))
+    bind = itemDef.get('binding').split(':')[0]
+
+    if bind not in activeBindings:
+        raise Exception('Binding %s not installed or started' % bind)
     else:
-        bind = binding.split(':')[0]
-        if bind not in activeBindings:
-            raise Exception('Binding %s not installed or started' % bind)
-        else:
-            # item = activeBindings[bind].register(name, type, binding.split(':')[1:], groups)
-            item = activeBindings[bind].register(name, type, binding, groups, icon)
-            item.bus = bus
+        item = activeBindings[bind].register(itemDef)
+        item.bus = bus
 
-        items[name] = item
+        items[itemDef.get('name')] = item
         return item
-
-    return items.get(name, None)

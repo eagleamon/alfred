@@ -39,11 +39,11 @@ class Swap(Binding):
             except Exception, E:
                 log.exception('Error while parsing message: %s' % E.message)
 
-    def register(self, name, type, binding, groups=None, icon=None):
+    def register(self, name, type, binding, groups=None, icon=None, **kwargs):
         """ More interesting to register by binding than by name """
 
         if not type in Binding.validTypes:
             raise AttributeError('Valid types: %s' % Random.validTypes)
 
-        self.items[binding[0]] = self.getClass(type)(name=name, binding=binding, groups=groups)
-        return self.items[binding[0]]
+        self.items[binding.split(':')[1]] = self.getClass(type)(name=name, binding=binding, groups=groups, **kwargs)
+        return self.items[binding.split(':')[1]]

@@ -19,7 +19,7 @@ def parseArgs(sysArgs=''):
                         default='/tmp/alfred.log')
 
     group = parser.add_argument_group('Database')
-    group.add_argument('--db_host', help='Database server address')
+    group.add_argument('--db_host', help='Database server address', required=True)
     group.add_argument('--db_port', help='Database server port (27017)', default=27017, type=int)
     group.add_argument('--db_name', help='Database environment name (alfred)', default='alfred')
 

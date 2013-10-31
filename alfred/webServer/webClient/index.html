@@ -1,74 +1,81 @@
 <!DOCTYPE html>
 <html lang="en" ng-app="alfred">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="author" content="Joseph Piron">
-    <link rel="shortcut icon" href="favicon.png">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="">
+        <meta name="author" content="Joseph Piron">
+        <link rel="shortcut icon" href="favicon.png">
 
-    <title>Alfred</title>
+        <title>Alfred</title>
 
-    <!-- Bootstrap core CSS -->
-    <link href="/vendors/bootstrap/bootstrap.min.css" rel="stylesheet">
-    <link href="/styles/main.css" rel="stylesheet">
-    <link href="/styles/animations.css" rel="stylesheet">
+        <!-- Bootstrap core CSS -->
+        <link href="/vendors/bootstrap/bootstrap.min.css" rel="stylesheet">
+        <link href="/styles/main.css" rel="stylesheet">
+        <link href="/styles/animations.css" rel="stylesheet">
 
-    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
-      <script src="../../assets/js/html5shiv.js"></script>
-      <script src="../../assets/js/respond.min.js"></script>
-    <![endif]-->
-  </head>
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="../../assets/js/html5shiv.js"></script>
+            <script src="../../assets/js/respond.min.js"></script>
+        <![endif]-->
+    </head>
 
-  <body>
+    <body>
 
-    <nav class="navbar navbar-inverse navbar-top">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="#">Alfred</a>
+        <nav class="navbar navbar-inverse navbar-top">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#"><!-- Alfred --></a>
+                </div>
+                <div class="collapse navbar-collapse">
+                    <ul class="nav navbar-nav">
+                        <li><a href="#items">Items</a></li>
+                        <li><a href="#cameras">Cameras</a></li>
+                        <li><a href="#bindings">Bindings</a></li>
+                    </ul>
+                    <ul class="nav navbar-nav pull-right">
+                        <li><a href="/auth/logout">Logout</a></li>
+                    </ul>
+                </div><!--/.nav-collapse -->
+            </div>
+        </nav>
+
+        <div class='alert-container' ng-controller='AlertCtrl'>
+            <alert ng-repeat="alert in alerts" type="alert.type" close="close($index)">{{alert.msg}}</alert>
         </div>
-        <div class="collapse navbar-collapse">
-          <ul class="nav navbar-nav">
-            <li><a href="#items">Items</a></li>
-            <li><a href="#cameras">Cameras</a></li>
-            <li><a href="#bindings">Bindings</a></li>
-            <li><a class="pull-right" href="/auth/logout">Logout</a></li>
-          </ul>
-        </div><!--/.nav-collapse -->
-      </div>
-    </nav>
 
-    <div class="container view-animate" ng-view>
+        <div class="container view-animate" ng-view>
 
-    </div><!-- /.container -->
+        </div><!-- /.container -->
 
-    <!-- TODO: go to Toastr or bootstrap notifications to notify this -->
-    <div class="navbar navbar-fixed-bottom">
-        <div class="container">
-            <span class="pull-right label {{connected != 'Connected' && 'label-danger' || 'label-success'}}">{{connected}}</span>
+        <!-- TODO: go to Toastr or bootstrap notifications to notify this -->
+        <div class="navbar navbar-fixed-bottom">
+                <div class="container">
+                        <span class="pull-right label {{connected != 'Connected' && 'label-danger' || 'label-success'}}">{{connected}}</span>
+                </div>
         </div>
-    </div>
 
 
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="/vendors/jquery/jquery.min.js"></script>
-    <script src="/vendors/bootstrap/bootstrap.min.js"></script>
+        <!-- Bootstrap core JavaScript
+        ================================================== -->
+        <!-- Placed at the end of the document so the pages load faster -->
+        <script src="/vendors/jquery/jquery.min.js"></script>
+        <script src="/vendors/bootstrap/bootstrap.min.js"></script>
 
-    <script src="/vendors/angular/angular.min.js"></script>
-    <script src="/vendors/angular/angular-route.min.js"></script>
-    <script src="/vendors/angular/angular-animate.min.js"></script>
-    <script src="http://code.highcharts.com/stock/highstock.src.js"></script>
-    <script src="/vendors/highcharts-ng/src/directives/highcharts-ng.js"></script>
+        <script src="/vendors/angular/angular.min.js"></script>
+        <script src="/vendors/angular/angular-route.min.js"></script>
+        <script src="/vendors/angular/angular-animate.min.js"></script>
+        <script src="/vendors/angular/ui-bootstrap-0.6.0.min.js"></script>
+        <script src="http://code.highcharts.com/stock/highstock.src.js"></script>
+        <script src="/vendors/highcharts-ng/src/directives/highcharts-ng.js"></script>
 
-    <script src="/scripts/app.js"></script>
-    <script src="/scripts/controllers.js"></script>
-  </body>
+        <script src="/scripts/app.js"></script>
+        <script src="/scripts/controllers.js"></script>
+    </body>
 </html>

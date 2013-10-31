@@ -46,12 +46,12 @@ def start(args):
 
     log.info('Starting alfred %s' % __version__ )
     import ruleHandler
-    import bindingProvider
+    import itemManager
 
     signal.signal(signal.SIGINT, signalHandler)
 
-    # Then register all available plugins and create/read their configuration
-    bindingProvider.startInstalled()
+    # Then register all available plugins and register defined items
+    itemManager.start()
 
     # Start the persistence handler
     import persistence

@@ -13,8 +13,8 @@ if not alfred.db:
     log.warning("No database defined, cannot persist values!")
 
 
-def lastValues():
-    return alfred.db.lastValues.find() if alfred.db else {}
+# def lastValues():
+#     return alfred.db.lastValues.find() if alfred.db else {}
 
 
 def save(collection, data, *args, **kwargs):
@@ -28,13 +28,15 @@ def update(collection, who, data, *args, **kwargs):
     if alfred.db:
         getattr(alfred.db, collection).update(who, data, *args, **kwargs)
 
-def verifyUser(username, password):
-    """ Check the existence of the user defined by injected credentials """
-    if alfred.db:
-        return alfred.db.users.find(username, sha.sha(password).hexdigest())
-    else:
-        # FIXME: foresee some other identificaiton mechanism
-        return dict(usename='default')
+# def verifyUser(username, password):
+#     """ Check the existence of the user defined by injected credentials """
+#     if alfred.db:
+#         return alfred.db.users.find_one(
+#             dict(username=username.lower(), hash=sha.sha(password).hexdigest()))
+
+# def get(resource, filter, From, To):
+#     filter.update({'time': {'$gt': str(From), '$lt': str(To)}})
+#     return list(alfred.db[resource].find(filter))
 
 
 def start():
@@ -50,7 +52,7 @@ def start():
 def on_message(msg):
     # Persist last value
     data = json.loads(msg.payload)
-    if msg.topic.startswith('afred/items'):
+    if msg.topic.startswith('alfred/items'):
         item = msg.topic.split('/')[-1]
         update('lastValues', dict(item=item), {'$set': data}, upsert=True)
 

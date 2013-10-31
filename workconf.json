@@ -1,0 +1,10 @@
+{
+    "broker": {"host": "test-gw"},
+    "items": [
+        {"name":"random", "binding": "random", "type": "number", "unit": "bits"}
+    ],
+    "persistence": {
+        "items": ["random"],
+        "groups": []
+    }
+}

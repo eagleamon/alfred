@@ -3,6 +3,7 @@ from tornado.websocket import WebSocketHandler
 from alfred import config, persistence
 import logging
 import json
+import datetime
 
 
 class BaseHandler(RequestHandler):
@@ -20,17 +21,15 @@ class BaseHandler(RequestHandler):
 
 class AuthLoginHandler(BaseHandler):
 
-    def get(self):
-        self.render('webClient/login.html')
-
     def post(self):
         # TODO: abstract this
-        if persistence.verifyUser(self.get_argument('username', ''), self.get_argument('password', '')):
-            self.set_secure_cookie('user', self.get_argument('username'))
-            self.redirect(self.get_argument('next', u'/'))
-            self.log.info('User %s logged in' % self.get_argument('username'))
+        cred = json.loads(self.request.body)
+        if persistence.verifyUser(cred.get('username'), cred.get('password')):
+            self.set_secure_cookie('user', cred.get('username'))
+            # self.redirect(self.get_argument('next', u'/'))
+            self.log.info('User %s logged in' % cred.get('username'))
         else:
-            self.render('webClient/login.html')
+            self.send_error(401)
 
 
 class AuthLogoutHandler(BaseHandler):
@@ -65,15 +64,34 @@ class WSHandler(BaseHandler, WebSocketHandler):
 
 
 class RestHandler(BaseHandler):
+    # NOTE: Eventually fo to tornado rest handler to fix things ? (but maybe not possible)
 
-    @authenticated
-    def get(self, *args, **kwargs):
+    def get(self, args):
+        # User must be authenticated
+        if not self.current_user:
+            self.send_error(401)
+            return
+
+        args = args.split('/')
+        if args[0] not in ['items', 'values']:
+            raise HTTPError(404, "%s not available in API" % args[0])
+
+        self.set_header('Content-Type', 'application/json')
+
+        result = []
         if args[0] == "items":
-            from alfred import bindingProvider
             result = {}
+            # Get from items collection, in config that's only for the watch of one instance
+            from alfred import bindingProvider
             for x, y in bindingProvider.items.items():
                 result[x] = y.jsonable()
 
-            self.write(json.dumps(result))
-        else:
-            raise HTTPError(404, "%s not available in API" % args[0])
+        elif args[0] == 'values':
+            now = datetime.datetime.now()
+            From = self.get_argument('from', now.replace(day=now.day - 1))
+            To = self.get_argument('to', now)
+
+            result = persistence.get(args[0], dict(item=args[1]) if len(args) > 1 else {}, From, To)
+
+        from bson import json_util
+        self.write(json.dumps(result, default=json_util.default))

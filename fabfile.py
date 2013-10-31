@@ -32,7 +32,7 @@ def run(where='home'):
     if where=='home':
     	local('python -m alfred --db_host hal -d')
     if where=='work':
-    	local('python -m alfred -c workconf.json -d')
+    	local('python -m alfred --db_host lutvms017 --db_name new_test -d')
 
 def test(toTest=''):
 	" Passes argument like -> fab test:tests/items.py "
