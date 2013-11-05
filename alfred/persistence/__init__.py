@@ -5,6 +5,8 @@ import json
 import sha
 import logging
 from alfred import config
+from datetime import datetime
+from dateutil import tz
 
 log = logging.getLogger(__name__)
 
@@ -46,17 +48,19 @@ def start():
 
 def on_message(msg):
     from alfred import itemManager
+    from dateutil import parser
 
     # Persist last value
     data = json.loads(msg.payload)
     if msg.topic.startswith('alfred/items'):
         item = msg.topic.split('/')[-1]
-        update('items', dict(name=item), {'$set': data}, upsert=True)
+        update('items', dict(name=item), {'$set': {'value':data.get('value'), 'time': parser.parse(data.get('time'))}}, upsert=True)
 
     # Persist historic if desired from config of items
         if item in config.get('persistence', 'items'):
             _id = itemManager.items[item]._id
-            save('values', dict(item_id=_id, time=data.get('time'), value=data.get('value')))
+            # save('values', dict(item_id=_id, time=data.get('time'), value=data.get('value')))
+            save('values', dict(item_id=_id, value=data.get('value')))
 
     # ... or groups (automatically in persistence -> subcribed )
     elif msg.topic.startswith('alfred/groups'):
@@ -64,7 +68,8 @@ def on_message(msg):
         # if group in getIncludingGroups(group, config.get('groups')):
         item = msg.topic.split('/')[-1]
         _id = itemManager.items[item]._id
-        save('values', dict(item_id=_id, time=data.get('time'), value=data.get('value')))
+        # save('values', dict(item_id=_id, time=data.get('time'), value=data.get('value')))
+        save('values', dict(item_id=_id, value=data.get('value')))
 
 
 # class Persistence(Thread):

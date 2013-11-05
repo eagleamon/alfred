@@ -4,7 +4,6 @@ import eventBus
 import alfred
 from alfred.bindings import Binding
 from alfred import persistence, db, config
-from datetime import datetime
 
 items = {}
 activeBindings = {}

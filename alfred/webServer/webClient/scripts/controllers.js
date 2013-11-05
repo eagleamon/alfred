@@ -1,16 +1,11 @@
-alfred.controller('ItemCtrl' , function($scope, $http, WebSocket){
+alfred.controller('ItemCtrl' , function($scope, Item,  WebSocket){
 
     $scope.items = {}
-    // Get first values
-    // TODO: use angular resources
-    $http.get('/api/items').
-        success(function(data){
-            angular.forEach(data, function(item){
-                $scope.items[item.name] = item;
-                if (item.time)
-                    item.time = new Date(item.time);
-            })
+    Item.query(function(data){
+        angular.forEach(data, function(d){
+            $scope.items[d.name] = d;
         })
+    })
 
     // Listen on updates (TODO: only for items here)
     WebSocket.onmessage = function(msg){
@@ -25,10 +20,7 @@ alfred.controller('ItemCtrl' , function($scope, $http, WebSocket){
 })
 
 // TODO: use angular resources
-.controller('GraphCtrl', function($scope, $routeParams, $http, WebSocket){
-    $scope.addPoint = function(){
-        $scope.data.push(Math.floor(Math.random()*10))
-    }
+.controller('GraphCtrl', function($scope, $routeParams, WebSocket, Item, $resource){
 
     WebSocket.onmessage = function(msg){
         msg = JSON.parse(msg.data);
@@ -43,43 +35,53 @@ alfred.controller('ItemCtrl' , function($scope, $http, WebSocket){
         }
     }
 
+    $scope.item = Item.get({_id: $routeParams._id}, function(){
+        $scope.data = [];
+        $scope.chart = {
+            animation: {duration:800},
+            title: {
+                text: "Last day values for " + $scope.item.name,
+            },
+            series: [{
+                data: $scope.data,
+                name: $scope.item.name + ($scope.item.unit ? ' (' + $scope.item.unit + ')': ''),
+                // marker: {enabled:false},
+                animation:{duration:1000}
+            }],
+            xAxis:{
+                type: 'datetime'
+            },
+            yAxis:{
+                title:{ text: $scope.item.unit }
+            },
+            tooltip: {
+                shared: true
+            },
+            legend: false,
+            // useHighStocks: true
+            loading: true
+        }
 
-    $scope.item = {name: $routeParams.itemName};
-    $scope.data = [];
-    $scope.chart = {
-        animation: {duration:800},
-        title: {
-            text: "Last values for " + $scope.item.name,
-        },
-        series: [{
-            data: $scope.data,
-            name: $scope.item.name,
-            // marker: {enabled:false},
-            animation:{duration:1000}
-        }],
-        yAxis:{
-            title:{ text: $scope.item.unit }
-        },
+        $resource('/api/values/item_id/:item_id').query({'item_id': $scope.item._id.$oid}, function(data){
+            angular.forEach(data, function(d){
+                $scope.data.push([getTimeStamp(d._id.$oid), d.value])
+            })
+            $scope.chart.loading = false;
+        })
+    });
 
-        legend: false,
-        // useHighStocks: true
-        loading: true
+    getTimeStamp = function(_id){
+        return parseInt(_id.toString().slice(0,8), 16)*1000
+        // return parseInt(_id.toString().slice(0,8), 16) - (new Date().getTimezoneOffset()*1000);
     }
-    $http.get('/api/items/' + $scope.item.name).success(function(data){
-        $scope.item = data
-    })
 
-    $http.get('/api/values/' + $scope.item.name).success(function(data){
-        // $scope.chart.series[0].setVisible(false)
+})
 
-        angular.forEach(data, function(p){
-            $scope.data.push(p.value)
-        });
-        $scope.chart.loading=false;
-        // $scope.chart.series[0].setVisible(true, true)
-    })
-
-
+.controller('EditItemCtrl', function($scope, $routeParams, Item){
+    // $scope.item = Item.get({'name': $routeParams.itemName})
+    $scope.item = new Item({'name': 'Rand'});
+    $scope.item.$save()
+    // $scope.item.name = "Rand";
 })
 
 .controller('LoginCtrl', function($scope, $location, AlertService, Auth){

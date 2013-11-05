@@ -27,6 +27,7 @@ def publish():
     f = os.listdir('dist')[0]
     put('dist/%s' % f, '/tmp/%s' % f)
     sudo('pip install -U /tmp/%s' % f)
+    sudo('restart alfred')
 
 def run(where='home'):
     if where=='home':

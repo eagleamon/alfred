@@ -1,5 +1,7 @@
 __author__ = 'Joseph Piron'
-__version__ = '0.0.8'
+
+version = '0.1.1b'
+version_info = (0,1,1,1)
 
 import logging
 import os
@@ -32,7 +34,7 @@ def start(args):
     if args.db_host:
         global db
         from pymongo import MongoClient
-        db = getattr(MongoClient(args.db_host, args.db_port), args.db_name)
+        db = getattr(MongoClient(args.db_host, args.db_port, tz_aware=True), args.db_name)
 
     # Load the configuration from required source
     if db:
@@ -44,7 +46,7 @@ def start(args):
     if not config.localConfig:
         raise ValueError('Config is not set')
 
-    log.info('Starting alfred %s' % __version__ )
+    log.info('Starting alfred %s' % version )
     import ruleHandler
     import itemManager
 

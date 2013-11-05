@@ -1,22 +1,24 @@
 from nose.tools import raises
-from alfred import parseArgs
-from alfred.bindings import BindingProvider
-from alfred.utils import Bus
 from os import chdir, path
 from ConfigParser import ConfigParser
 from pymongo import MongoClient
 
 from ConfigParser import ConfigParser
-config = ConfigParser()
-config.read('tests/test.ini')
+import json, os
+config = json.load(open(os.path.dirname(__file__) + '/tests.ini'))
 
-import alfred.config as c
-c.inTest = True
+def testAllImports():
+    from alfred import config
+    from alfred import eventBus
+    from alfred import itemManager
+    from alfred import items
+    from alfred import ruleHandler
 
+
+from alfred import eventBus
 class TestBusConnection(object):
-
     def testBusConnection(self):
-        Bus(config.get('broker', 'host'), 1883)
+        eventBus.create(config.get('broker'), 1883)
 
     def testPublish(self):
         self.passed = False
@@ -27,7 +29,7 @@ class TestBusConnection(object):
             assert msg.payload == 'test message'
             assert msg.topic == '/'.join([b.base_topic, 'test'])
 
-        b = Bus(config.get('broker', 'host'), 1883)
+        b = eventBus.create(config.get('broker'), 1883)
 
         b.subscribe('test')
         b.on_message = on_message

@@ -1,10 +1,16 @@
 from tornado.web import RequestHandler, HTTPError, authenticated
 from tornado.websocket import WebSocketHandler
-from alfred import config, db, itemManager
+from alfred import config, db, itemManager, version
 import logging
 import json
 import datetime
+from bson import json_util
+from bson.objectid import ObjectId
+from dateutil import tz
+from dateutil.parser import parse
 import sha
+import os
+
 
 class BaseHandler(RequestHandler):
 
@@ -17,6 +23,13 @@ class BaseHandler(RequestHandler):
     # @property
     # def zmq(self):
     #     return self.application.zmqStream
+
+
+class MainHandler(BaseHandler):
+
+    def get(self):
+        with (open(os.path.dirname(__file__) + '/webClient/index.html')) as f:
+            self.write(f.read() % {'version': version})
 
 
 class AuthLoginHandler(BaseHandler):
@@ -80,22 +93,23 @@ class RestHandler(BaseHandler):
             raise HTTPError(404, "%s not available in API" % args[0])
 
         self.set_header('Content-Type', 'application/json')
-        result = []
-        if args[0] == "items":
+        now = datetime.datetime.now(tz.tzutc())
 
-            # Get from items collection, in config that's only for the watch of one instance
-            result = list(db.items.find({'name': args[1]} if len(args)>1 else {}))
+        filter = {}
+        # General id filter
+        if len(args) == 2:
+            filter['_id'] = ObjectId(args[1])
+        # Other filters
+        if len(args) == 3:
+            filter[args[1]] = ObjectId(args[2]) if '_id' in args[1] else args[2]
 
-        elif args[0] == 'values':
-            now = datetime.datetime.now()
-            From = self.get_argument('from', now.replace(day=now.day - 1))
-            To = self.get_argument('to', now)
-            filter = {'time': {'$gt': str(From), '$lt': str(To)}}
+        if args[0] == 'values':
+            filter['_id'] = {
+                '$gt': ObjectId.from_datetime(parse(self.get_argument('from')) if self.get_argument('from', '') else (now - datetime.timedelta(1))),
+                '$lte': ObjectId.from_datetime(parse(self.get_argument('to')) if self.get_argument('to', '') else now)
+            }
 
-            if len(args)>1:
-                filter['item_id'] = db.items.find_one({'name': args[1]}).get('_id')
-
-            result = list(db.values.find(filter).limit(100))
-
-        from bson import json_util
-        self.write(json.dumps(result, default=json_util.default))
+        res = list(db[args[0]].find(filter))
+        if len(res) == 1:
+            res = res[0]
+        self.write(json.dumps(res, default=json_util.default))

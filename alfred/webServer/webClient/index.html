@@ -40,7 +40,8 @@
                         <li><a href="#bindings">Bindings</a></li>
                     </ul>
                     <ul class="nav navbar-nav pull-right">
-                        <li><a href="/auth/logout">Logout</a></li>
+                        <li><span class='navbar-text'>v %(version)s</span></li>
+                        <li><a href='' ng-click='logout()'>Logout</a></li>
                     </ul>
                 </div><!--/.nav-collapse -->
             </div>
@@ -69,6 +70,7 @@
         <script src="/vendors/bootstrap/bootstrap.min.js"></script>
 
         <script src="/vendors/angular/angular.min.js"></script>
+        <script src="/vendors/angular/angular-resource.min.js"></script>
         <script src="/vendors/angular/angular-route.min.js"></script>
         <script src="/vendors/angular/angular-animate.min.js"></script>
         <script src="/vendors/angular/ui-bootstrap-0.6.0.min.js"></script>

@@ -31,7 +31,8 @@ class WebServer(web.Application):
             (r'/auth/login', h.AuthLoginHandler),
             (r'/live', h.WSHandler),
             (r'/api/?(.*)', h.RestHandler),
-            (r'/', web.RedirectHandler, dict(url='/index.html')),
+            # (r'/', web.RedirectHandler, dict(url='/index.html')),
+            (r'/', h.MainHandler),
             (r'/(.*)$', web.StaticFileHandler, dict(path=settings.get('static_path')))
         ]
         self.log.debug('Static path: %s' % settings.get('static_path'))

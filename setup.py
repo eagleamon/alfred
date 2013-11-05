@@ -10,12 +10,13 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 def reqs():
-	return [str(i.req) for i in pr(os.path.join(os.path.dirname(__file__), 'requirements.txt'))]
+    return [str(i.req) for i in pr(os.path.join(os.path.dirname(__file__), 'requirements.txt'))]
 
 def version():
-	fd = open('alfred/__init__.py')
-	fd.readline()
-	return fd.readline().split('=')[1].strip().strip("'")
+    fd = open('alfred/__init__.py')
+    fd.readline()
+    fd.readline()
+    return fd.readline().split('=')[1].strip().strip("'")
 
 setup(
     name = "alfred",
@@ -31,12 +32,12 @@ setup(
     install_requires=reqs(),
     long_description=read('README.md'),
     data_files=[
-    	('/etc/init', ['data/alfred.conf'])
+        ('/etc/init', ['data/alfred.conf'])
     ],
     include_package_data=True,
     classifiers=[
         "Development Status :: 2 - PreAlpha",
-       	"Topic :: Home Automation",
+        "Topic :: Home Automation",
         "License :: OSI Approved :: BSD License",
     ],
 )

@@ -4,7 +4,6 @@ from alfred.ruleHandler import timeEvent, busEvent, logging, eventBus
 from alfred.utils.notifications import sendMail
 from alfred import persistence
 import json
-import datetime
 
 log = logging.getLogger(__name__)
 
@@ -48,12 +47,3 @@ first lines on top and the different rules below:
 # def mail_over_50(topic, msg):
 #     if float(msg) > .5:
 #         sendMail('joseph.piron@gmail.com', "%s: %s" % (topic, msg))
-
-# @timeEvent(second='*/10')
-# def check_last_update():
-#     from alfred import bindingProvider
-#     from datetime import datetime
-
-#     print bindingProvider.items
-#     for name, item in bindingProvider.items.items():
-#         log.info(datetime.now() - item.lastUpdate)

@@ -6,17 +6,17 @@
         <th>Last Update</th>
     </thead>
     <tbody>
-        <tr ng-repeat="(name, conf) in items">
-            <td class="{{conf.icon}}">{{name}}</td>
-            <td>{{conf.type}}</td>
-            <td><a href='#/graph/{{name}}'>{{conf.value|number}} {{conf.unit}}</a></td>
+        <tr ng-repeat="item in items">
+            <td class="{{item.icon}}">{{item.name}}</td>
+            <td>{{item.type}}</td>
+            <td><a href='#/graph/{{item._id.$oid}}'>{{item.value|number}} {{item.unit}}</a></td>
             <td>
-                <span tooltip="{{conf.time|date:'medium'}}" am-time-ago='conf.time'></span>
+                <span tooltip="{{item.time|date:'medium'}}" am-time-ago='item.time'></span>
                 <!-- <span class='label label-danger'>Last Seen</span> -->
             </td>
             <td class='actions'>
                 <span class="pull-right" show-on-hover>
-                    <a class='btn btn-default btn-xs' href='' ng-click='edit(name)'>Edit</a>
+                    <a class='btn btn-default btn-xs' href='#editItem/{{item.name}}'>Edit</a>
                     <a class='btn btn-danger btn-xs' href='' ng-click='delete(name)'>Delete</a>
                 </span>
             </td>

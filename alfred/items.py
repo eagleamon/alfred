@@ -3,6 +3,8 @@ __author__ = 'Joseph Piron'
 import logging
 from alfred.utils import PluginMount
 from datetime import datetime
+import dateutil
+from dateutil import tz
 import json
 
 log = logging.getLogger(__name__)
@@ -47,15 +49,16 @@ class Item(object):
         if value == self._value:
             return
         self._value = value
-        self.time = datetime.now()
+        # Datetimes only in UTC
+        self.time = datetime.now(tz.tzutc())
         log.debug("Value of '%s' changed: %s" % (self.name, value))
         if self.bus:
             self.bus.publish('items/%s' % self.name,
-                             json.dumps(dict(value=value, time=str(self.time))))
+                             json.dumps(dict(value=value, time=self.time.isoformat())))
             if self.groups:
                 for g in self.groups:
                     self.bus.publish('groups/%s/%s' % (g, self.name),
-                                     json.dumps(dict(value=value, time=str(self.time))))
+                                     json.dumps(dict(value=value, time=self.time.isoformat())))
         else:
             log.warn("No bus defined")
 

@@ -1,11 +1,15 @@
-alfred = angular.module('alfred', ['ngRoute', 'ngAnimate', 'ui.bootstrap', 'highcharts-ng', 'angularMoment'])
+alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngAnimate', 'ui.bootstrap', 'highcharts-ng', 'angularMoment'])
     .config(['$routeProvider', '$httpProvider', function($routeProvider, $httpProvider){
         $routeProvider
             .when('/items', {
                 templateUrl: 'views/items.html',
                 controller: 'ItemCtrl'
             })
-            .when('/graph/:itemName', {
+            .when('/editItem/:_id',{
+                templateUrl: 'views/editItem.html',
+                controller: 'EditItemCtrl'
+            })
+            .when('/graph/:_id', {
             	templateUrl: 'views/graph.html',
             	controller: 'GraphCtrl'
             })
@@ -40,14 +44,14 @@ alfred = angular.module('alfred', ['ngRoute', 'ngAnimate', 'ui.bootstrap', 'hig
         return {
             connect: function(){
                 var $this = this;
-                console.log('Trying to connect to WebSocket..')
+                console.info('Trying to connect to WebSocket..')
                 var socket = new WebSocket('ws://' + location.host + '/live');
                 socket.onopen = function(){
-                    console.log('Socket connected!');
+                    console.info('Socket connected!');
                     $rootScope.connected = 'Connected'
                     $rootScope.$apply()
                 }
-                socket.onerror = function(event){ console.log('WebSocket error: ' + event);}
+                socket.onerror = function(event){ console.info('WebSocket error: ' + event);}
                 socket.onclose = function(event){
                     $rootScope.connected = 'Connecting...'
                     $rootScope.$apply()
@@ -66,7 +70,7 @@ alfred = angular.module('alfred', ['ngRoute', 'ngAnimate', 'ui.bootstrap', 'hig
     })
 
     // Service to handle atuthentication against backend validation
-    .factory('Auth', function($http){
+    .factory('Auth', function($http, $location, $rootScope){
         return {
             username: '',
             login: function(username, password){
@@ -75,6 +79,14 @@ alfred = angular.module('alfred', ['ngRoute', 'ngAnimate', 'ui.bootstrap', 'hig
                     .success(function(data){
                         $this.username = username
                 })
+            },
+            logout: function(){
+                var $this = this;
+                $http.get('/auth/logout')
+                    .success(function(){
+                        $this.username = null;
+                        $location.path('/')
+                    })
             }
         }
     })
@@ -101,6 +113,10 @@ alfred = angular.module('alfred', ['ngRoute', 'ngAnimate', 'ui.bootstrap', 'hig
         }
     })
 
+    .factory('Item', function($resource){
+        return $resource('/api/items/:_id')
+    })
+
     .directive('showOnHover', function(){
         return {
             link: function(scope, element, attrs){
@@ -115,6 +131,13 @@ alfred = angular.module('alfred', ['ngRoute', 'ngAnimate', 'ui.bootstrap', 'hig
         }
     })
 
-alfred.run(function($rootScope, WebSocket){
+alfred.run(function($rootScope, WebSocket, Auth){
+    Highcharts.setOptions({                                            // This is for all plots, change Date axis to local timezone
+                global : {
+                    useUTC : false
+                }
+            });
+
+    $rootScope.logout = Auth.logout
     WebSocket.connect();
 })
