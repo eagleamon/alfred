@@ -42,10 +42,13 @@ path = None
 # Gist: https://gist.github.com/Xjs/114831
 __author__ = 'jannis@itisme.org (Jannis Andrija Schnitzer)'
 
+
 class RecursiveDictionary(dict):
+
     """RecursiveDictionary provides the methods rec_update and iter_rec_update
     that can be used to update member dictionaries rather than overwriting
     them."""
+
     def rec_update(self, other, **third):
         """Recursively update the dictionary with the contents of other and
         third like dict.update() does - but don't overwrite sub-dictionaries.
@@ -75,8 +78,6 @@ class RecursiveDictionary(dict):
     def __repr__(self):
         return super(self.__class__, self).__repr__()
 
-# TODO: update localConfig, do not replace -> default in case nothing is ready
-
 localConfig = RecursiveDictionary(
     http=dict(port=8000, debug=True, secret='TODO: Generate Random value'),
     broker=dict(host=''),
@@ -92,7 +93,6 @@ def save(config):
     raise NotImplementedError()
 
 
-# TODO: update recursively all internal dicts of localConfig
 def load(dbToRead=None, filePath=None):
     """ Load configuration either from a mongo database or a configuration file """
     global db, path

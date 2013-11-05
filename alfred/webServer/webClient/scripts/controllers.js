@@ -4,6 +4,7 @@ alfred.controller('ItemCtrl' , function($scope, Item,  WebSocket){
     Item.query(function(data){
         angular.forEach(data, function(d){
             $scope.items[d.name] = d;
+            d.time = new Date(d.time.$date)
         })
     })
 
@@ -19,17 +20,14 @@ alfred.controller('ItemCtrl' , function($scope, Item,  WebSocket){
     }
 })
 
-// TODO: use angular resources
 .controller('GraphCtrl', function($scope, $routeParams, WebSocket, Item, $resource){
 
     WebSocket.onmessage = function(msg){
         msg = JSON.parse(msg.data);
         item = msg.topic.split('/').pop()
-        if (item == $scope.item){
+        if (item == $scope.item.name){
             payload = JSON.parse(msg.payload);
-
-            // $scope.chart.series[0].addPoint(payload.value, true, true)
-            $scope.data.push(payload.value);
+            $scope.data.push([new Date(payload.time).getTime(), payload.value]);
             if ($scope.data.length>50)
                 $scope.data.shift();
         }
@@ -38,6 +36,9 @@ alfred.controller('ItemCtrl' , function($scope, Item,  WebSocket){
     $scope.item = Item.get({_id: $routeParams._id}, function(){
         $scope.data = [];
         $scope.chart = {
+            chart:{
+                zoomType: 'x'
+            },
             animation: {duration:800},
             title: {
                 text: "Last day values for " + $scope.item.name,
