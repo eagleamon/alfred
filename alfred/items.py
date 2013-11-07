@@ -80,4 +80,5 @@ class NumberItem(Item):
 
 
 class SwitchItem(Item):
-    pass
+    pass # Three commands: ON, OFF, TOGGLE
+

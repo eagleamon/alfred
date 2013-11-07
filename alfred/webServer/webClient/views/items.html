@@ -8,17 +8,44 @@
     <tbody>
         <tr ng-repeat="item in items">
             <td class="{{item.icon}}">{{item.name}}</td>
-            <td>{{item.type}}</td>
+            <td>
+                <span class='dropdown'>
+                    <a href='' class='dropdown-toggle'>{{item.type}} <span class='caret'/></a>
+                    <ul class='dropdown-menu'>
+                        <li ng-repeat='command in commands[item.type]'>
+                            <a href='' ng-click='sendCommand(item.name, command)'>{{command}}</a>
+                        </li>
+                    </ul>
+                </span>
+            </td>
             <td><a href='#/graph/{{item._id.$oid}}'>{{item.value|number}} {{item.unit}}</a></td>
             <td>
                 <span tooltip="{{item.time|date:'medium'}}" am-time-ago='item.time'></span>
             </td>
             <td class='actions'>
                 <span class="pull-right" show-on-hover>
-                    <a class='btn btn-default btn-xs' href='#editItem/{{item.name}}'>Edit</a>
-                    <a class='btn btn-danger btn-xs' href='' ng-click='delete(name)'>Delete</a>
+                    <a class='btn btn-default btn-xs' href='#editItem/{{item._id.$oid}}'>Edit</a>
+                    <a class='btn btn-danger btn-xs' href=''
+                        ng-click='showDeleteDlg("{{item._id.$oid}}", "{{item.name}}")'>Delete</a>
                 </span>
             </td>
         </tr>
     </tbody>
 </table>
+
+<script type="text/ng-template" id="deleteDialog.html">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Are you sure ?</h3>
+            </div>
+            <div class="modal-body">
+                The item will not be recoverable... {{items}}
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" ng-click="$close(ok)">Delete</button>
+                <button class="btn btn-default" ng-click="$dismiss(nope)">Cancel</button>
+            </div>
+        </div>
+    </div>
+</script>

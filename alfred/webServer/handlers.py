@@ -1,6 +1,7 @@
 from tornado.web import RequestHandler, HTTPError, authenticated
 from tornado.websocket import WebSocketHandler
 from alfred import config, db, itemManager, version
+import alfred
 import logging
 import json
 import datetime
@@ -23,6 +24,18 @@ class BaseHandler(RequestHandler):
     # @property
     # def zmq(self):
     #     return self.application.zmqStream
+
+
+class AuthBaseHandler(BaseHandler):
+
+    def prepare(self):
+        # User must be authenticated
+        if not self.current_user:
+            self.send_error(401)
+            return
+
+        self.set_header('Content-Type', 'application/json')
+        self.now = datetime.datetime.now(tz.tzutc())
 
 
 class MainHandler(BaseHandler):
@@ -61,9 +74,10 @@ class WSHandler(BaseHandler, WebSocketHandler):
 
     @classmethod
     def dispatch(cls, msg):
+        payload = json.loads(msg.payload)
+        data = dict(topic=msg.topic, value=payload['value'], time=payload['time'])
         for c in WSHandler.clients:
-            c.write_message(json.dumps(
-                dict(topic=msg.topic, payload=msg.payload)))
+            c.write_message(json.dumps(data))
 
     def open(self):
         WSHandler.clients.add(self)
@@ -79,21 +93,17 @@ class WSHandler(BaseHandler, WebSocketHandler):
         self.log.debug("WebSocket closed: %s user(s) online" % len(WSHandler.clients))
 
 
-class RestHandler(BaseHandler):
+class RestHandler(AuthBaseHandler):
     # NOTE: Eventually fo to tornado rest handler to fix things ? (but maybe not possible)
+    collections = ['items', 'values', 'commands']
 
     def get(self, args):
-        # User must be authenticated
-        if not self.current_user:
-            self.send_error(401)
-            return
-
+        """
+        Get list and individual resource present in the database
+        """
         args = args.split('/')
-        if args[0] not in ['items', 'values']:
+        if args[0] not in RestHandler.collections:
             raise HTTPError(404, "%s not available in API" % args[0])
-
-        self.set_header('Content-Type', 'application/json')
-        now = datetime.datetime.now(tz.tzutc())
 
         filter = {}
         # General id filter
@@ -105,11 +115,57 @@ class RestHandler(BaseHandler):
 
         if args[0] == 'values':
             filter['_id'] = {
-                '$gt': ObjectId.from_datetime(parse(self.get_argument('from')) if self.get_argument('from', '') else (now - datetime.timedelta(1))),
-                '$lte': ObjectId.from_datetime(parse(self.get_argument('to')) if self.get_argument('to', '') else now)
+                '$gt': ObjectId.from_datetime(parse(self.get_argument('from')) if self.get_argument('from', '') else (self.now - datetime.timedelta(1))),
+                '$lte': ObjectId.from_datetime(parse(self.get_argument('to')) if self.get_argument('to', '') else self.now)
             }
 
         res = list(db[args[0]].find(filter))
         if len(res) == 1:
             res = res[0]
         self.write(json.dumps(res, default=json_util.default))
+
+    def post(self, args):
+        """
+        Creates new resource or send commands on the bus
+        """
+        args = args.split('/')
+        if args[0] not in RestHandler.collections:
+            raise HTTPError(404, "%s not available in API" % args[0])
+
+        data = json.loads(self.request.body)
+        if args[0] == 'commands':
+            self.log.info('Sending command "%s" to %s' % (data['command'], data['name']))
+            alfred.webServer.bus.publish('commands/%s' % data['name'],
+                json.dumps({'command': data['command'], 'timedelta': self.now.isoformat()}))
+
+    def put(self, args):
+        """
+        Mofify an existing resource
+        """
+        args = args.split('/')
+        if args[0] not in RestHandler.collections:
+            raise HTTPError(404, "%s not available in API" % args[0])
+        if len(args) != 2:
+            raise HTTPError(400, "No id given in request")
+
+        data = json.loads(self.request.body)
+        if '_id' in data:
+            del data['_id']
+
+        res = db[args[0]].update({'_id': ObjectId(args[1])}, {'$set': data})
+        if res['err']:
+            self.write(dict(error=res['err']))
+
+    def delete(self, args):
+        """
+        Delete an existig resource
+        """
+        args = args.split('/')
+        if args[0] not in RestHandler.collections:
+            raise HTTPError(404, "%s not available in API" % args[0])
+        if len(args) != 2:
+            raise HTTPError(400, "No id given in request")
+
+        res = db[args[0]].remove({'_id': ObjectId(args[1])})
+        if res['err']:
+            self.write(dict(error=res['err']))

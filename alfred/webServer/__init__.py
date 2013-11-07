@@ -56,5 +56,4 @@ class WebServer(web.Application):
         inst.add_callback_from_signal(lambda x: x.stop(), inst)
 
     def on_message(self, msg):
-        # TODO: parse to have only one JSON parse in browser
         h.WSHandler.dispatch(msg)

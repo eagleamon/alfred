@@ -1,4 +1,10 @@
-alfred.controller('ItemCtrl' , function($scope, Item,  WebSocket){
+alfred.controller('ItemCtrl' , function($scope, Item,  WebSocket, Commands,  $modal){
+
+    $scope.commands={
+        'switch': ['On', 'Off', 'Toggle'],
+        'number': ['Increase', 'Decrease', 'Set']
+
+    }
 
     $scope.items = {}
     Item.query(function(data){
@@ -10,24 +16,39 @@ alfred.controller('ItemCtrl' , function($scope, Item,  WebSocket){
 
     // Listen on updates (TODO: only for items here)
     WebSocket.onmessage = function(msg){
-        msg = JSON.parse(msg.data);
-        payload = JSON.parse(msg.payload)
         name = msg.topic.split('/').pop();
         if (name in $scope.items){
-            $scope.items[name].value = payload.value;
-            $scope.items[name].time = new Date(payload.time);
+            $scope.items[name].value = msg.value;
+            $scope.items[name].time = new Date(msg.time);
         }
     }
+
+    $scope.showDeleteDlg = function(itemId, itemName){
+        $modal.open({
+            templateUrl:'deleteDialog.html',
+        })
+        .result.then(function(){
+            var i = Item.get({_id:itemId}, function(item){
+                console.log(item.$delete(function(res){
+                    if (res.error)
+                        AlertService.add({msg: 'Error while deleting: ' + res.error, type:'danger'})
+                    else
+                        delete $scope.items[itemName]
+                }))
+            })
+        },function(){
+        })
+    }
+
+    $scope.sendCommand = Commands.send
 })
 
 .controller('GraphCtrl', function($scope, $routeParams, WebSocket, Item, $resource){
 
     WebSocket.onmessage = function(msg){
-        msg = JSON.parse(msg.data);
         item = msg.topic.split('/').pop()
         if (item == $scope.item.name){
-            payload = JSON.parse(msg.payload);
-            $scope.data.push([new Date(payload.time).getTime(), payload.value]);
+            $scope.data.push([new Date(msg.time).getTime(), msg.value]);
             if ($scope.data.length>50)
                 $scope.data.shift();
         }
@@ -72,17 +93,29 @@ alfred.controller('ItemCtrl' , function($scope, Item,  WebSocket){
     });
 
     getTimeStamp = function(_id){
-        return parseInt(_id.toString().slice(0,8), 16)*1000
-        // return parseInt(_id.toString().slice(0,8), 16) - (new Date().getTimezoneOffset()*1000);
+        return parseInt(_id.toString().slice(0,8), 16)*1000;
     }
 
 })
 
-.controller('EditItemCtrl', function($scope, $routeParams, Item){
-    // $scope.item = Item.get({'name': $routeParams.itemName})
-    $scope.item = new Item({'name': 'Rand'});
-    $scope.item.$save()
-    // $scope.item.name = "Rand";
+.controller('EditItemCtrl', function($scope, $routeParams, $location, AlertService, Item){
+    $scope.item = Item.get({'_id': $routeParams._id})
+    $scope.types = ['number', 'switch', 'string']
+
+    $scope.submit = function(){
+        delete $scope.item.time // Do not update those ones here :)
+        delete $scope.item.value
+
+        if ($scope.item.groups && !$scope.item.groups.push) // If it is not an array
+            $scope.item.groups = $scope.item.groups.split(',')
+
+        $scope.item.$update(function(res){
+            if (res.error)
+                AlertService.add({msg: "Error while updating: " + res.error, type:'danger'})
+            else
+                $location.path('/')
+        })
+    }
 })
 
 .controller('LoginCtrl', function($scope, $location, AlertService, Auth){

@@ -6,8 +6,8 @@
     height: 50px
 }
 
-#login_form {
-    width: 400px;
+#edit_form, #login_form {
+    max-width: 400px;
     margin: auto;
 }
 
@@ -19,42 +19,42 @@
     z-index: 9000
 }
 
-td.humidity {
+.humidity {
     background-image: url(../images/humidity.png);
     background-size: 20px 20px;
     background-repeat: no-repeat;
     background-position: right center;
 }
 
-td.temperature {
+.temperature {
     background-image: url(../images/temperature.png);
     background-size: 20px 20px;
     background-repeat: no-repeat;
     background-position: right center;
 }
 
-td.random {
+.random {
     background-image: url(../images/random.png);
     background-size: 20px 20px;
     background-repeat: no-repeat;
     background-position: right center;
 }
 
-td.voltage {
+.voltage {
     background-image: url(../images/voltage.png);
     background-size: 20px 20px;
     background-repeat: no-repeat;
     background-position: right center;
 }
 
-td.light {
+.light {
     background-image: url(../images/light.png);
     background-size: 20px 20px;
     background-repeat: no-repeat;
     background-position: right center;
 }
 
-td.computers {
+.computers {
     background-image: url(../images/computers.png);
     background-size: 20px 20px;
     background-repeat: no-repeat;
@@ -63,4 +63,29 @@ td.computers {
 
 td.actions {
     width: 100px;
+}
+
+/* Quick hack to get angular-ui working with bootstrap 3 */
+.modal {
+    display: block;
+}
+.modal-body:before,
+.modal-body:after {
+    display: table;
+    content: " ";
+}
+.modal-header:before,
+.modal-header:after {
+    display: table;
+    content: " ";
+}
+
+/* end of hack */
+
+a.dropdown-toggle {
+    color: black
+}
+
+a.dropdown-toggle:hover {
+    text-decoration: none;
 }

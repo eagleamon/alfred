@@ -1,7 +1,7 @@
 __author__ = 'Joseph Piron'
 
-version = '0.1.1b'
-version_info = (0,1,1,1)
+version = '0.1.2'
+version_info = (0,1,2,0)
 
 import logging
 import os
@@ -11,7 +11,7 @@ import config
 
 log = logging.getLogger(__name__)
 db = None
-server = None
+webServer = None
 
 def signalHandler(signum, frame):
     if signum == signal.SIGINT:
@@ -20,7 +20,7 @@ def signalHandler(signum, frame):
 def stop():
     import ruleHandler
     import itemManager
-    server.stop()
+    webServer.stop()
     ruleHandler.stop()
     itemManager.stop()
     log.info('Bye!')
@@ -63,9 +63,9 @@ def start(args):
     ruleHandler.loadRules(os.path.join(os.path.dirname(__file__), 'rules'))
     ruleHandler.start()
 
-    import webServer
-    global server
-    server = webServer.WebServer()
-    server.start()
+    from webServer import WebServer
+    global webServer
+    webServer = WebServer()
+    webServer.start()
 
     # signal.pause()

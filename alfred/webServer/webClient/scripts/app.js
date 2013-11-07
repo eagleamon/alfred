@@ -53,13 +53,14 @@ alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngAnimate', 'ui.bo
                 }
                 socket.onerror = function(event){ console.info('WebSocket error: ' + event);}
                 socket.onclose = function(event){
+                    // console.log(event)
                     $rootScope.connected = 'Connecting...'
                     $rootScope.$apply()
-                    console.error('Socket closed, reconnecting in 5 seconds...')
+                    console.error('Socket closed, reconnecting in 5 seconds... ' + (event.reason ? '(' + event.reason + ')' : ''))
                     setTimeout(function(){$this.connect()}, 5000)
                 }
                 socket.onmessage = function(msg){
-                    // console.debug(msg);
+                    var msg = JSON.parse(msg.data);
                     $rootScope.$apply(
                         $this.onmessage(msg)
                     )
@@ -114,7 +115,16 @@ alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngAnimate', 'ui.bo
     })
 
     .factory('Item', function($resource){
-        return $resource('/api/items/:_id')
+        return $resource('/api/items/:_id', {_id: '@_id.$oid'}, {update: {method:'PUT'}})
+    })
+
+    .factory('Commands', function($http, $log){
+        return {
+            send: function(itemName, command){
+                $log.info('Sending ' + command + ' to ' + itemName);
+                $http.post('/api/commands',{name: itemName, command: command})
+            }
+        }
     })
 
     .directive('showOnHover', function(){
@@ -131,7 +141,15 @@ alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngAnimate', 'ui.bo
         }
     })
 
-alfred.run(function($rootScope, WebSocket, Auth){
+    // .directive('focus', function () {
+    //     return function (scope, element, attrs) {
+    //         attrs.$observe('focus', function (newValue) {
+    //             newValue === 'true' && element[0].focus();
+    //         });
+    //     }
+    // })
+
+alfred.run(function($rootScope, WebSocket, Auth, $log){
     Highcharts.setOptions({                                            // This is for all plots, change Date axis to local timezone
                 global : {
                     useUTC : false
@@ -139,5 +157,6 @@ alfred.run(function($rootScope, WebSocket, Auth){
             });
 
     $rootScope.logout = Auth.logout
+    $rootScope.$log = $log
     WebSocket.connect();
 })

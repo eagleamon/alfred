@@ -47,7 +47,7 @@
             </div>
         </nav>
 
-        <div class='alert-container' ng-controller='AlertCtrl'>
+        <div ng-cloak class='alert-container' ng-controller='AlertCtrl'>
             <alert ng-repeat="alert in alerts" type="alert.type" close="close($index)">{{alert.msg}}</alert>
         </div>
 
