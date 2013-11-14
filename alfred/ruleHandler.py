@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 def busEvent(topic):
     """ Decorator: triggers the function run when a message is received matching topic """
     def wrapper(f):
-        bus = eventBus.create()
+        bus = eventBus.create(__name__.split('.')[-1])
         bus.on_subscribe = lambda: log.debug("Subscribed to topic %s" % topic)
         bus.subscribe(topic.replace('*', '#'))
         # context = Context()

@@ -3,6 +3,7 @@ __author__ = 'Joseph Piron'
 import mosquitto
 import logging
 import config
+import os
 
 class Bus(object):
 
@@ -17,6 +18,7 @@ class Bus(object):
         self.brokerPort = brokerPort
         self.brokerHost = brokerHost
         self.base_topic = base_topic
+        self.clientId = client_id
 
         self.client = mosquitto.Mosquitto(client_id)
         self.connected = False
@@ -34,14 +36,14 @@ class Bus(object):
 
     def _on_connect(self, mosq, userData, rc):
         if rc == 0:
-            self.logger.debug("Connected to broker (%s:%d)" % (self.brokerHost, self.brokerPort))
+            self.logger.debug("%s connected to broker (%s:%d)" % (self.clientId or '', self.brokerHost, self.brokerPort))
             self.connected = True
             self.on_connect(rc)
         else:
             self.logger.error("Cannot connect: %s" % rc)
 
     def _on_disconnect(self, mosq, userData, rc):
-        self.logger.warn("Disconnected from broker: %s" % rc)
+        self.logger.warn("%s disconnected from broker: %s" % (self.clientId or '', rc))
         self.connected = False
         self.on_disconnect(rc)
 
@@ -71,8 +73,8 @@ def publish(topic, message):
     bus.publish(topic, message)
 
 
-def create():
+def create(clientId=None):
     """ Factory function for future upgrades.. """
-    return Bus(config.get('broker', 'host'), int(config.get('broker', 'port', 1883)))
+    return Bus(config.get('broker', 'host'), int(config.get('broker', 'port', 1883)), client_id=clientId+'-'+os.urandom(8).encode('hex'))
 
 # bus = create()

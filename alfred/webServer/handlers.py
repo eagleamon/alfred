@@ -95,7 +95,7 @@ class WSHandler(BaseHandler, WebSocketHandler):
 
 class RestHandler(AuthBaseHandler):
     # NOTE: Eventually fo to tornado rest handler to fix things ? (but maybe not possible)
-    collections = ['items', 'values', 'commands']
+    collections = ['items', 'values', 'commands', 'bindings']
 
     def get(self, args):
         """
@@ -104,6 +104,9 @@ class RestHandler(AuthBaseHandler):
         args = args.split('/')
         if args[0] not in RestHandler.collections:
             raise HTTPError(404, "%s not available in API" % args[0])
+
+        if args[0] == 'bindings':
+            self.getBindings(args)
 
         filter = {}
         # General id filter
@@ -124,6 +127,10 @@ class RestHandler(AuthBaseHandler):
             res = res[0]
         self.write(json.dumps(res, default=json_util.default))
 
+    def getBindings(self, args):
+        res = {'availables': itemManager.getAvailableBindings(), 'installed': [], 'active': []}
+        self.write(json.dumps(res))
+
     def post(self, args):
         """
         Creates new resource or send commands on the bus
@@ -136,7 +143,7 @@ class RestHandler(AuthBaseHandler):
         if args[0] == 'commands':
             self.log.info('Sending command "%s" to %s' % (data['command'], data['name']))
             alfred.webServer.bus.publish('commands/%s' % data['name'],
-                json.dumps({'command': data['command'], 'timedelta': self.now.isoformat()}))
+                                         json.dumps({'command': data['command'], 'time': self.now.isoformat()}))
 
     def put(self, args):
         """
@@ -155,6 +162,9 @@ class RestHandler(AuthBaseHandler):
         res = db[args[0]].update({'_id': ObjectId(args[1])}, {'$set': data})
         if res['err']:
             self.write(dict(error=res['err']))
+        else:
+            data.update({'_id': args[1]})
+            alfred.webServer.bus.publish('config/%s' % args[0], json.dumps({'action': 'edit', 'data': data}))
 
     def delete(self, args):
         """
@@ -169,3 +179,5 @@ class RestHandler(AuthBaseHandler):
         res = db[args[0]].remove({'_id': ObjectId(args[1])})
         if res['err']:
             self.write(dict(error=res['err']))
+        else:
+            alfred.webServer.bus.publish('config/%s' % args[0], json.dumps({'action': 'delete', 'data': args[1]}))

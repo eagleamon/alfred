@@ -14,6 +14,7 @@ class Item(object):
 
     """
     General representation of a piece of information
+    Converntion: all commands should be camelcase
     """
     __metaclass__ = PluginMount
 
@@ -27,6 +28,7 @@ class Item(object):
         self._icon = kwargs.get('icon', None)
         self.unit = kwargs.get('unit', None)
         self._id = kwargs.get('_id', None)
+        self.commands = kwargs.get('commands', {})
 
     @property
     def icon(self):
@@ -62,13 +64,12 @@ class Item(object):
         else:
             log.warn("No bus defined")
 
-    # def jsonable(self):
-    #     return dict(
-    #         name=self.name, value=self.value, type=self.type,
-    #         time=self.time and str(self.time) or None,
-    #         groups=list(self.groups), binding=self.binding,
-    #         icon=self.icon, unit=self.unit
-    #     )
+    def command(self, cmd):
+        """
+        Generic call to pass a command to the itemManager
+        """
+        from alfred import itemManager
+        itemManager.sendCommand(self.name, self.commands[cmd])
 
 
 class StringItem(Item):
@@ -80,5 +81,11 @@ class NumberItem(Item):
 
 
 class SwitchItem(Item):
-    pass # Three commands: ON, OFF, TOGGLE
+    def on(self):
+        self.command('on')
 
+    def off(self):
+        self.command('off')
+
+    def toggle(self):
+        self.off() if self.value else self.on()

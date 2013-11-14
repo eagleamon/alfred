@@ -1,7 +1,7 @@
 __author__ = 'Joseph Piron'
 
-version = '0.1.2'
-version_info = (0,1,2,0)
+version = '0.2.1'
+version_info = (0,2,1,0)
 
 import logging
 import os

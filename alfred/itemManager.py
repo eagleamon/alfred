@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 import eventBus
 import alfred
 from alfred.bindings import Binding
@@ -33,24 +34,25 @@ def getAvailableBindings():
 
 def start():
     global bus
-    bus = eventBus.create()
+    bus = eventBus.create(__name__.split('.')[-1])
+    bus.subscribe('commands/#')
+    bus.subscribe('config/#')
+    bus.on_message = on_message
 
     log.info("Available bindings: %s" % getAvailableBindings())
-    # bindingProvider.bus = eventBus.create()
     for i in filter(lambda i: i[1]['autoStart'], config.get('bindings').items()):
         startBinding(i[0])
 
-    # Then fetch item definition
-    log.info('Defined items: %s' % config.get('items'))
+    # Then register needed items
     for name in config.get('items'):
         register(name)
 
     for k, v in activeBindings.items():
         log.debug('%s items: %s' % (k, v.items.keys()))
 
-
-
 # TODO: migrate to new config form
+
+
 def installBinding(bindingName):
     __import__('alfred.bindings.%s' % bindingName)
 
@@ -92,10 +94,15 @@ def register(name):
     # If not, register it
     itemDef = db.items.find_one(dict(name=name))
     if not itemDef:
-        raise AttributeError('No definition found for item %s' % name)
+        log.error('No definition found for item %s' % name)
+        return
     bind = itemDef.get('binding').split(':')[0]
 
-    if bind not in activeBindings:
+    # Memory only item
+    if not bind:
+        item = Binding.getClass(itemDef.get('type'))(**itemDef)
+
+    elif bind not in activeBindings:
         raise Exception('Binding %s not installed or started' % bind)
     else:
         item = activeBindings[bind].register(**itemDef)
@@ -103,6 +110,67 @@ def register(name):
         if not itemDef.get('icon'):
             db.items.update(dict(name=item.name), {'$set': {'icon': item.icon}})
 
-        item.bus = bus
-        items[itemDef.get('name')] = item
-        return item
+    item.bus = bus
+    items[itemDef.get('name')] = item
+    log.debug('Item %s registered' % item.name)
+    return item
+
+
+def unregister(_id):
+    item = filter(lambda x: str(x._id) == _id, items.values()).pop()
+    bind = item.binding.split(':')[0]
+    if bind:
+        activeBindings[bind].unregister(_id)
+    del items[item.name]
+    log.debug('Item %s unregistered' % item.name)
+
+
+def on_message(msg):
+    """
+    Called when a command or config modification is received from the bus
+    """
+    topics = msg.topic.split('/')
+    if topics[1] == 'commands':
+        item = topics[-1]
+        if item in items:
+            data = json.loads(msg.payload)
+            command = data.get('command').lower()
+            if hasattr(items[item], command):
+                getattr(items[item], command)()
+            else:
+                log.error("%s does not accept %s command" % (item, command))
+
+    elif topics[1] == 'config':
+        msg = json.loads(msg.payload)
+        if msg.get('action') == 'edit':
+            itemDef = msg.get('data')
+            if filter(lambda x: str(x._id) == itemDef.get('_id'), items.values()):
+                unregister(itemDef.get('_id'))
+                register(itemDef.get('name'))
+
+        if msg.get('action') == 'delete':
+            _id = msg.get('data')
+            if filter(lambda x: str(x._id) == _id, items.values()):
+                unregister(_id)
+
+
+def sendCommand(name, command):
+    """
+    Handling of the command request to the binding (from the item)
+    """
+
+    binding = activeBindings.get(command.split(':')[0], None)
+    if not binding:
+        log.error("No %s binding defined" % binding)
+    try:
+        function = command.split(':')[1]
+        log.info('Executing %s for %s' % (command, name))
+
+        # try to get the function otherwise call the generic sendCommand function
+        try:
+            getattr(binding, function)(*command.split(':')[2:])
+        except AttributeError:
+            binding.sendCommand(command.split(':')[1])
+
+    except Exception, E:
+        log.exception('Error while executing %s for %s' % (command, name))

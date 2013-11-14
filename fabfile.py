@@ -20,7 +20,7 @@ def build():
     local('python setup.py sdist')
 
 
-# @hosts('pi@raspbmc')
+@hosts('hal')
 def publish():
     clean()
     build()

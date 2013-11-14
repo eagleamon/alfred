@@ -44,7 +44,7 @@ class WebServer(web.Application):
         self.server = httpserver.HTTPServer(self)
         self.server.listen(config.get('http', 'port'))
 
-        self.bus = eventBus.create()
+        self.bus = eventBus.create(self.__module__.split('.')[-1])
         self.bus.subscribe('items/#')
         self.bus.on_message = self.on_message
 

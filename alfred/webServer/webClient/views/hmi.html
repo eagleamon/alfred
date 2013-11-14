@@ -1,0 +1,63 @@
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h6 class='panel-title'>Living</h6>
+    </div>
+
+    <ul class="list-group">
+        <li class="list-group-item">
+            Capteurs
+            <div class='pull-right'>
+                <span class="temperature">{{items['TempLiving'].value|number:1}}{{items['TempLiving'].unit}}</span>
+                <span class="humidity">{{items['HumLiving'].value|number:1}}{{items['HumLiving'].unit}}</span>
+                <span class="light">{{items['LightLiving'].value}}{{items['LightLiving'].unit}}</span>
+            </div>
+        </li>
+        <li class="list-group-item">
+            Media Center
+            <!-- <input type='checkbox' class='pull-right'> -->
+            <switch ng-model='items["Htpc"].value' class='pull-right' ng-click='sendCommand()'/>
+        </li>
+    </ul>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h6 class='panel-title'>Bureau</h6>
+    </div>
+
+    <ul class="list-group">
+        <li class="list-group-item">
+            Capteurs
+            <div class='pull-right'>
+                <span class="temperature">{{items['TempBureau'].value|number:1}}{{items['TempBureau'].unit}}</span>
+                <span class="humidity">{{items['HumBureau'].value|number:1}}{{items['HumBureau'].unit}}</span>
+                <span class="light">{{items['LightBureau'].value}}{{items['LightBureau'].unit}}</span>
+            </div>
+        </li>
+        <li class="list-group-item">
+            <div class="btn-group pull-right">
+                <button class='btn btn-default'><span class="glyphicon glyphicon-chevron-down"></span></button>
+                <button class='btn btn-default'></button>
+                <button class='btn btn-default'></button>
+            </div>
+            Stores
+        </li>
+    </ul>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h6 class='panel-title'>Chambre</h6>
+    </div>
+
+    <ul class="list-group">
+        <li class="list-group-item">
+            Capteurs
+            <div class='pull-right'>
+                <span class="temperature">{{items['TempChambre'].value|number:1}}{{items['TempChambre'].unit}}</span>
+                <span class="humidity">{{items['HumChambre'].value|number:1}}{{items['HumChambre'].unit}}</span>
+                <span class="light">{{items['LightChambre'].value}}{{items['LightChambre'].unit}}</span>
+            </div>
+        </li>
+    </ul>
+</div>

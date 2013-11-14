@@ -1,6 +1,10 @@
 alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngAnimate', 'ui.bootstrap', 'highcharts-ng', 'angularMoment'])
     .config(['$routeProvider', '$httpProvider', function($routeProvider, $httpProvider){
         $routeProvider
+            .when('/hmi',{
+                templateUrl: 'views/hmi.html',
+                controller: 'HmiCtrl'
+            })
             .when('/items', {
                 templateUrl: 'views/items.html',
                 controller: 'ItemCtrl'
@@ -18,12 +22,13 @@ alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngAnimate', 'ui.bo
             })
             .when('/bindings', {
                 templateUrl: 'views/bindings.html',
+                controller: 'BindingCtrl'
             })
             .when('/login',{
                 templateUrl: 'views/login.html',
                 controller: 'LoginCtrl'
             })
-            .otherwise({redirectTo: '/items'})
+            .otherwise({redirectTo: '/hmi'})
 
 
         // If the server needs an authentication, redirect to the login page
@@ -122,7 +127,7 @@ alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngAnimate', 'ui.bo
         return {
             send: function(itemName, command){
                 $log.info('Sending ' + command + ' to ' + itemName);
-                $http.post('/api/commands',{name: itemName, command: command})
+                $http.post('/api/commands',{name: itemName, command: command.toLowerCase()})
             }
         }
     })
@@ -141,6 +146,28 @@ alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngAnimate', 'ui.bo
         }
     })
 
+    .directive('switch', function(){
+        return {
+            restrict: 'E',
+            replace: true,
+            require: '^ngModel',
+            template:  "<span class='switch'><span class='background'></span><span class='mask'></span</span>",
+            scope: {
+                ngModel: '=',
+                ngClick: '&'
+            },
+            link : function(scope, elem, attrs){
+                scope.switch = function(){
+                    if (!scope.ngModel)
+                        elem.find('.background').animate({left: '-56px'}, 200);
+                    else
+                        elem.find('.background').animate({left: '0px'}, 200);
+                    scope.ngModel = ! scope.ngModel;
+                }
+            }
+        }
+    })
+
     // .directive('focus', function () {
     //     return function (scope, element, attrs) {
     //         attrs.$observe('focus', function (newValue) {
@@ -150,11 +177,11 @@ alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngAnimate', 'ui.bo
     // })
 
 alfred.run(function($rootScope, WebSocket, Auth, $log){
-    Highcharts.setOptions({                                            // This is for all plots, change Date axis to local timezone
-                global : {
-                    useUTC : false
-                }
-            });
+    Highcharts.setOptions({                           // This is for all plots, change Date axis to local timezone
+        global : {
+            useUTC : false
+        }
+    });
 
     $rootScope.logout = Auth.logout
     $rootScope.$log = $log

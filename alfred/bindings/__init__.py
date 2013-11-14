@@ -4,6 +4,7 @@ from alfred.items import Item
 from alfred.utils import PluginMount
 from alfred import eventBus
 from threading import Thread, Event
+import logging
 # Going on with Thread, if stop needed will switch to Process, but should look at Concurrrence of Gevent
 # for better concurrency
 
@@ -13,8 +14,9 @@ class Binding(Thread):
     validTypes = ['number', 'switch', 'string']
 
     def __init__(self):
+        self.log = logging.getLogger(__name__)
         self.stopEvent = Event()
-        self.bus = eventBus.create()
+        self.bus = eventBus.create(self.__module__.split('.')[-1])
         self.items = {}
 
         Thread.__init__(self)
@@ -30,6 +32,11 @@ class Binding(Thread):
         res = self.items[kwargs.get('name')] = self.getClass(kwargs.get('type'))(**kwargs)
         return res
 
+    def unregister(self, _id):
+        item = filter(lambda x: str(x._id) == _id, self.items.values()).pop()
+        del self.items[item.name]
+
+    @classmethod
     def getClass(self, type):
         " Return item class according to string defining type"
         return Item.plugins.get(type.lower() + 'item')
@@ -37,3 +44,6 @@ class Binding(Thread):
     @property
     def config(self):
         return NotImplementedError()
+
+    def sendCommand(self):
+        raise NotImplementedError('Should be overwritten')

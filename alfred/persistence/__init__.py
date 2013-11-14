@@ -29,7 +29,7 @@ def start():
         log.warning("No database defined, cannot persist values!")
 
     if alfred.db:
-        bus = eventBus.create()
+        bus = eventBus.create(__name__.split('.')[-1])
         bus.on_message = on_message
         bus.subscribe('items/#')
 
