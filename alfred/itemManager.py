@@ -12,12 +12,6 @@ activeBindings = {}
 bus = None
 log = logging.getLogger(__name__)
 
-
-def stop():
-    for b in activeBindings:
-        activeBindings[b].stop()
-
-
 def getAvailableBindings():
     """
     Check for all bindings available
@@ -51,6 +45,14 @@ def start():
         log.debug('%s items: %s' % (k, v.items.keys()))
 
 # TODO: migrate to new config form
+
+
+def stop():
+    for b in activeBindings:
+        activeBindings[b].stop()
+    items.clear()
+    activeBindings.clear()
+    bus.stop()
 
 
 def installBinding(bindingName):
@@ -103,7 +105,9 @@ def register(name):
         item = Binding.getClass(itemDef.get('type'))(**itemDef)
 
     elif bind not in activeBindings:
-        raise Exception('Binding %s not installed or started' % bind)
+        log.error('Binding %s not installed or started' % bind)
+        bus.publish('ok', 'Binding %s not installed or started' % str(bind))
+        return
     else:
         item = activeBindings[bind].register(**itemDef)
         # Small tip to get icons
@@ -158,19 +162,20 @@ def sendCommand(name, command):
     """
     Handling of the command request to the binding (from the item)
     """
-
     binding = activeBindings.get(command.split(':')[0], None)
     if not binding:
         log.error("No %s binding defined" % binding)
-    try:
-        function = command.split(':')[1]
-        log.info('Executing %s for %s' % (command, name))
-
-        # try to get the function otherwise call the generic sendCommand function
+    else:
         try:
-            getattr(binding, function)(*command.split(':')[2:])
-        except AttributeError:
-            binding.sendCommand(command.split(':')[1])
+            function = command.split(':')[1]
+            log.info('Executing %s for %s' % (command, name))
 
-    except Exception, E:
-        log.exception('Error while executing %s for %s' % (command, name))
+            # try to get the function otherwise call the generic sendCommand function
+            try:
+                # Careful, list comprehension !
+                getattr(binding, function)(*command.split(':')[2:])
+            except AttributeError:
+                binding.sendCommand(command.split(':')[1:])
+
+        except Exception, E:
+            log.exception('Error while executing %s for %s' % (command, name))

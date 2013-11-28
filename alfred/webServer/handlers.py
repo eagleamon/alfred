@@ -1,14 +1,15 @@
 from tornado.web import RequestHandler, HTTPError, authenticated
 from tornado.websocket import WebSocketHandler
 from alfred import config, db, itemManager, version
-import alfred
-import logging
-import json
-import datetime
 from bson import json_util
 from bson.objectid import ObjectId
 from dateutil import tz
 from dateutil.parser import parse
+import alfred
+import logging
+import json
+import datetime
+import socket
 import sha
 import os
 
@@ -37,6 +38,8 @@ class AuthBaseHandler(BaseHandler):
         self.set_header('Content-Type', 'application/json')
         self.now = datetime.datetime.now(tz.tzutc())
 
+# Handlers
+
 
 class MainHandler(BaseHandler):
 
@@ -47,15 +50,18 @@ class MainHandler(BaseHandler):
 
 class AuthLoginHandler(BaseHandler):
 
-    def verifyUser(self, username, password):
+    def verifyUser(self, username=None, password=None):
+        if not all([username, password]):
+            raise HTTPError(400, 'No username/password given')
         phash = sha.sha(password).hexdigest()
         return db.users.find_one({'username': username, 'hash': phash})
 
     def post(self):
         cred = json.loads(self.request.body)
-        if self.verifyUser(**cred):
+        res = self.verifyUser(**cred)
+        if res:
             self.set_secure_cookie('user', cred.get('username'))
-            # self.redirect(self.get_argument('next', u'/'))
+            self.set_cookie('username', cred.get('username'))
             self.log.info('User %s logged in' % cred.get('username'))
         else:
             self.send_error(401)
@@ -66,6 +72,7 @@ class AuthLogoutHandler(BaseHandler):
     def get(self):
         self.log.info('User %s logged out' % self.current_user)
         self.clear_cookie('user')
+        self.clear_cookie('username')
         self.redirect(self.get_argument('next', '/'))
 
 
@@ -95,7 +102,7 @@ class WSHandler(BaseHandler, WebSocketHandler):
 
 class RestHandler(AuthBaseHandler):
     # NOTE: Eventually fo to tornado rest handler to fix things ? (but maybe not possible)
-    collections = ['items', 'values', 'commands', 'bindings']
+    collections = ['items', 'values', 'config', 'commands', 'bindings']
 
     def get(self, args):
         """
@@ -107,6 +114,7 @@ class RestHandler(AuthBaseHandler):
 
         if args[0] == 'bindings':
             self.getBindings(args)
+            return
 
         filter = {}
         # General id filter
@@ -122,14 +130,25 @@ class RestHandler(AuthBaseHandler):
                 '$lte': ObjectId.from_datetime(parse(self.get_argument('to')) if self.get_argument('to', '') else self.now)
             }
 
+        # Each Alfred can only update its own config
+        if args[0] == 'config':
+            filter['name'] = socket.gethostname().split('.')[0]
+
         res = list(db[args[0]].find(filter))
         if len(res) == 1:
             res = res[0]
         self.write(json.dumps(res, default=json_util.default))
 
     def getBindings(self, args):
-        res = {'availables': itemManager.getAvailableBindings(), 'installed': [], 'active': []}
-        self.write(json.dumps(res))
+        res = {'available': itemManager.getAvailableBindings(),
+               'installed': config.get('bindings')}
+        for k in res['installed']:
+            if itemManager.activeBindings[k]:
+                res['installed'][k]['active'] = True
+            if k in res['available']:
+                res['available'].remove(k)
+
+        self.write(json.dumps(res, default=json_util.default))
 
     def post(self, args):
         """
@@ -144,6 +163,14 @@ class RestHandler(AuthBaseHandler):
             self.log.info('Sending command "%s" to %s' % (data['command'], data['name']))
             alfred.webServer.bus.publish('commands/%s' % data['name'],
                                          json.dumps({'command': data['command'], 'time': self.now.isoformat()}))
+
+        elif args[0] == 'bindings':
+            if len(args) != 3:
+                raise HTTPError(400, "No command or binding name given")
+            if args[1] not in ['install', 'uninstall', 'start', 'stop']:
+                raise HTTPError(405)
+            else:
+                res = getattr(itemManager, args[1])(args[2])
 
     def put(self, args):
         """
@@ -165,6 +192,11 @@ class RestHandler(AuthBaseHandler):
         else:
             data.update({'_id': args[1]})
             alfred.webServer.bus.publish('config/%s' % args[0], json.dumps({'action': 'edit', 'data': data}))
+
+            # Restart if general config modified
+            # if args[0] == 'config':
+                # alfred.stop()
+                # alfred.start()
 
     def delete(self, args):
         """

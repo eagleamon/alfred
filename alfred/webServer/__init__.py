@@ -46,12 +46,14 @@ class WebServer(web.Application):
 
         self.bus = eventBus.create(self.__module__.split('.')[-1])
         self.bus.subscribe('items/#')
+        self.bus.subscribe('errors/#')
         self.bus.on_message = self.on_message
 
         ioloop.IOLoop.instance().start()
 
     def stop(self):
         self.server.stop()
+        self.bus.stop()
         inst = ioloop.IOLoop.instance()
         inst.add_callback_from_signal(lambda x: x.stop(), inst)
 

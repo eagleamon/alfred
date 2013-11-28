@@ -1,4 +1,4 @@
-alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngAnimate', 'ui.bootstrap', 'highcharts-ng', 'angularMoment'])
+alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngCookies','ngAnimate', 'ui.bootstrap', 'highcharts-ng', 'angularMoment'])
     .config(['$routeProvider', '$httpProvider', function($routeProvider, $httpProvider){
         $routeProvider
             .when('/hmi',{
@@ -24,6 +24,10 @@ alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngAnimate', 'ui.bo
                 templateUrl: 'views/bindings.html',
                 controller: 'BindingCtrl'
             })
+            .when('/config',{
+                templateUrl: 'views/config.html',
+                controller: 'ConfigCtrl'
+            })
             .when('/login',{
                 templateUrl: 'views/login.html',
                 controller: 'LoginCtrl'
@@ -45,7 +49,7 @@ alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngAnimate', 'ui.bo
     }])
 
     .factory('WebSocket', function($rootScope){
-        $rootScope.connected = 'Connecting...'
+        // $rootScope.connected = 'Connecting...'
         return {
             connect: function(){
                 var $this = this;
@@ -53,14 +57,16 @@ alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngAnimate', 'ui.bo
                 var socket = new WebSocket('ws://' + location.host + '/live');
                 socket.onopen = function(){
                     console.info('Socket connected!');
-                    $rootScope.connected = 'Connected'
-                    $rootScope.$apply()
+                    $rootScope.$broadcast('websocket:connected');
+                    // $rootScope.connected = 'Connected'
+                    // $rootScope.$apply()
                 }
                 socket.onerror = function(event){ console.info('WebSocket error: ' + event);}
                 socket.onclose = function(event){
                     // console.log(event)
-                    $rootScope.connected = 'Connecting...'
-                    $rootScope.$apply()
+                    // $rootScope.connected = 'Connecting...'
+                    // $rootScope.$apply()
+                    $rootScope.$broadcast('websocket:disconnected');
                     console.error('Socket closed, reconnecting in 5 seconds... ' + (event.reason ? '(' + event.reason + ')' : ''))
                     setTimeout(function(){$this.connect()}, 5000)
                 }
@@ -76,21 +82,23 @@ alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngAnimate', 'ui.bo
     })
 
     // Service to handle atuthentication against backend validation
-    .factory('Auth', function($http, $location, $rootScope){
+    .factory('Auth', function($http, $location, $rootScope, $cookieStore){
         return {
-            username: '',
+            user: {username:''},
             login: function(username, password){
                 var $this = this;
                 return $http.post('/auth/login', {username:username, password: password})
                     .success(function(data){
-                        $this.username = username
+                        $this.user.username = username
+                        $rootScope.$broadcast('auth:login', $this.user)
                 })
             },
             logout: function(){
                 var $this = this;
                 $http.get('/auth/logout')
                     .success(function(){
-                        $this.username = null;
+                        $this.user.username = null;
+                        $rootScope.$broadcast('auth:logout')
                         $location.path('/')
                     })
             }
@@ -123,6 +131,10 @@ alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngAnimate', 'ui.bo
         return $resource('/api/items/:_id', {_id: '@_id.$oid'}, {update: {method:'PUT'}})
     })
 
+    .factory('Config', function($resource){
+        return $resource('/api/config/:_id', {_id: '@_id.$oid'}, {update: {method:'PUT'}})
+    })
+
     .factory('Commands', function($http, $log){
         return {
             send: function(itemName, command){
@@ -151,39 +163,65 @@ alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngAnimate', 'ui.bo
             restrict: 'E',
             replace: true,
             require: '^ngModel',
-            template:  "<span class='switch'><span class='background'></span><span class='mask'></span</span>",
+            template:  "<span class='switch' ng-click='onSwitch()'> {{ngModel}}" +
+                        "   <span class='background'></span><span class='mask'></span</span>",
             scope: {
                 ngModel: '=',
-                ngClick: '&'
+                onSwitch: '&'
             },
             link : function(scope, elem, attrs){
-                scope.switch = function(){
-                    if (!scope.ngModel)
-                        elem.find('.background').animate({left: '-56px'}, 200);
+                elem.bind('click', function(){
+                    if (scope.ngModel)
+                        elem.find('.background').animate({left: '-57px'}, 200);
                     else
                         elem.find('.background').animate({left: '0px'}, 200);
-                    scope.ngModel = ! scope.ngModel;
-                }
+                });
+                scope.$watch("ngModel", function(val){
+                    if (val)
+                        elem.find('.background').animate({left: '0px'}, 200);
+                    else
+                        elem.find('.background').animate({left: '-57px'}, 200);
+                })
+            },
+        }
+    })
+
+    .directive('websocketstatus', function(){
+        return {
+            restrict: 'EA',
+            template: "<span>{{state}}</span>",
+            scope: {},
+            link: function(scope){
+                scope.state = "ok"
+            },
+            controller: function($scope){
+                                $scope.$on('websocket:connected', function(){
+                    $scope.$apply(function(){
+                      $scope.state = "Connected"
+                    })
+                });
+                $scope.$on('websocket:disconnected', function(){
+                    $scope.$apply(function(){
+                      $scope.state = "Connecting..."
+                    })
+                })
             }
         }
     })
 
-    // .directive('focus', function () {
-    //     return function (scope, element, attrs) {
-    //         attrs.$observe('focus', function (newValue) {
-    //             newValue === 'true' && element[0].focus();
-    //         });
-    //     }
-    // })
+    .filter('title', function(){
+        return function(str){
+            return str ? str[0].toUpperCase() + str.substring(1, str.length) : ''
+        }
+    })
 
 alfred.run(function($rootScope, WebSocket, Auth, $log){
-    Highcharts.setOptions({                           // This is for all plots, change Date axis to local timezone
+    Highcharts.setOptions({     // This is for all plots, change Date axis to local timezone
         global : {
             useUTC : false
         }
     });
 
-    $rootScope.logout = Auth.logout
     $rootScope.$log = $log
     WebSocket.connect();
 })

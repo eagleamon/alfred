@@ -12,7 +12,9 @@ class Network(Binding):
         while not self.stopEvent.isSet():
             for name, item in self.items.items():
                 if item.type == 'switch':
-                    stat, out = commands.getstatusoutput('ping -c 1 %s' % item.binding.split(':')[1])
+                    stat, out = commands.getstatusoutput('ping -t2 -c 2 %s' % item.binding.split(':')[1])
+                    # if stat != 0:
+                    #     self.log.debug("Ping result: (%s) %s " % (stat, out))
                     item.value = stat == 0
                 else:
                     raise NotImplementedError('Not yet :)')

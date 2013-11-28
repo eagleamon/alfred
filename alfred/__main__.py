@@ -48,7 +48,7 @@ root.handlers[0].setFormatter(ColoredFormatter(
             'CRITICAL': 'red',
         }
     ))
-root.addHandler(RotatingFileHandler(args.log_file, maxBytes=1024 * 10, backupCount=3))
+root.addHandler(RotatingFileHandler(args.log_file, maxBytes=1024 * 1024 * 10, backupCount=3))
 root.handlers[1].setFormatter(logging.Formatter('%(asctime)s [%(name)s] %(levelname)s %(message)s'))
 
 # Do not do anything specific here as tornado autoreload will screw up... (config.db etc..)

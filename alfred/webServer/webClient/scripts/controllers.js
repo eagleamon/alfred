@@ -1,15 +1,5 @@
 alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
     $scope.items = {}
-    Item.query(function(data){
-        angular.forEach(data, function(d){
-            $scope.items[d.name] = d;
-        })
-    })
-
-    // $scope.sendCommand = Commands.send
-    $scope.sendCommand = function(){
-        console.log('ok')
-    }
 
     // Listen on updates (TODO: only for items here)
     WebSocket.onmessage = function(msg){
@@ -19,6 +9,30 @@ alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
             $scope.items[name].time = new Date(msg.time);
         }
     }
+
+    Item.query(function(data){
+        angular.forEach(data, function(d){
+            $scope.items[d.name] = d;
+            if (d.time)
+                d.time = new Date(d.time.$date);
+        })
+    })
+
+    $scope.sendCommand = Commands.send
+
+    // Check if 'old' label should be displayed, 5h old by default
+    $scope.older = function(litems, age){
+        var age = age || 1000 * 60 * 60 * 5,
+            now = new Date();
+            res = false;
+
+        angular.forEach(litems, function(item){
+            if ((item in $scope.items) && ($scope.items[item].time) && ((now - $scope.items[item].time) > age))
+                res = true;
+        })
+        return res;
+    }
+    window.old = $scope.older
 })
 
 .controller('ItemCtrl' , function($scope, Item,  WebSocket, Commands,  $modal){
@@ -67,62 +81,72 @@ alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
     $scope.sendCommand = Commands.send
 })
 
-.controller('BindingCtrl', function($scope){
-    bean.on(window, 'keydown', function(e){
-        e.preventDefault();
-        var keyCode = e.keyCode;
+.controller('BindingCtrl', function($scope, $http){
+    $http.get('/api/bindings').success(function(data){
+        $scope.active = data.active;
+        $scope.available = data.available;
+        $scope.installed = data.installed;
+    })
 
-        var match = map[keyCode];
-        if(match){
-            console.log(match)
-            sendInputCommand(match);
-        }
-        else{
-            console.log(keyCode);
-        }
-    });
-
-    var map = {
-        37: {command:'Input.Left', params:{}},
-        39: {command:'Input.Right', params:{}},
-        38: {command:'Input.Up', params:{}},
-        40: {command:'Input.Down', params:{}},
-        13: {command:'Input.Select', params:{}},
-        8:  {command:'Input.Back', params:{}},
-        77: {command:'Input.ShowOSD'},
-        27: {command:'Input.ExecuteAction', params: {action: 'close'}},
-        67: {command:'Input.ContextMenu', params:{}},
-        80: {command:'Player.PlayPause', params:{playerid:1}},
-        32: {command:'Player.PlayPause', params:{playerid:1}},
-        83: {command:'Player.Stop', params:{playerid:1}},
-        48: {command:'Application.SetMute', params:{}}
-
-    };
-
-    function sendInputCommand(match){
-        var data = {
-            jsonrpc: "2.0",
-            method: match.command,
-            params: match.params,
-            id: 1
-        }
-        ws.send(JSON.stringify(data));
+    $scope.install = function(name){
+        $scope.installed[name] = {active: false, config:{}, autoStart:false }
+        $scope.available.splice($scope.available.indexOf(name),1)
     }
-    window.send = sendInputCommand
+    // bean.on(window, 'keydown', function(e){
+    //     e.preventDefault();
+    //     var keyCode = e.keyCode;
 
-    var ws = new WebSocket('ws://htpc:9090/jsonrpc');
-    ws.onopen = function() {
-        console.log('open');
-    };
-    ws.onclose = function(evt) {
-        console.log('closed')
-    };
-    ws.onmessage = function(evt) {
-        console.log(evt.data)
-    };
-    ws.onerror = function(evt) {
-        console.log(evt.data)
-    };
+    //     var match = map[keyCode];
+    //     if(match){
+    //         console.log(match)
+    //         sendInputCommand(match);
+    //     }
+    //     else{
+    //         console.log(keyCode);
+    //     }
+    // });
+
+    // var map = {
+    //     37: {command:'Input.Left', params:{}},
+    //     39: {command:'Input.Right', params:{}},
+    //     38: {command:'Input.Up', params:{}},
+    //     40: {command:'Input.Down', params:{}},
+    //     13: {command:'Input.Select', params:{}},
+    //     8:  {command:'Input.Back', params:{}},
+    //     77: {command:'Input.ShowOSD'},
+    //     27: {command:'Input.ExecuteAction', params: {action: 'close'}},
+    //     67: {command:'Input.ContextMenu', params:{}},
+    //     80: {command:'Player.PlayPause', params:{playerid:1}},
+    //     32: {command:'Player.PlayPause', params:{playerid:1}},
+    //     83: {command:'Player.Stop', params:{playerid:1}},
+    //     48: {command:'Application.SetMute', params:{}}
+
+    // };
+
+    // function sendInputCommand(match){
+    //     var data = {
+    //         jsonrpc: "2.0",
+    //         method: match.command,
+    //         params: match.params,
+    //         id: 1
+    //     }
+    //     ws.send(JSON.stringify(data));
+    // }
+    // window.send = sendInputCommand
+
+    // var ws = new WebSocket('ws://htpc:9090/jsonrpc');
+    // ws.onopen = function() {
+    //     console.log('open');
+    // };
+    // ws.onclose = function(evt) {
+    //     console.log('closed')
+    // };
+    // ws.onmessage = function(evt) {
+    //     console.log(evt.data)
+    // };
+    // ws.onerror = function(evt) {
+    //     console.log(evt.data)
+    // };
 })
 
 .controller('GraphCtrl', function($scope, $routeParams, WebSocket, Item, $resource){
@@ -196,15 +220,21 @@ alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
                 AlertService.add({msg: "Error while updating: " + res.error, type:'danger'})
             else
                 $location.path('/')
+        }, function(err){
+            str = err.data.split('(').pop();
+            str = str.trim().substring(0, str.length - 2)
+            AlertService.add({msg: "Error while updating: " + str, type:'danger'})
         })
     }
 })
 
 .controller('LoginCtrl', function($scope, $location, AlertService, Auth){
+
     $scope.login = function(){
+        window.user = $scope.loginForm.username
         Auth.login($scope.username, $scope.password)
         .success(function(data){
-            AlertService.add({msg: Auth.username + ", you've been logged in", type:'success', timeout: 2000})
+            AlertService.add({msg: Auth.user.username + ", you've been logged in", type:'success', timeout: 2000})
             $location.path('/')
         })
         .error(function(data){
@@ -213,7 +243,40 @@ alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
     }
 })
 
+.controller('AuthCtrl', function($scope, Auth, $cookies){
+    $scope.user = {username: $cookies.username || null}
+    $scope.$on('auth:login', function(ev, user){
+        $scope.user = user;
+    })
+
+    $scope.logout = Auth.logout
+})
+
 .controller('AlertCtrl', function($scope, AlertService){
     $scope.alerts = AlertService.alerts;
     $scope.close = AlertService.close;
+})
+
+.controller('ConfigCtrl', function($scope, Config, $location, AlertService){
+    $scope.settings = Config.get()
+
+    $scope.submit = function(){
+        if (!$scope.settings.config.items.pop)
+            $scope.settings.config.items = $scope.settings.config.items.split(',').map(function(l){return l.trim()})
+        if (!$scope.settings.config.persistence.items.pop)
+            $scope.settings.config.persistence.items = $scope.settings.config.persistence.items.split(',').map(function(l){return l.trim()})
+        if (!$scope.settings.config.persistence.groups.pop)
+            $scope.settings.config.persistence.groups = $scope.settings.config.persistence.groups.split(',').map(function(l){return l.trim()})
+
+        $scope.settings.$update(function(res){
+            if (res.error)
+                AlertService.add({msg: "Error while updating: " + res.error, type:'danger'})
+            else
+                $location.path('/')
+        }, function(err){
+            str = err.data.split('(').pop();
+            str = str.trim().substring(0, str.length - 2)
+            AlertService.add({msg: "Error while updating: " + str, type:'danger'})
+        })
+    }
 })

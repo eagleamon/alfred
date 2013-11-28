@@ -5,6 +5,7 @@ import logging
 import config
 import os
 
+
 class Bus(object):
 
     """
@@ -14,7 +15,7 @@ class Bus(object):
     def __init__(self, brokerHost, brokerPort, base_topic='alfred', client_id=None):
         assert config.get('broker', 'host'), "No broker configuration provided"
 
-        self.logger = logging.getLogger(__name__)
+        self.log = logging.getLogger(__name__)
         self.brokerPort = brokerPort
         self.brokerHost = brokerHost
         self.base_topic = base_topic
@@ -26,24 +27,29 @@ class Bus(object):
         self.client.on_connect = self._on_connect
         self.client.on_disconnect = self._on_disconnect
         self.client.on_subscribe = self._on_subscribe
+        self.start()
 
-        self.client.connect(self.brokerHost, self.brokerPort)
-        self.client.loop_start()
+    def start(self):
+        try:
+            self.client.connect(self.brokerHost, self.brokerPort)
+            self.client.loop_start()
+        except Exception, E:
+            self.log.exception("Cannot connect: %s " % E.message)
 
     def _on_message(self, mosq, userData, msg):
-        # self.logger.debug("Received message: %s -> %s" % (msg.topic, msg.payload))
+        # self.log.debug("Received message: %s -> %s" % (msg.topic, msg.payload))
         self.on_message(msg)
 
     def _on_connect(self, mosq, userData, rc):
         if rc == 0:
-            self.logger.debug("%s connected to broker (%s:%d)" % (self.clientId or '', self.brokerHost, self.brokerPort))
+            self.log.debug("%s connected to broker (%s:%d)" % (self.clientId or '', self.brokerHost, self.brokerPort))
             self.connected = True
             self.on_connect(rc)
         else:
-            self.logger.error("Cannot connect: %s" % rc)
+            self.log.error("Cannot connect: %s" % rc)
 
     def _on_disconnect(self, mosq, userData, rc):
-        self.logger.warn("%s disconnected from broker: %s" % (self.clientId or '', rc))
+        self.log.warn("%s disconnected from broker: %s" % (self.clientId or '', rc))
         self.connected = False
         self.on_disconnect(rc)
 
@@ -68,6 +74,9 @@ class Bus(object):
     def publish(self, topic, message):
         self.client.publish('/'.join([self.base_topic, topic]), message)
 
+    def stop(self):
+        self.client.loop_stop()
+        self.client.disconnect()
 
 def publish(topic, message):
     bus.publish(topic, message)
@@ -75,6 +84,6 @@ def publish(topic, message):
 
 def create(clientId=None):
     """ Factory function for future upgrades.. """
-    return Bus(config.get('broker', 'host'), int(config.get('broker', 'port', 1883)), client_id=clientId+'-'+os.urandom(8).encode('hex'))
+    return Bus(config.get('broker', 'host'), int(config.get('broker', 'port', 1883)), client_id=clientId + '-' + os.urandom(8).encode('hex'))
 
 # bus = create()

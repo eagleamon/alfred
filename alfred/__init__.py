@@ -1,7 +1,7 @@
 __author__ = 'Joseph Piron'
 
-version = '0.2.1'
-version_info = (0,2,1,0)
+version = '0.3.2'
+version_info = (0,3,2,0)
 
 import logging
 import os
@@ -15,14 +15,17 @@ webServer = None
 
 def signalHandler(signum, frame):
     if signum == signal.SIGINT:
+        log.debug('SIGINT catched')
         stop()
 
 def stop():
     import ruleHandler
     import itemManager
+    import threading
     webServer.stop()
     ruleHandler.stop()
     itemManager.stop()
+    log.debug('Number of threads still active: %s' % threading.activeCount())
     log.info('Bye!')
 
 def start(args):

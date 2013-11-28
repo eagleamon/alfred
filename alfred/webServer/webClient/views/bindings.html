@@ -1,3 +1,26 @@
 <p>
-	The list of bindings
+	<div class="row">
+        <div class="col-sm-8">
+            <h4>Installed Bindings</h4>
+            <div class='panel panel-default' ng-class="{'panel-primary': config.active}" ng-repeat='(name, config) in installed'>
+                <div class="panel-heading">
+                    <h6 class='panel-title'>{{name|title}}</h6>
+
+                </div>
+                <div class="panel-body">
+                    AutoStart <input type='checkbox' ng-model='config.autoStart'>
+                    <switch ng-model='config.active' class='pull-right' on-switch='toggle(name)'/>
+                </div>
+            </div>
+
+        </div>
+        <div class="col-sm-4" ng-show='available.length!=0'>
+            <h4>Available Bindings</h4>
+            <ul class="list-group">
+                <li class="list-group-item" ng-repeat='item in available'>
+                    <span>{{item|title}}</span>
+                    <a class="btn pull-right" ng-click='install(item)'>Install</a>
+                </li>
+            </ul>
+        </div>
 </p>

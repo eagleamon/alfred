@@ -1,0 +1,90 @@
+<form class='form-horizontal' name='configForm' id='configForm' role='form' ng-submit='submit()'>
+    <legend>Settings for {{settings.name}}</legend>
+    <fieldset>
+        <legend>Http</legend>
+        <div class="form-group">
+            <label class='col-sm-2 control-label'>Debug</label>
+            <div class='col-sm-10'>
+                <input required ng-model='settings.config.http.debug' class='form-control'></input>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class='col-sm-2 control-label'>Port</label>
+            <div class="col-sm-10">
+                <input type='number' required ng-model='settings.config.http.port' class='form-control'></input>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class='col-sm-2 control-label'>Secret</label>
+            <div class="col-sm-10">
+                <input required ng-model='settings.config.http.secret' class='form-control'></input>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Definitions</legend>
+        <div class="form-group">
+            <label class='col-sm-2 control-label'>Items</label>
+            <div class="col-sm-10">
+                <input ng-model='settings.config.items' class='form-control'></input>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class='col-sm-2 control-label'>Groups</label>
+            <div class="col-sm-10">
+                <input ng-model='settings.config.groups' class='form-control'></input>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Broker</legend>
+        <div class="form-group">
+            <label class='col-sm-2 control-label'>Host</label>
+            <div class="col-sm-10">
+                <input required ng-model='settings.config.broker.host' class='form-control'></input>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class='col-sm-2 control-label'>Port</label>
+            <div class="col-sm-10">
+                <input type='input' ng-model='settings.config.broker.port' class='form-control'></input>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Persistence</legend>
+        <div class="form-group">
+            <label class='col-sm-2 control-label'>Items</label>
+            <div class="col-sm-10">
+                <input ng-model='settings.config.persistence.items' class='form-control'></input>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class='col-sm-2 control-label'>Groups</label>
+            <div class="col-sm-10">
+                <input ng-model='settings.config.persistence.groups' class='form-control'></input>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Mail</legend>
+        <div class="form-group">
+            <label class='col-sm-2 control-label'>Server</label>
+            <div class="col-sm-10">
+                <input ng-model='settings.config.mail.server' class='form-control'></input>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class='col-sm-2 control-label'>From</label>
+            <div class="col-sm-10">
+                <input type='email' ng-model='settings.config.mail.fromAddress' class='form-control'></input>
+            </div>
+        </div>
+    </fieldset>
+
+    <input type='submit' class='btn btn-primary pull-right' ng-disabled='configForm.$invalid' value='submit'></input>
+</form>

@@ -33,6 +33,7 @@ import json
 import pymongo
 import socket
 import logging
+import os
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ db = None
 path = None
 
 # Gist: https://gist.github.com/Xjs/114831
-__author__ = 'jannis@itisme.org (Jannis Andrija Schnitzer)'
+# __author__ = 'jannis@itisme.org (Jannis Andrija Schnitzer)'
 
 
 class RecursiveDictionary(dict):
@@ -78,13 +79,18 @@ class RecursiveDictionary(dict):
     def __repr__(self):
         return super(self.__class__, self).__repr__()
 
+
+# Default configuration values
 localConfig = RecursiveDictionary(
-    http=dict(port=8000, debug=True, secret='TODO: Generate Random value'),
-    broker=dict(host=''),
     bindings=dict(
         random=dict(autoStart=True, config=dict())
     ),
+    boxcar=dict(secret='', key=''),
+    broker=dict(host='localhost', port=1883),
+    http=dict(port=8000, debug=True, secret=os.urandom(16).encode('hex')),
     items=[],
+    groups={},
+    mail=dict(fromAddress='', server=''),
     persistence=dict(items=[], groups=[])
 )
 

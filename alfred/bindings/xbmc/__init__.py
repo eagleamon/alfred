@@ -2,11 +2,9 @@
 Based on code from http://www.emoticode.net/python/interact-with-xbmc-wake-on-lan-library-update.html
 """
 
-print 'ok'
-try:
-    import json
-except ImportError:
-    import simplejson as json
+from alfred.bindings import Binding
+from alfred import config
+import json
 import urllib2
 import base64
 import time
@@ -14,7 +12,31 @@ import socket
 import struct
 
 
-class Xbmc:
+class Xbmc(Binding):
+
+    def run(self):
+        # refreshRate = config.getBindingConfig('xbmc').get('refresh', 5)
+        while not self.stopEvent.isSet():
+            # for name, item in self.items.items():
+            #     if item.type == 'switch':
+            #         stat, out = commands.getstatusoutput('ping -c 1 %s' % item.binding.split(':')[1])
+            #         item.value = stat == 0
+            #     else:
+            #         raise NotImplementedError('Not yet :)')
+            self.stopEvent.wait(1)
+
+    def sendCommand(self, command):
+        """
+        Sends a command to Xbmc using JSON v6 API
+        """
+        conf = config.getBindingConfig('xbmc')
+        req = command[0]
+        params = dictt(k.split('=') for k in command[1].split(',')) if len(command)>1 else {}
+        xj = XbmcJsonCommand(**conf)
+        self.log.debug(getattr(xj, req)(**params))
+
+
+class XbmcJsonCommand:
 
     def __init__(self, host, port=80, username='', password=''):
         self.server = "http://%s:%s/jsonrpc" % (host, port)
@@ -23,10 +45,9 @@ class Xbmc:
         self.password = password
 
     def __call__(self, **kwargs):
-        print kwargs
         method = '.'.join(map(str, self.n))
         self.n = []
-        return Xbmc.__dict__['Request'](self, method, kwargs)
+        return XbmcJsonCommand.__dict__['Request'](self, method, kwargs)
 
     def __getattr__(self, name):
         if not self.__dict__.has_key('n'):
@@ -66,14 +87,14 @@ class Xbmc:
 
 # xbmc = Xbmc(http_address)
 
-# # Sleep for 2 minutes
+# Sleep for 2 minutes
 # time.sleep(120)
 
-# # Send scan request
+# Send scan request
 # xbmc.VideoLibrary.Scan()
 
-# # Sleep for 5 minutes
+# Sleep for 5 minutes
 # time.sleep(300)
 
-# # Shutdown
+# Shutdown
 # xbmc.System.Shutdown()
