@@ -1,18 +1,13 @@
 __author__ = 'joseph'
 
-# from zmq.eventloop import ioloop, zmqstream
-# ioloop.install()
-
 from tornado import web, httpserver, ioloop
-# import zmq
 import logging
 import os
 from alfred import config
 from alfred import eventBus
 import handlers as h
 
-from alfred import config
-
+__webServer = bus = None
 
 class WebServer(web.Application):
 
@@ -20,10 +15,10 @@ class WebServer(web.Application):
         self.log = logging.getLogger(__name__)
         settings = dict(
             # debug=config.get('http', 'debug'),
-            debug=config.get('http', 'debug', False),
+            debug=config.get('http').get('debug', False),
             static_path=os.path.join(os.path.dirname(__file__), 'webClient/'),
             login_url='/auth/login',
-            cookie_secret=config.get('http', 'secret')
+            cookie_secret=config.get('http').get('secret')
         )
 
         handlers = [
@@ -40,9 +35,9 @@ class WebServer(web.Application):
         web.Application.__init__(self, handlers, **settings)
 
     def start(self):
-        self.log.info("Starting webserver on port: %s" % config.get('http', 'port'))
+        self.log.info("Starting webserver on port: %s" % config.get('http').get('port'))
         self.server = httpserver.HTTPServer(self)
-        self.server.listen(config.get('http', 'port'))
+        self.server.listen(config.get('http').get('port'))
 
         self.bus = eventBus.create(self.__module__.split('.')[-1])
         self.bus.subscribe('items/#')
@@ -59,3 +54,16 @@ class WebServer(web.Application):
 
     def on_message(self, msg):
         h.WSHandler.dispatch(msg)
+
+# To keep a coherent interface with other modules
+
+def start():
+    global bus, __webServer
+    bus = eventBus.create(__name__.split('.')[-1])
+    __webServer = WebServer()
+    __webServer.start()
+
+
+def stop():
+    if __webServer:
+        __webServer.stop()

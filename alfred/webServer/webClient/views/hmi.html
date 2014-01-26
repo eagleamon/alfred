@@ -1,4 +1,4 @@
-<div class="panel panel-default">
+<div class="panel panel-primary">
     <div class="panel-heading">
         <h6 class='panel-title'>Living</h6>
     </div>
@@ -19,10 +19,17 @@
             <!-- <input type='checkbox' class='pull-right'> -->
             <switch ng-model='items["Htpc"].value' class='pull-right' on-switch='sendCommand("Htpc", "toggle")'/>
         </li>
+        <li class="list-group-item">
+            Lampes
+            <div class="pull-right">
+                <switch ng-model='items["LivLightLeft"].value' on-switch='sendCommand("LivLightLeft", "toggle")'/>
+                <switch ng-model='items["LivLightRight"].value' on-switch='sendCommand("LivLightRight", "toggle")'/>
+            </div>
+        </li>
     </ul>
 </div>
 
-<div class="panel panel-default">
+<div class="panel panel-primary">
     <div class="panel-heading">
         <h6 class='panel-title'>Bureau</h6>
     </div>
@@ -39,7 +46,7 @@
         </li>
         <!-- <li class="list-group-item">
             <div class="btn-group">
-                <button class='btn btn-default'><span class="glyphicon glyphicon-chevron-down"></span></button>
+                <button class='btn btn-primary'><span class="glyphicon glyphicon-chevron-down"></span></button>
                 <button class='btn btn-default'><span class="glyphicon glyphicon-stop"></button>
                 <button class='btn btn-default'><span class="glyphicon glyphicon-chevron-up"></button>
             </div>
@@ -48,7 +55,7 @@
     </ul>
 </div>
 
-<div class="panel panel-default">
+<div class="panel panel-primary">
     <div class="panel-heading">
         <h6 class='panel-title'>Chambre</h6>
     </div>
@@ -65,8 +72,8 @@
         </li>
     </ul>
 </div>
-
-<div class="panel panel-default">
+<!--
+<div class="panel panel-primary">
     <div class="panel-heading">
         <h6 class='panel-title'>Cuisine</h6>
     </div>
@@ -83,7 +90,7 @@
         <li class="list-group-item">
             <form class='form-horizontal'>
                 <div class="form-group">
-                    <!-- <label class='col-sm-2'>Dimmer</label> -->
+                    <label class='col-sm-2'>Dimmer</label>
                     <p class="col-sm-2">Dimmer</p>
                     <div class="col-sm-5 pull-right">
                         <input class='form-control' type='range' min=0 max=100 />
@@ -95,7 +102,7 @@
     </ul>
 </div>
 
-<div class="panel panel-default">
+<div class="panel panel-primary">
     <div class="panel-heading">
         <h6 class='panel-title'>Salle de bain</h6>
     </div>
@@ -112,7 +119,7 @@
     </ul>
 </div>
 
-<div class="panel panel-default">
+<div class="panel panel-primary">
     <div class="panel-heading">
         <h6 class='panel-title'>Extérieur</h6>
     </div>
@@ -128,3 +135,4 @@
         </li>
     </ul>
 </div>
+ -->

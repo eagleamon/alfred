@@ -2,7 +2,7 @@ __author__ = 'Joseph Piron'
 
 import mosquitto
 import logging
-import config
+from alfred import config
 import os
 
 
@@ -13,7 +13,7 @@ class Bus(object):
     """
 
     def __init__(self, brokerHost, brokerPort, base_topic='alfred', client_id=None):
-        assert config.get('broker', 'host'), "No broker configuration provided"
+        assert config.get('broker').get('host'), "No broker configuration provided"
 
         self.log = logging.getLogger(__name__)
         self.brokerPort = brokerPort
@@ -84,6 +84,6 @@ def publish(topic, message):
 
 def create(clientId=None):
     """ Factory function for future upgrades.. """
-    return Bus(config.get('broker', 'host'), int(config.get('broker', 'port', 1883)), client_id=clientId + '-' + os.urandom(8).encode('hex'))
+    return Bus(config.get('broker').get('host'), int(config.get('broker').get('port', 1883)), client_id=clientId + '-' + os.urandom(8).encode('hex'))
 
 # bus = create()

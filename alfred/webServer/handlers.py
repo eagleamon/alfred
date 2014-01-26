@@ -1,6 +1,6 @@
 from tornado.web import RequestHandler, HTTPError, authenticated
 from tornado.websocket import WebSocketHandler
-from alfred import config, db, itemManager, version
+from alfred import config, itemManager, version
 from bson import json_util
 from bson.objectid import ObjectId
 from dateutil import tz
@@ -12,7 +12,6 @@ import datetime
 import socket
 import sha
 import os
-
 
 class BaseHandler(RequestHandler):
 
@@ -54,7 +53,7 @@ class AuthLoginHandler(BaseHandler):
         if not all([username, password]):
             raise HTTPError(400, 'No username/password given')
         phash = sha.sha(password).hexdigest()
-        return db.users.find_one({'username': username, 'hash': phash})
+        return alfred.db.users.find_one({'username': username, 'hash': phash})
 
     def post(self):
         cred = json.loads(self.request.body)
@@ -134,7 +133,7 @@ class RestHandler(AuthBaseHandler):
         if args[0] == 'config':
             filter['name'] = socket.gethostname().split('.')[0]
 
-        res = list(db[args[0]].find(filter))
+        res = list(alfred.db[args[0]].find(filter))
         if len(res) == 1:
             res = res[0]
         self.write(json.dumps(res, default=json_util.default))
@@ -143,7 +142,7 @@ class RestHandler(AuthBaseHandler):
         res = {'available': itemManager.getAvailableBindings(),
                'installed': config.get('bindings')}
         for k in res['installed']:
-            if itemManager.activeBindings[k]:
+            if k in itemManager.activeBindings:
                 res['installed'][k]['active'] = True
             if k in res['available']:
                 res['available'].remove(k)
@@ -161,7 +160,7 @@ class RestHandler(AuthBaseHandler):
         data = json.loads(self.request.body)
         if args[0] == 'commands':
             self.log.info('Sending command "%s" to %s' % (data['command'], data['name']))
-            alfred.webServer.bus.publish('commands/%s' % data['name'],
+            alfred.webserver.bus.publish('commands/%s' % data['name'],
                                          json.dumps({'command': data['command'], 'time': self.now.isoformat()}))
 
         elif args[0] == 'bindings':
@@ -186,17 +185,20 @@ class RestHandler(AuthBaseHandler):
         if '_id' in data:
             del data['_id']
 
-        res = db[args[0]].update({'_id': ObjectId(args[1])}, {'$set': data})
+        res = alfred.db[args[0]].update({'_id': ObjectId(args[1])}, {'$set': data})
         if res['err']:
             self.write(dict(error=res['err']))
         else:
             data.update({'_id': args[1]})
-            alfred.webServer.bus.publish('config/%s' % args[0], json.dumps({'action': 'edit', 'data': data}))
+            alfred.webserver.bus.publish('config/%s' % args[0], json.dumps({'action': 'edit', 'data': data}))
 
             # Restart if general config modified
-            # if args[0] == 'config':
-                # alfred.stop()
-                # alfred.start()
+            if args[0] == 'config':
+                self.log.info("Cought a config modification, restarting...")
+                self.finish()
+                # config.save()
+                alfred.stop()
+
 
     def delete(self, args):
         """
@@ -208,8 +210,8 @@ class RestHandler(AuthBaseHandler):
         if len(args) != 2:
             raise HTTPError(400, "No id given in request")
 
-        res = db[args[0]].remove({'_id': ObjectId(args[1])})
+        res = alfred.db[args[0]].remove({'_id': ObjectId(args[1])})
         if res['err']:
             self.write(dict(error=res['err']))
         else:
-            alfred.webServer.bus.publish('config/%s' % args[0], json.dumps({'action': 'delete', 'data': args[1]}))
+            alfred.webserver.bus.publish('config/%s' % args[0], json.dumps({'action': 'delete', 'data': args[1]}))

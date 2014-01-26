@@ -3,6 +3,7 @@ from alfred import config
 import time
 import urllib2
 
+defaultConfig = {'refresh': 5}
 
 class Http(Binding):
 

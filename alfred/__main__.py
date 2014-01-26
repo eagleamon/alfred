@@ -1,7 +1,5 @@
 """ Entry point to start the daemon """
 
-__author__ = "Joseph Piron"
-
 import sys
 import logging
 import argparse
@@ -16,14 +14,14 @@ def parseArgs(sysArgs=''):
     parser.add_argument('-d', '--debug', action='store_true',
                         help='Activate debug logging for the application')
     parser.add_argument('--log_file', help='Path to log file (needs write access on directory - /tmp/alfred.log)',
-                        default='/tmp/alfred.log')
+                        default='/var/log/alfred.log')
 
     group = parser.add_argument_group('Database')
     group.add_argument('--db_host', help='Database server address', required=True)
     group.add_argument('--db_port', help='Database server port (27017)', default=27017, type=int)
     group.add_argument('--db_name', help='Database environment name (alfred)', default='alfred')
 
-    group = parser.add_argument_group('Config file')
+    group = parser.add_argument_group('Config file (deprecated)')
     group.add_argument('-c', '--conf_file', help='Config file')
 
     return parser.parse_args(sysArgs)

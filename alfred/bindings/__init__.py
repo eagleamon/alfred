@@ -45,5 +45,5 @@ class Binding(Thread):
     def config(self):
         return NotImplementedError()
 
-    def sendCommand(self):
-        raise NotImplementedError('Should be overwritten')
+    def sendCommand(self, cmd):
+        raise NotImplementedError('Should be overwritten (%s)' % cmd)

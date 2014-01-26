@@ -4,7 +4,7 @@ import json
 import eventBus
 import alfred
 from alfred.bindings import Binding
-from alfred import persistence, db, config
+from alfred import persistence, config
 
 items = {}
 activeBindings = {}
@@ -26,7 +26,7 @@ def getAvailableBindings():
     return res
 
 
-def start():
+def init():
     global bus
     bus = eventBus.create(__name__.split('.')[-1])
     bus.subscribe('commands/#')
@@ -47,7 +47,7 @@ def start():
 # TODO: migrate to new config form
 
 
-def stop():
+def dispose():
     for b in activeBindings:
         activeBindings[b].stop()
     items.clear()
@@ -56,20 +56,22 @@ def stop():
 
 
 def installBinding(bindingName):
-    __import__('alfred.bindings.%s' % bindingName)
+    mod = __import__('alfred.bindings.%s' % bindingName, fromlist='alfred')
 
-    if not (bindings.find_one({'name': bindingName})):
-        db.bindings.insert(dict(
-            name=bindingName,
+    # temp = config.get('bindings')
+    if not bindingName in config.get('bindings'):
+        config['bindings'][bindingName] = dict(
             autoStart=False,
-            config={}
-        ))
+            config=getattr(mod,'defaultConfig', {})
+        )
+        config.save()
 
 
 def uninstallBinding(bindingName):
     if bindingName in activeBindings:
         stopBinding(bindingName)
-    db.bindings.remove({'name': bindingName})
+    del config['bindings'][bindingName]
+    config.save()
 
 
 def startBinding(bindingName):
@@ -82,9 +84,9 @@ def startBinding(bindingName):
 
 def stopBinding(bindingName):
     log.info('Stopping binding %s' % bindingName)
-    b = activeBindings[bindingName]
-    b.stop()
-    del b
+    ins = activeBindings[bindingName]
+    ins.stop()
+    del activeBindings[bindingName]
 
 
 # def register(name, type, binding, groups=None, icon=None, **kwargs):
@@ -106,7 +108,7 @@ def register(name):
 
     elif bind not in activeBindings:
         log.error('Binding %s not installed or started' % bind)
-        bus.publish('ok', 'Binding %s not installed or started' % str(bind))
+        bus.publish('error', 'Binding %s not installed or started' % str(bind))
         return
     else:
         item = activeBindings[bind].register(**itemDef)
