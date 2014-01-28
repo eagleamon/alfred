@@ -4,8 +4,11 @@
             <h4>Installed Bindings</h4>
             <div class='panel panel-default' ng-class="{'panel-primary': config.active}" ng-repeat='(name, config) in installed'>
                 <div class="panel-heading">
-                    <h6 class='panel-title'>{{name|title}}</h6>
-
+                    <!-- <h6 class='panel-title'>{{name|title}}</h6> -->
+                    <b><spans class="panel-title">{{name|title}}</spans></b>
+                    <!-- <span class='pull-right close'>x</span> -->
+                    <a class='pull-right close' ng-click="uninstall(name)">x</a>
+                    <!-- <div class="clearfix"></div> -->
                 </div>
                 <div class="panel-body">
                     AutoStart <input type='checkbox' ng-model='config.autoStart'>

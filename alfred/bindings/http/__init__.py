@@ -12,7 +12,7 @@ class Http(Binding):
         self.cache = {}
 
     def run(self):
-        refreshRate = config.getBindingConfig('http').get('refresh', 5)
+        refreshRate = self.config.get('refresh', 5)
         while not self.stopEvent.isSet():
             for name, item in self.items.items():
                 if item.type == 'number':

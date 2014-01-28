@@ -12,6 +12,7 @@ import datetime
 import socket
 import sha
 import os
+import copy
 
 class BaseHandler(RequestHandler):
 
@@ -36,6 +37,10 @@ class AuthBaseHandler(BaseHandler):
 
         self.set_header('Content-Type', 'application/json')
         self.now = datetime.datetime.now(tz.tzutc())
+
+    def ajax_error(self, code, error):
+        self.set_status(code)
+        self.write(error)
 
 # Handlers
 
@@ -140,7 +145,8 @@ class RestHandler(AuthBaseHandler):
 
     def getBindings(self, args):
         res = {'available': itemManager.getAvailableBindings(),
-               'installed': config.get('bindings')}
+               'installed': copy.deepcopy(config.get('bindings'))}
+
         for k in res['installed']:
             if k in itemManager.activeBindings:
                 res['installed'][k]['active'] = True
@@ -157,7 +163,9 @@ class RestHandler(AuthBaseHandler):
         if args[0] not in RestHandler.collections:
             raise HTTPError(404, "%s not available in API" % args[0])
 
-        data = json.loads(self.request.body)
+        if self.request.body:
+            data = json.loads(self.request.body)
+
         if args[0] == 'commands':
             self.log.info('Sending command "%s" to %s' % (data['command'], data['name']))
             alfred.webserver.bus.publish('commands/%s' % data['name'],
@@ -165,11 +173,15 @@ class RestHandler(AuthBaseHandler):
 
         elif args[0] == 'bindings':
             if len(args) != 3:
-                raise HTTPError(400, "No command or binding name given")
-            if args[1] not in ['install', 'uninstall', 'start', 'stop']:
-                raise HTTPError(405)
+                self.ajax_error(400, "No command or binding name given")
+                # raise HTTPError(400, "No command or binding name given")
+            if args[2] not in ['install', 'uninstall', 'start', 'stop']:
+                self.ajax_error(405, "Command %s not allowed" % args[2])
+                # raise HTTPError(405)
             else:
-                res = getattr(itemManager, args[1])(args[2])
+                err = getattr(itemManager, '%sBinding' % args[2])(args[1])
+                if err:
+                    self.ajax_error(400, err)
 
     def put(self, args):
         """
@@ -198,7 +210,6 @@ class RestHandler(AuthBaseHandler):
                 self.finish()
                 # config.save()
                 alfred.stop()
-
 
     def delete(self, args):
         """

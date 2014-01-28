@@ -9,6 +9,7 @@ import handlers as h
 
 __webServer = bus = None
 
+
 class WebServer(web.Application):
 
     def __init__(self):
@@ -34,15 +35,15 @@ class WebServer(web.Application):
 
         web.Application.__init__(self, handlers, **settings)
 
-    def start(self):
-        self.log.info("Starting webserver on port: %s" % config.get('http').get('port'))
-        self.server = httpserver.HTTPServer(self)
-        self.server.listen(config.get('http').get('port'))
-
         self.bus = eventBus.create(self.__module__.split('.')[-1])
         self.bus.subscribe('items/#')
         self.bus.subscribe('errors/#')
         self.bus.on_message = self.on_message
+
+    def start(self):
+        self.log.info("Starting webserver on port: %s" % config.get('http').get('port'))
+        self.server = httpserver.HTTPServer(self)
+        self.server.listen(config.get('http').get('port'))
 
         ioloop.IOLoop.instance().start()
 
@@ -57,10 +58,11 @@ class WebServer(web.Application):
 
 # To keep a coherent interface with other modules
 
+
 def start():
     global bus, __webServer
-    bus = eventBus.create(__name__.split('.')[-1])
     __webServer = WebServer()
+    bus = __webServer.bus
     __webServer.start()
 
 

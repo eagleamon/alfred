@@ -13,10 +13,12 @@ def reqs():
     return [str(i.req) for i in pr(os.path.join(os.path.dirname(__file__), 'requirements.txt'))]
 
 def version():
-    fd = open('alfred/__init__.py')
-    fd.readline()
-    fd.readline()
-    return fd.readline().split('=')[1].strip().strip("'")
+    # fd = open('alfred/__init__.py')
+    # fd.readline()
+    # fd.readline()
+    # return fd.readline().split('=')[1].strip().strip("'")
+    import alfred
+    return alfred.version
 
 setup(
     name = "alfred",

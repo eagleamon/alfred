@@ -5,8 +5,7 @@ import os
 
 def clean():
     local('find . -name "*.pyc" -delete')
-    local('rm -rf dist build *.egg-info')
-    local('rm alfred.log')
+    local('rm -rf alfred.log dist build *.egg-info')
 
 
 # TODO: change to package
@@ -29,7 +28,6 @@ def publish():
     put('dist/%s' % f, '/tmp/%s' % f)
     sudo('pip install -U /tmp/%s' % f)
     sudo('touch /var/log/alfred.log')
-    sudo('chown ')
     sudo('restart alfred')
 
 def run(where='home'):

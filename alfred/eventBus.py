@@ -77,6 +77,7 @@ class Bus(object):
     def stop(self):
         self.client.loop_stop()
         self.client.disconnect()
+        self.log.debug("%s disconnected from broker (%s:%d)" % (self.clientId or '', self.brokerHost, self.brokerPort))
 
 def publish(topic, message):
     bus.publish(topic, message)

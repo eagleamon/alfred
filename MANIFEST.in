@@ -1,2 +1,2 @@
 include requirements.txt README.md data/alfred.conf
-recursive-include alfred/webServer/webClient *.*
+recursive-include alfred/webserver/webClient *.*

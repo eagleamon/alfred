@@ -4,13 +4,14 @@ import json
 import eventBus
 import alfred
 from alfred.bindings import Binding
-from alfred import persistence, config
+from alfred import persistence, config, getHost, db
 
 items = {}
 activeBindings = {}
 
 bus = None
 log = logging.getLogger(__name__)
+
 
 def getAvailableBindings():
     """
@@ -58,31 +59,44 @@ def dispose():
 def installBinding(bindingName):
     mod = __import__('alfred.bindings.%s' % bindingName, fromlist='alfred')
 
-    # temp = config.get('bindings')
     if not bindingName in config.get('bindings'):
+        log.info('Installing binding %s' % bindingName)
         config['bindings'][bindingName] = dict(
             autoStart=False,
-            config=getattr(mod,'defaultConfig', {})
+            config=getattr(mod, 'defaultConfig', {})
         )
-        config.save()
+        db.config.update({'name': getHost()}, {'$set': {'config': config}})
 
 
 def uninstallBinding(bindingName):
     if bindingName in activeBindings:
         stopBinding(bindingName)
+    log.info('Uninstalling binding %s' % bindingName)
     del config['bindings'][bindingName]
-    config.save()
+    db.config.update({'name': getHost()}, {'$set': {'config': config}})
 
 
 def startBinding(bindingName):
+    if not bindingName in config.get('bindings'):
+        res = 'Binding %s not installed' % bindingName
+        log.error(res)
+        return res
+
     log.info("Starting binding %s" % bindingName)
     __import__('alfred.bindings.%s' % bindingName)
     instance = Binding.plugins[bindingName]()
     activeBindings[bindingName] = instance
+    for item in config.get('items'):
+        register(item)
     instance.start()
 
 
 def stopBinding(bindingName):
+    if not bindingName in activeBindings:
+        res = 'Binding %s not installed' % bindingName
+        log.error(res)
+        return res
+
     log.info('Stopping binding %s' % bindingName)
     ins = activeBindings[bindingName]
     ins.stop()
@@ -91,11 +105,8 @@ def stopBinding(bindingName):
 
 # def register(name, type, binding, groups=None, icon=None, **kwargs):
 def register(name):
-    # Check for a previous registration
-    if name in items:
-        return items[name]
 
-    # If not, register it
+    # Get informations
     itemDef = db.items.find_one(dict(name=name))
     if not itemDef:
         log.error('No definition found for item %s' % name)
@@ -112,15 +123,16 @@ def register(name):
         return
     else:
         item = activeBindings[bind].register(**itemDef)
+        item.bus = bus
         # Small tip to get icons
         if not itemDef.get('icon'):
             db.items.update(dict(name=item.name), {'$set': {'icon': item.icon}})
 
-    item.bus = bus
-    items[itemDef.get('name')] = item
+    # Check for a previous registration
+    if name not in items:
+        items[name] = item
     log.debug('Item %s registered' % item.name)
     return item
-
 
 def unregister(_id):
     item = filter(lambda x: str(x._id) == _id, items.values()).pop()

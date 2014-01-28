@@ -144,6 +144,27 @@ alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngCookies','ngAnim
         }
     })
 
+    // Can't map directly to REST as bindings are part of config by host and config for all hosts like items exists
+    .factory('Binding', function($http, $log){
+        return {
+            query: function(){
+                return $http.get('/api/bindings');
+            },
+            start: function(name){
+                return $http.post('/api/bindings/' + name + '/start');
+            },
+            stop: function(name){
+                return $http.post('/api/bindings/' + name + '/stop');
+            },
+            install: function(name){
+                return $http.post('/api/bindings/' + name + '/install');
+            },
+            uninstall: function(name){
+                return $http.post('/api/bindings/' + name + '/uninstall');
+            }
+        }
+    })
+
     .directive('showOnHover', function(){
         return {
             link: function(scope, element, attrs){

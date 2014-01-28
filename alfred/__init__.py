@@ -2,12 +2,10 @@
 Modules that are thread like have start/stop methods, others have init/dispose methods
 """
 
-print 'How can I serve, sir ? :)'
-
 __author__ = 'Joseph Piron'
 
-version = '0.3.3'
-version_info = (0, 3, 3, 0)
+version = '0.3.4'
+version_info = (0, 3, 4, 0)
 
 import threading
 import logging
@@ -25,21 +23,25 @@ db = config = None
 def dbConnect(dbHost, dbPort, dbName):
     """ Configure db to be used for config, items, etc... """
     global db
-    db = getattr(MongoClient('hal', port=dbPort), dbName)
+    db = getattr(MongoClient(dbHost, port=dbPort), dbName)
 
 
 def loadConfig():
     """ Load configuration from db according to host name """
     global config
-    name = socket.gethostname().split('.')[0]
-    dbConf = db.config.find_one(dict(name=name))
-    config = RecursiveDictionary()
-    if dbConf:
-        config.rec_update(dbConf.get('config'))
+    name = getHost()
+    config = db.config.find_one(dict(name=name))
+    if config:
+        config = config.get('config')
         log.info("Fetched configuration from database for '%s'" % name)
     else:
-        config.rec_update(baseConfig)
-        db.config.save({'name': name, 'config': config})
+        config = {}
+        config.update(baseConfig)
+        db.config.save(dict(name=name, config=config))
+
+
+def getHost():
+    return socket.gethostname().split('.')[0]
 
 
 def signalHandler(signum, frame):
@@ -50,7 +52,9 @@ def signalHandler(signum, frame):
 
 def init(db_host, db_port=27017, db_name='alfred', **kwargs):
     """ Separation to get shell access """
+
     # Configure the db if required
+    print 'How can I serve, sir ? :)'
     dbConnect(db_host, db_port, db_name)
     loadConfig()
 

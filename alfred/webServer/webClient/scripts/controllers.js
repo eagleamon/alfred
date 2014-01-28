@@ -81,17 +81,51 @@ alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
     $scope.sendCommand = Commands.send
 })
 
-.controller('BindingCtrl', function($scope, $http){
-    $http.get('/api/bindings').success(function(data){
-        $scope.active = data.active;
+.controller('BindingCtrl', function($scope, $http, Binding, AlertService){
+    Binding.query().success(function(data){
         $scope.available = data.available;
         $scope.installed = data.installed;
     })
 
     $scope.install = function(name){
-        $scope.installed[name] = {active: false, config:{}, autoStart:false }
-        $scope.available.splice($scope.available.indexOf(name),1)
+        Binding.install(name).success(function(data){
+            $scope.installed[name] = {active: false, config:{}, autoStart:false }
+            $scope.available.splice($scope.available.indexOf(name),1)
+        }).error(function(data){
+            AlertService.add({msg: data, type: 'danger', timeout: 1500});
+        })
     }
+
+    $scope.uninstall = function(name){
+        Binding.uninstall(name).success(function(data){
+            delete $scope.installed[name]
+            $scope.available.push(name)
+        })
+    }
+
+    $scope.toggle = function(name){
+        if ($scope.installed[name].active)
+            $scope.stop(name);
+        else
+            $scope.start(name);
+    }
+
+    $scope.start = function(name){
+        Binding.start(name).success(function(data){
+            $scope.installed[name].active = true;
+        }).error(function(data){
+            AlertService.add({msg: data, type:'danger', timeout: 1500});
+        })
+    }
+
+    $scope.stop = function(name){
+        Binding.stop(name).success(function(data){
+            $scope.installed[name].active = false;
+        }).error(function(data){
+            AlertService.add({msg: data, type:'danger', timeout: 1500});
+        })
+    }
+
     // bean.on(window, 'keydown', function(e){
     //     e.preventDefault();
     //     var keyCode = e.keyCode;

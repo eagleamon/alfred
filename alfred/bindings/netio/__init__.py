@@ -4,12 +4,16 @@ import time
 from telnetlib import Telnet
 from threading import Lock
 
+defaultConfig = {
+    'host': 'localhost',
+    'port': 1234,
+    'refresh': 30
+}
 
 class Netio(Binding):
 
     def run(self):
-        bConfig = config.getBindingConfig('netio')
-        refresh = bConfig.get('refresh', 30)
+        refresh = self.config.get('refresh')
         self.lock = Lock()
 
         self.connect()
@@ -28,9 +32,8 @@ class Netio(Binding):
             self.stopEvent.wait(refresh)
 
     def connect(self):
-        bConfig = config.getBindingConfig('netio')
-        self.log.info('Connecting to smart plug on %s:%s' % (bConfig.get('host'), bConfig.get('port')))
-        self.telnet = Telnet(bConfig.get('host'), bConfig.get('port'))
+        self.log.info('Connecting to smart plug on %s:%s' % (self.config.get('host'), self.config.get('port')))
+        self.telnet = Telnet(self.config.get('host'), self.config.get('port'))
         res = self.telnet.read_until('\r\n')
         if not res:
             self.log.error('No answer from Netio')

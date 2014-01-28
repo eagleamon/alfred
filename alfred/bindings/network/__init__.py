@@ -4,11 +4,12 @@ import struct
 import socket
 import commands
 
+defaultConfig = {'refresh': 5}
 
 class Network(Binding):
 
     def run(self):
-        refreshRate = config.getBindingConfig('network').get('refresh', 5)
+        refreshRate = self.config.get('refresh')
         while not self.stopEvent.isSet():
             for name, item in self.items.items():
                 if item.type == 'switch':
