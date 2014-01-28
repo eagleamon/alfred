@@ -11,6 +11,12 @@ import time
 import socket
 import struct
 
+defaultConfig = {
+    'host': 'htpc.',
+    'port': 80,
+    'username': '',
+    'password': ''
+}
 
 class Xbmc(Binding):
 
@@ -29,10 +35,9 @@ class Xbmc(Binding):
         """
         Sends a command to Xbmc using JSON v6 API
         """
-        conf = config.getBindingConfig('xbmc')
         req = command[0]
         params = dictt(k.split('=') for k in command[1].split(',')) if len(command)>1 else {}
-        xj = XbmcJsonCommand(**conf)
+        xj = XbmcJsonCommand(**self.config)
         self.log.debug(getattr(xj, req)(**params))
 
 

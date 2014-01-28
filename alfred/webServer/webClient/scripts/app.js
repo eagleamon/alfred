@@ -1,4 +1,4 @@
-alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngCookies','ngAnimate', 'ui.bootstrap', 'highcharts-ng', 'angularMoment'])
+alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngCookies','ngAnimate', 'ui.bootstrap', 'highcharts-ng', 'angularMoment', 'ui.select2'])
     .config(['$routeProvider', '$httpProvider', function($routeProvider, $httpProvider){
         $routeProvider
             .when('/hmi',{
@@ -161,6 +161,9 @@ alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngCookies','ngAnim
             },
             uninstall: function(name){
                 return $http.post('/api/bindings/' + name + '/uninstall');
+            },
+            save: function(name, value){
+                return $http.put('/api/bindings/' + name, data = {autoStart: value.autoStart , config: value.config})
             }
         }
     })

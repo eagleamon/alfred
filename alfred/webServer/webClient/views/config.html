@@ -27,7 +27,7 @@
         <div class="form-group">
             <label class='col-sm-2 control-label'>Items</label>
             <div class="col-sm-10">
-                <input ng-model='settings.config.items' class='form-control'></input>
+                <input style='width:100%' ui-select2="itemsOptions" ng-model="settings.config.items" data-placeholder='Pick some items...'>
             </div>
         </div>
         <div class="form-group">
@@ -88,4 +88,3 @@
 
     <input type='submit' class='btn btn-primary pull-right' ng-disabled='configForm.$invalid' value='submit'></input>
 </form>
-<div class='clearfix'></div>

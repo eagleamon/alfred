@@ -1,6 +1,6 @@
 from tornado.web import RequestHandler, HTTPError, authenticated
 from tornado.websocket import WebSocketHandler
-from alfred import config, itemManager, version
+from alfred import config, itemManager, version, db, getHost
 from bson import json_util
 from bson.objectid import ObjectId
 from dateutil import tz
@@ -197,19 +197,22 @@ class RestHandler(AuthBaseHandler):
         if '_id' in data:
             del data['_id']
 
-        res = alfred.db[args[0]].update({'_id': ObjectId(args[1])}, {'$set': data})
-        if res['err']:
-            self.write(dict(error=res['err']))
+        if args[0] == 'bindings':
+            config.get('bindings').get(args[1]).update(data)
+            db.config.update({'name': getHost()}, {'$set': {'config': config}})
         else:
-            data.update({'_id': args[1]})
-            alfred.webserver.bus.publish('config/%s' % args[0], json.dumps({'action': 'edit', 'data': data}))
+            res = alfred.db[args[0]].update({'_id': ObjectId(args[1])}, {'$set': data})
+            if res['err']:
+                self.write(dict(error=res['err']))
+            else:
+                data.update({'_id': args[1]})
+                alfred.webserver.bus.publish('config/%s' % args[0], json.dumps({'action': 'edit', 'data': data}))
 
-            # Restart if general config modified
-            if args[0] == 'config':
-                self.log.info("Cought a config modification, restarting...")
-                self.finish()
-                # config.save()
-                alfred.stop()
+                # Restart if general config modified
+                if args[0] == 'config':
+                    self.log.info("Cought a config modification, restarting...")
+                    self.finish()
+                    alfred.stop()
 
     def delete(self, args):
         """

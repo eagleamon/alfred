@@ -126,6 +126,10 @@ alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
         })
     }
 
+    $scope.autoStart = function(name){
+        Binding.save(name, $scope.installed[name]);
+    }
+
     // bean.on(window, 'keydown', function(e){
     //     e.preventDefault();
     //     var keyCode = e.keyCode;
@@ -291,8 +295,24 @@ alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
     $scope.close = AlertService.close;
 })
 
-.controller('ConfigCtrl', function($scope, Config, $location, AlertService){
+.controller('ConfigCtrl', function($scope, Config, $location, Item, AlertService){
     $scope.settings = Config.get()
+
+    // $scope.select2 = ['ok','ko']
+    $scope.itemsOptions = {
+        multiple: true,
+        simple_tags: true,
+        closeOnSelect: false,
+        tags: function(){return $scope.items},
+        createSearchChoice: function() { return null; },
+    };
+
+    $scope.items=[];
+    Item.query(function(data){
+        angular.forEach(data, function(d){
+            $scope.items.push(d.name)
+        })
+    });
 
     $scope.submit = function(){
         if (!$scope.settings.config.items.pop)

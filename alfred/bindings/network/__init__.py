@@ -6,20 +6,21 @@ import commands
 
 defaultConfig = {'refresh': 5}
 
+
 class Network(Binding):
 
     def run(self):
-        refreshRate = self.config.get('refresh')
         while not self.stopEvent.isSet():
             for name, item in self.items.items():
                 if item.type == 'switch':
                     stat, out = commands.getstatusoutput('ping -t2 -c 2 %s' % item.binding.split(':')[1])
+                    self.log.debug('Ping for %s: %s' % (name, stat))
                     # if stat != 0:
                     #     self.log.debug("Ping result: (%s) %s " % (stat, out))
                     item.value = stat == 0
                 else:
                     raise NotImplementedError('Not yet :)')
-            self.stopEvent.wait(refreshRate)
+            self.stopEvent.wait(self.config.get('refresh'))
 
     def sendWOL(self, macAddress):
         """
