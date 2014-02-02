@@ -1,42 +1,132 @@
+#     def register(self, **kwargs):
+#         """ More interesting to register by binding than by name """
+
+#         if not kwargs.get('type') in Binding.validTypes:
+#             raise AttributeError('Valid types: %s' % Random.validTypes)
+
+#         res = self.items[kwargs.get('binding').split(':')[1]] = self.getClass(kwargs.get('type'))(**kwargs)
+#         return res
+
+
+from swap.SwapInterface import SwapInterface
+from swap.protocol.SwapDefs import SwapState, SwapType
 from alfred.bindings import Binding
-from alfred import config
-import zmq
-import json
 import logging
+import os
 
-log = logging.getLogger(__name__)
+class Swap(SwapInterface, Binding):
+    baseDir = os.path.dirname(__file__)
+
+    def __init__(self, *args, **kwargs):
+        SwapInterface.__init__(self, *args, settings=os.path.join(Swap.baseDir, 'settings.xml'), start=False, **kwargs)
+        self.server.setDaemon(True)
+        self.items = {}
+        self.log = logging.getLogger(__name__)
+
+    def start(self):
+        self.server.start()
+
+    def stop(self):
+        self.server.stop()
+
+    def getItem(self, cfg):
+        for k, v in self.items.items():
+            if v.binding.split(':')[1] == cfg:
+                return v
+
+# Events
+
+    def swapServerStarted(self):
+        """
+        SWAP server started successfully
+        """
+        self.log.info('Swap server started (%s motes)' % self.getNbOfMotes())
+
+    def newMoteDetected(self, mote):
+        """
+        New mote detected by SWAP server
+
+        'mote'  Mote detected
+        """
+        self.log.debug("New mote with address %s: %s (by %s)" %
+                      (mote.address, mote.definition.product, mote.definition.manufacturer))
+
+    def swapPacketReceived(self, packet):
+        """
+        New SWAP packet received
+
+        @param packet: SWAP packet received
+        """
+        self.log.debug("Received (RSSI: %s, LQI: %s): %s" % (packet.rssi, packet.lqi, packet.toString()))
+
+    def newEndpointDetected(self, endpoint):
+        """
+        New endpoint detected by SWAP server
+
+        'endpoint'  Endpoint detected
+        """
+        self.log.debug("New endpoint with Reg ID = " + str(endpoint.getRegId()) + " : " + endpoint.name)
+
+    def moteStateChanged(self, mote):
+        """
+        Mote state changed
+
+        'mote'  Mote having changed
+        """
+        self.log.debug("Mote with address %s switched to '%s'" % (mote.address, SwapState.toString(mote.state)))
+
+        # SYNC mode entered?
+        if mote.state == SwapState.SYNC:
+            self._addrInSyncMode = mote.address
+
+    def moteAddressChanged(self, mote):
+        """
+        Mote address changed
+
+        'mote'  Mote having changed
+        """
+        self.log.debug("Mote changed address to %s" % (mote.address))
+
+    # def registerValueChanged(self, register):
+    #     """
+    #     Register value changed
+
+    #     @param register: Register having changed
+    #     """
+    #     self.log.debug('Register %s.%s changed: %s' % (register.getAddress(), register.id, register))
+
+    def endpointValueChanged(self, endpoint):
+        """
+        Endpoint value changed
+
+        @param endpoint: Endpoint having changed
+        """
+        self.log.debug('Endpoint %s changed: %s' % (endpoint.id, endpoint.getValueInAscii()))
+        item = self.getItem(endpoint.id)
+        if item:
+            if endpoint.type == SwapType.NUMBER:
+                item.value = float(endpoint.getValueInAscii())
+            else:
+                raise NotImplemented('Yet')
+
+    def parameterValueChanged(self, parameter):
+        """
+        Configuration parameter changed
+
+        @param parameter: configuration parameter having changed
+        """
+        self.log.debug('parameter changed: %s' % parameter)
 
 
-class Swap(Binding):
+if __name__ == '__main__':
 
-    def run(self):
-        ctx = zmq.Context()
-        self.client = ctx.socket(zmq.SUB)
-        self.client.setsockopt_string(zmq.SUBSCRIBE, unicode(config.getBindingConfig('swap').get('topics')))
+    def bye(*args):
+        a.stop()
+        exit()
 
-        if not config.getBindingConfig('swap'):
-            config.setBindingConfig('swap',
-                                    dict(protocol='tcp', host='localhost', port='10001'))
+    import signal
+    signal.signal(signal.SIGINT, bye)
+    a = Swap()
+    a.start()
 
-        c = config.getBindingConfig('swap')
-        self.client.connect("%s://%s:%s" % (c.get('protocol'), c.get('host'), c.get('port')))
-
-        while not self.stopEvent.isSet():
-            topic, msg = self.client.recv_multipart()
-            log.debug('message received: %s:%s' % (topic, msg))
-
-            try:
-                link = '/'.join(topic.split('/')[1:])
-                if link in self.items:
-                    self.items[link].value = json.loads(msg).get('value')
-            except Exception, E:
-                log.exception('Error while parsing message: %s' % E.message)
-
-    def register(self, **kwargs):
-        """ More interesting to register by binding than by name """
-
-        if not kwargs.get('type') in Binding.validTypes:
-            raise AttributeError('Valid types: %s' % Random.validTypes)
-
-        res = self.items[kwargs.get('binding').split(':')[1]] = self.getClass(kwargs.get('type'))(**kwargs)
-        return res
+    signal.pause()

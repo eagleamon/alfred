@@ -1,2 +1,3 @@
 include requirements.txt README.md data/alfred.conf
 recursive-include alfred/webserver/webClient *.*
+recursive-include alfred/bindings *.xml *.json *.txt

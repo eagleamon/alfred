@@ -1,5 +1,7 @@
 import logging
 import os
+import alfred
+import json
 
 # Default configuration values
 baseConfig = dict(
@@ -67,3 +69,29 @@ class RecursiveDictionary(dict):
 
     # def __repr__(self):
     #     return super(self.__class__, self).__repr__()
+
+
+class MqttHandler(logging.Handler):
+
+    """"""
+
+    def __init__(self):
+        logging.Handler.__init__(self)
+        self._bus = None
+        self.host = alfred.getHost()
+    #     self.bus = eventBus.create()
+
+
+    @property
+    def bus(self):
+        if not self._bus:
+            from alfred import eventBus
+            self._bus = eventBus.create('logger')
+        return self._bus
+
+    def emit(self, record):
+        if record.name != 'alfred.eventBus':
+            res = {'message': record.message, 'time': record.created, 'name': record.name, 'host': self.host, 'level': record.levelname}
+            self.bus.publish('log/%s/%s'% (self.host, record.levelname), json.dumps(res))
+
+        # self.bus.publish('log/host/%s' % record.levelname, str(record.getMessage()))

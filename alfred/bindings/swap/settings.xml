@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<settings>
+  <devices>
+    <local>/Users/joseph/Documents/repos/panstamp/devices</local>
+  </devices>
+  <serial>serial.xml</serial>
+  <network>network.xml</network>
+</settings>

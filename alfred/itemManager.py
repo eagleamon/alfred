@@ -57,7 +57,17 @@ def dispose():
 
 
 def installBinding(bindingName):
-    mod = __import__('alfred.bindings.%s' % bindingName, fromlist='alfred')
+    try:
+        mod = __import__('alfred.bindings.%s' % bindingName, fromlist='alfred')
+    except Exception, E:
+        try:
+            import pip
+            pip.main('install -r {0}/bindings/{1}/requirements.txt'.format(os.path.dirname(__file__), bindingName).split())
+            mod = __import__('alfred.bindings.%s' % bindingName, fromlist='alfred')
+        except:
+            res = 'Cannot install binding: %s' % E.message
+            log.error(res)
+            return res
 
     if not bindingName in config.get('bindings'):
         log.info('Installing binding %s' % bindingName)
@@ -119,7 +129,6 @@ def register(name):
 
     elif bind not in activeBindings:
         log.error('Binding %s not installed or started' % bind)
-        bus.publish('error', 'Binding %s not installed or started' % str(bind))
         return
     else:
         item = activeBindings[bind].register(**itemDef)

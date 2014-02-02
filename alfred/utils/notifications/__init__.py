@@ -1,22 +1,20 @@
+import boxcar
 import smtplib
+from alfred import config
 from email.mime.text import MIMEText
 
 
 def sendMail(to, message, subject="Nouvelles de la maison.."):
     """ Sends a mail.. yep.. :) """
 
-    s = smtplib.SMTP(config.get('mail', 'server'))
+    s = smtplib.SMTP(config.get('mail').get('server'))
     msg = MIMEText(message)
-    msg['From'] = 'Alfred <%s>' % config.get('mail', 'fromAddress')
+    msg['From'] = 'Alfred <%s>' % config.get('mail').get('fromAddress')
     msg['To'] = to
     msg['Subject'] = subject
     if not isinstance(to, list):
         to = [to]
-    return s.sendmail(config.get('mail', 'fromAddress'), to, msg.as_string())
-
-
-from alfred import config
-import boxcar
+    return s.sendmail(config.get('mail').get('fromAddress'), to, msg.as_string())
 
 
 def sendToBoxcar(emails, message, url='http://alfred.miom.be',

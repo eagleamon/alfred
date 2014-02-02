@@ -17,18 +17,18 @@ def install():
         sudo('pip install -r requirements.txt')
 
 def build():
+    clean()
     local('python setup.py sdist')
 
 
-@hosts('hal')
+@hosts('hal', 'pi@raspbmc')
 def publish():
-    clean()
-    build()
-    f = os.listdir('dist')[0]
+    f = os.listdir('dist')[-1]
     put('dist/%s' % f, '/tmp/%s' % f)
     sudo('pip install -U /tmp/%s' % f)
     sudo('touch /var/log/alfred.log')
     sudo('restart alfred')
+    sudo('uname -a')
 
 def run(where='home'):
     if where=='home':

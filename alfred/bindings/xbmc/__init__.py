@@ -21,14 +21,7 @@ defaultConfig = {
 class Xbmc(Binding):
 
     def run(self):
-        # refreshRate = config.getBindingConfig('xbmc').get('refresh', 5)
         while not self.stopEvent.isSet():
-            # for name, item in self.items.items():
-            #     if item.type == 'switch':
-            #         stat, out = commands.getstatusoutput('ping -c 1 %s' % item.binding.split(':')[1])
-            #         item.value = stat == 0
-            #     else:
-            #         raise NotImplementedError('Not yet :)')
             self.stopEvent.wait(1)
 
     def sendCommand(self, command):

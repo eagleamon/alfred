@@ -48,7 +48,7 @@ alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngCookies','ngAnim
 
     }])
 
-    .factory('WebSocket', function($rootScope){
+    .factory('WebSocket', function($rootScope, $log){
         // $rootScope.connected = 'Connecting...'
         return {
             connect: function(){
@@ -72,9 +72,24 @@ alfred = angular.module('alfred', ['ngRoute', 'ngResource', 'ngCookies','ngAnim
                 }
                 socket.onmessage = function(msg){
                     var msg = JSON.parse(msg.data);
-                    $rootScope.$apply(
-                        $this.onmessage(msg)
-                    )
+                    if (msg.level)
+                    {
+                        tmp = 'Alfred: ' + msg.message;
+                        if (msg.level == 'DEBUG')
+                            $log.debug(tmp);
+                        else if (msg.level == 'INFO')
+                            $log.info(tmp);
+                        else if (msg.level == 'WARN')
+                            $log.warn(tmp);
+                        else
+                            $log.error(tmp);
+                    }
+                    else
+                    {
+                        $rootScope.$apply(
+                            $this.onmessage(msg)
+                        )
+                    }
                 }
             },
             onmessage: function(callback){}

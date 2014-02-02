@@ -2,11 +2,11 @@ from alfred.bindings import Binding
 from alfred import config
 import commands
 
+defaultConfig = {'refresh': 5}
 
 class Exec(Binding):
 
     def run(self):
-        refreshRate = config.getBindingConfig('exec').get('refresh', 5)
         while not self.stopEvent.isSet():
             for name, item in self.items.items():
                 try:
@@ -14,7 +14,7 @@ class Exec(Binding):
                     item.value = out
                 except Exception, E:
                     self.log.exception('Error while executing "%s": %s'%(item.binding.split(':')[1], E.message))
-            self.stopEvent.wait(1)
+            self.stopEvent.wait(self.config.get('refresh'))
 
     def sendCommand(self, command):
         self.log.debug(commands.getoutput(command))

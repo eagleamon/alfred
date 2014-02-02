@@ -3,8 +3,7 @@ __author__ = 'joseph'
 from tornado import web, httpserver, ioloop
 import logging
 import os
-from alfred import config
-from alfred import eventBus
+from alfred import config, eventBus, getHost
 import handlers as h
 
 __webServer = bus = None
@@ -37,7 +36,7 @@ class WebServer(web.Application):
 
         self.bus = eventBus.create(self.__module__.split('.')[-1])
         self.bus.subscribe('items/#')
-        self.bus.subscribe('errors/#')
+        self.bus.subscribe('log/%s/#' % getHost())
         self.bus.on_message = self.on_message
 
     def start(self):

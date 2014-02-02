@@ -2,7 +2,7 @@ __author__ = 'Joseph Piron'
 
 import mosquitto
 import logging
-from alfred import config
+import alfred
 import os
 
 
@@ -12,8 +12,8 @@ class Bus(object):
     Handy class to provide message queue functionnalities to all plugins
     """
 
-    def __init__(self, brokerHost, brokerPort, base_topic='alfred', client_id=None):
-        assert config.get('broker').get('host'), "No broker configuration provided"
+    def __init__(self, brokerHost, brokerPort, base_topic='alfred', client_id=None, start=True):
+        assert alfred.config.get('broker').get('host'), "No broker configuration provided"
 
         self.log = logging.getLogger(__name__)
         self.brokerPort = brokerPort
@@ -27,7 +27,8 @@ class Bus(object):
         self.client.on_connect = self._on_connect
         self.client.on_disconnect = self._on_disconnect
         self.client.on_subscribe = self._on_subscribe
-        self.start()
+        if start:
+            self.start()
 
     def start(self):
         try:
@@ -79,12 +80,13 @@ class Bus(object):
         self.client.disconnect()
         self.log.debug("%s disconnected from broker (%s:%d)" % (self.clientId or '', self.brokerHost, self.brokerPort))
 
+
 def publish(topic, message):
     bus.publish(topic, message)
 
 
-def create(clientId=None):
+def create(clientId=None, start=True):
     """ Factory function for future upgrades.. """
-    return Bus(config.get('broker').get('host'), int(config.get('broker').get('port', 1883)), client_id=clientId + '-' + os.urandom(8).encode('hex'))
+    return Bus(alfred.config.get('broker').get('host'), int(alfred.config.get('broker').get('port', 1883)), client_id=(clientId or 'id') + '-' + os.urandom(8).encode('hex'), start=start)
 
 # bus = create()

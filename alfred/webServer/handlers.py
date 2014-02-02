@@ -85,10 +85,13 @@ class WSHandler(BaseHandler, WebSocketHandler):
 
     @classmethod
     def dispatch(cls, msg):
-        payload = json.loads(msg.payload)
-        data = dict(topic=msg.topic, value=payload['value'], time=payload['time'])
+        if msg.topic.startswith('alfred/log'):
+            data = msg.payload
+        else:
+            payload = json.loads(msg.payload)
+            data = json.dumps(dict(topic=msg.topic, value=payload['value'], time=payload['time']))
         for c in WSHandler.clients:
-            c.write_message(json.dumps(data))
+            c.write_message(data)
 
     def open(self):
         WSHandler.clients.add(self)
