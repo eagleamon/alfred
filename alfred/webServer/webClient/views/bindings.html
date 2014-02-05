@@ -1,4 +1,4 @@
-<p>
+
 	<div class="row">
         <div class="col-sm-8">
             <h4>Installed Bindings</h4>
@@ -12,7 +12,12 @@
                 </div>
                 <div class="panel-body">
                     AutoStart <input type='checkbox' ng-model='config.autoStart' ng-change='autoStart(name)'>
+                    <a class='btn' ng-click="isc=!isc">Config</a><span class="caret"></span>
                     <switch ng-model='config.active' class='pull-right' on-switch='toggle(name)'/>
+                    <div collapse="isc">
+                        <hr>
+                            <pre class='well well-large'>{{config.config|json}}</pre>
+                    </div>
                 </div>
             </div>
 
@@ -26,4 +31,3 @@
                 </li>
             </ul>
         </div>
-</p>

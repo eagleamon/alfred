@@ -71,6 +71,22 @@
     background-position: right center;
 }
 
+.onoffswitch {
+    padding-right: 25px;
+    background-image: url(../images/onoffswitch.png);
+    background-size: 20px 20px;
+    background-repeat: no-repeat;
+    background-position: right center;
+}
+
+.lamp {
+    padding-right: 25px;
+    background-image: url(../images/lamp.png);
+    background-size: 20px 20px;
+    background-repeat: no-repeat;
+    background-position: right center;
+}
+
 td.actions {
     width: 100px;
 }

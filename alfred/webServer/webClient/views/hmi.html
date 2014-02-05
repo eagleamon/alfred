@@ -21,6 +21,7 @@
         </li>
         <li class="list-group-item">
             Lampes
+            <span class="lamp"></span>
             <div class="pull-right">
                 <switch ng-model='items["LivLightLeft"].value' on-switch='sendCommand("LivLightLeft", "toggle")'/>
                 <switch ng-model='items["LivLightRight"].value' on-switch='sendCommand("LivLightRight", "toggle")'/>
@@ -68,6 +69,13 @@
                 <span class="temperature">{{items['TempChambre'].value|number:1}}{{items['TempChambre'].unit}}</span>
                 <span class="humidity">{{items['HumChambre'].value|number:1}}{{items['HumChambre'].unit}}</span>
                 <span class="light">{{items['LightChambre'].value}}{{items['LightChambre'].unit}}</span>
+            </div>
+        </li>
+                <li class="list-group-item">
+            Lampes
+            <div class="pull-right">
+                <switch ng-model='items["ChambreLightLeft"].value' on-switch='sendCommand("ChambreLightLeft", "toggle")'/>
+                <switch ng-model='items["ChambreLightRight"].value' on-switch='sendCommand("ChambreLightRight", "toggle")'/>
             </div>
         </li>
     </ul>

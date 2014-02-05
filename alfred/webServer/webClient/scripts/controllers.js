@@ -86,6 +86,7 @@ alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
         $scope.available = data.available;
         $scope.installed = data.installed;
     })
+    $scope.isc = true;
 
     $scope.install = function(name){
         Binding.install(name).success(function(data){

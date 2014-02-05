@@ -1,7 +1,10 @@
 TODO's
 
-1 Don't log to files etc at init, but in start if defined in host config (sd wear)
-2 Don't register all items two times, and only items for binding
+- Don't log to files etc at init, but in start if defined in host config (sd wear)
+- multiple netio (and others) -> config
+- Don't register all items two times, and only items for binding
+- handle devices for swap: in swap folder, svn co when needed
 - Handle bower components nicely -> create a webclient build for publishing
-3 Put xbmc web interface control in media page
-4 Change angular ellipsis for binding page binding column
+- Put xbmc web interface control in media page
+- Change angular ellipsis for binding page binding column
+- edition web intf des item commands et des groupes

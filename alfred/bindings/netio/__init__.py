@@ -49,21 +49,25 @@ class Netio(Binding):
         if not cmd.endswith('\r'):
             cmd += '\r'
         self.log.debug('Sending: %r' % cmd)
-        with self.lock:
-            self.telnet.write(cmd)
-            res = self.telnet.read_until('\r\n')
-        self.log.debug('Received: %r' % res)
+        try:
+            with self.lock:
+                self.telnet.write(cmd)
+                res = self.telnet.read_until('\r\n')
+            self.log.debug('Received: %r' % res)
 
-        if not res:
-            self.log.error('No answer from Netio')
-        else:
-            res = res.split('\r\n')[:-1][-1]
-        if not res.startswith('250'):
-            self.log.warn('Error code returned from netio: %s' % res)
-            if res.startswith('130'):
-                self.connect()
-                return self.get(cmd)
-        return ' '.join(res.split(' ')[1:])
+            if not res:
+                self.log.error('No answer from Netio')
+            else:
+                res = res.split('\r\n')[:-1][-1]
+            if not res.startswith('250'):
+                self.log.warn('Error code returned from netio: %s' % res)
+                if res.startswith('130'):
+                    self.connect()
+                    return self.get(cmd)
+            return ' '.join(res.split(' ')[1:])
+        except Exception, E:
+            self.connect()
+            return self.get(cmd)
 
     def login(self):
         self.get('login admin admin')
