@@ -1,5 +1,5 @@
-from alfred.bindings import Binding
-from alfred import config
+from alfred import config, bindings
+from multiprocessing.pool import ThreadPool
 import struct
 import socket
 import commands
@@ -7,25 +7,31 @@ import commands
 defaultConfig = {'refresh': 5}
 
 
-class Network(Binding):
+class Network(bindings.Binding):
+
+
+    # TODO: register, only accept Switch
 
     def run(self):
+        if not self.items: return
+        pool = ThreadPool(len(self.items))
         while not self.stopEvent.isSet():
-            for name, item in self.items.items():
-                if item.type == 'switch':
-                    stat, out = commands.getstatusoutput('ping -t2 -c 2 %s' % item.binding.split(':')[1])
-                    self.log.debug('Ping for %s: %s' % (name, stat))
-                    # if stat != 0:
-                    #     self.log.debug("Ping result: (%s) %s " % (stat, out))
-                    item.value = stat == 0
-                else:
-                    raise NotImplementedError('Not yet :)')
+            pool.map(self.pingItem, self.items.values())
             self.stopEvent.wait(self.config.get('refresh'))
 
+
+    def pingItem(self, item):
+        stat, out = self.ping(item.binding.split(':')[1])
+        self.log.debug('Ping for %s: %s' % (item.name, stat))
+        item.value = stat == 0
+
+    def ping(self, nameOrIp, count=2, timeout=2):
+        """ Pings a host and return the (stat, output) result """
+
+        return commands.getstatusoutput('ping -t%d -c%d %s' % (timeout, count, nameOrIp))
+
     def sendWOL(self, macAddress):
-        """
-        Sends a WOL packet to switch a computer on.
-        """
+        """ Sends a WOL packet to switch a computer on """
 
         if len(macAddress) == 12 + 5:
             macAddress = macAddress.replace(macAddress[2], '')

@@ -1,12 +1,12 @@
 <form role='form' method='post' name='loginForm' id='loginForm' ng-submit='login()'>
     <legend>Login</legend>
-    <div class="form-group">
-        <label for='username'>Username</label>
+    <div class="input-group form-group">
+        <span class="input-group-addon"><i class='glyphicon glyphicon-user'></i></span>
         <input type='text' ng-required class='form-control' ng-model='username' name='username' placeholder='Enter username'></input>
     </div>
 
-    <div class="form-group">
-        <label for='password'>Password</label>
+    <div class="input-group form-group">
+        <span class="input-group-addon"><i class='glyphicon glyphicon-lock'></i></span>
         <input type='password' ng-required class='form-control' ng-model='password' name='password' placeholder='Enter password'>
     </div>
 

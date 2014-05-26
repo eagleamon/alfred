@@ -35,52 +35,34 @@ def start():
 def stop():
     pass
 
-# def getIncludingGroups(group, grpCfg):
-#     res = set([group])
-#     for k, v in grpCfg.items():
-#         if group in v:
-#             res.add(k)
-#     return res
-
 
 def on_message(msg):
-    from alfred import itemManager
-    from dateutil import parser
+    try:
+        from alfred import itemManager
+        from dateutil import parser
 
-    # Persist last value
-    data = json.loads(msg.payload)
-    if msg.topic.startswith('alfred/items'):
-        item = msg.topic.split('/')[-1]
-        update('items', dict(name=item), {'$set': {'value':data.get('value'), 'time': parser.parse(data.get('time'))}}, upsert=True)
+        # Persist last value
+        data = json.loads(msg.payload)
+        if msg.topic.startswith('alfred/items'):
+            item = msg.topic.split('/')[-1]
+            update('items', dict(name=item), {'$set': {'value':data.get('value'), 'time': parser.parse(data.get('time'))}}, upsert=True)
 
-    # Persist historic if desired from config of items
-        if item in config.get('persistence').get('items'):
+        # Persist historic if desired from config of items
+            if item in config.get('persistence').get('items') or "*" in config.get("persistence").get('items'):
+                _id = db.items.find_one(dict(name=item))['_id']
+
+                # TODO create id based on timestamp from message
+                save('values', dict(item_id=_id, value=data.get('value')))
+
+        # ... or groups (automatically in persistence -> subcribed )
+        elif msg.topic.startswith('alfred/groups'):
+            group = msg.topic.split('/')[2]
+            # if group in getIncludingGroups(group, config.get('groups')):
+            item = msg.topic.split('/')[-1]
             _id = itemManager.items[item]._id
             # save('values', dict(item_id=_id, time=data.get('time'), value=data.get('value')))
             save('values', dict(item_id=_id, value=data.get('value')))
 
-    # ... or groups (automatically in persistence -> subcribed )
-    elif msg.topic.startswith('alfred/groups'):
-        group = msg.topic.split('/')[2]
-        # if group in getIncludingGroups(group, config.get('groups')):
-        item = msg.topic.split('/')[-1]
-        _id = itemManager.items[item]._id
-        # save('values', dict(item_id=_id, time=data.get('time'), value=data.get('value')))
-        save('values', dict(item_id=_id, value=data.get('value')))
+    except Exception, E:
+        log.error("Error while handling message: " + E.message)
 
-
-# class Persistence(Thread):
-#     __metaclass__ = PluginMount
-
-#     def __init__(self, topics):
-#         self.bus = eventBus.create()
-#         self.bus.on_message = on_message
-#         for topic in topics:
-#             self.bus.subscribe(topic)
-
-
-#         Thread.__init__(self)
-#         self.setDeamon(True)
-
-#     def on_message(self, msg):
-#         raise NotImplementedError('Persistence object must implement this method')

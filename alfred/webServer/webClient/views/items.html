@@ -1,9 +1,8 @@
-<!--
-<a class="btn btn-primary">Add one</a>
-<span class='form-group pull-right'>
-    <label class='sr-only'>Search: </label>
-    <input ng-model='searchText' type='search' class='form-control'></input>
-</span> -->
+<div class="row">
+    <div class="col-sm-4"><a href='#'>Add an item</a>    {{searchText}}</div>
+    <div class="col-sm-4 col-sm-offset-4"><input type='search' placeholder='Search in all properties...' class='form-control' ng-model='searchText'/></div>
+</div>
+
 <table class="table table-striped table-hover center">
     <thead>
         <th>Name</th>
@@ -13,7 +12,7 @@
         <th>Last Update</th>
     </thead>
     <tbody>
-        <tr ng-repeat="item in items | filter:searchText">
+        <tr ng-repeat="item in items | array | orderBy:'name' | filter:searchText " class='repeat-item'>
             <td class="{{item.icon}}">{{item.name}}</td>
             <td>{{item.binding|limitTo:15}}</td>
             <td>
@@ -57,3 +56,4 @@
         </div>
     </div>
 </script>
+

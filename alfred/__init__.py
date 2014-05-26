@@ -4,8 +4,8 @@ Modules that are thread like have start/stop methods, others have init/dispose m
 
 __author__ = 'Joseph Piron'
 
-version = '0.3.7'
-version_info = (0, 3, 7, 0)
+version_info = (0, 3, 8, 4)
+version = '.'.join(map(str, version_info))
 
 import threading
 import logging

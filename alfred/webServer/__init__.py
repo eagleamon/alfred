@@ -36,7 +36,8 @@ class WebServer(web.Application):
 
         self.bus = eventBus.create(self.__module__.split('.')[-1])
         self.bus.subscribe('items/#')
-        self.bus.subscribe('log/%s/#' % getHost())
+        # self.bus.subscribe('log/%s/#' % getHost())
+        self.bus.subscribe('log/#')
         self.bus.on_message = self.on_message
 
     def start(self):

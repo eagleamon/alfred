@@ -13,21 +13,35 @@ from swap.protocol.SwapDefs import SwapState, SwapType
 from alfred.bindings import Binding
 import logging
 import os
+import re
+
+defaultConfig = {'serial':  '/dev/ttyUSB0'}
+
 
 class Swap(SwapInterface, Binding):
     baseDir = os.path.dirname(__file__)
 
     def __init__(self, *args, **kwargs):
-        SwapInterface.__init__(self, *args, settings=os.path.join(Swap.baseDir, 'settings.xml'), start=False, **kwargs)
-        self.server.setDaemon(True)
-        self.items = {}
         self.log = logging.getLogger(__name__)
+        self.server = None
+        # Prepare config files
+        try:
+            tmp = re.sub('<port>(.*)</port>', '<port>%s</port>' % self.config.get('serial'), open(os.path.join(Swap.baseDir, 'serial.xml')).read())
+            open(os.path.join(Swap.baseDir, 'serial.xml'), 'w').write(tmp)
+            SwapInterface.__init__(self, *args, settings=os.path.join(Swap.baseDir, 'settings.xml'), start=False, **kwargs)
+            self.server.setDaemon(True)
+        except Exception, E:
+            self.log.error('Cannot initialize: %s' % E.message)
+
+        self.items = {}
 
     def start(self):
-        self.server.start()
+        if self.server:
+            self.server.start()
 
     def stop(self):
-        self.server.stop()
+        if self.server:
+            self.server.stop()
 
     def getItem(self, cfg):
         for k, v in self.items.items():
@@ -35,6 +49,9 @@ class Swap(SwapInterface, Binding):
                 return v
 
 # Events
+
+    def configChanged(self):
+        pass
 
     def swapServerStarted(self):
         """

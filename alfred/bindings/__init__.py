@@ -51,3 +51,6 @@ class Binding(Thread):
 
     def sendCommand(self, cmd):
         raise NotImplementedError('Should be overwritten (%s)' % cmd)
+
+    def configChanged(self, newConfig):
+        self.log.debug("configChanged not implemented for this binding")

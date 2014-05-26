@@ -35,6 +35,7 @@ class AuthBaseHandler(BaseHandler):
             self.send_error(401)
             return
 
+        self.set_cookie('username', self.current_user)
         self.set_header('Content-Type', 'application/json')
         self.now = datetime.datetime.now(tz.tzutc())
 
@@ -65,7 +66,7 @@ class AuthLoginHandler(BaseHandler):
         res = self.verifyUser(**cred)
         if res:
             self.set_secure_cookie('user', cred.get('username'))
-            self.set_cookie('username', cred.get('username'))
+            # self.set_cookie('username', cred.get('username'))
             self.log.info('User %s logged in' % cred.get('username'))
         else:
             self.send_error(401)
@@ -213,7 +214,7 @@ class RestHandler(AuthBaseHandler):
 
                 # Restart if general config modified
                 if args[0] == 'config':
-                    self.log.info("Cought a config modification, restarting...")
+                    self.log.info("Caught a config modification, restarting...")
                     self.finish()
                     alfred.stop()
 

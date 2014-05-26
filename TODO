@@ -8,3 +8,9 @@ TODO's
 - Put xbmc web interface control in media page
 - Change angular ellipsis for binding page binding column
 - edition web intf des item commands et des groupes
+- general command to restart all nodes i.e.
+- health monitor of all instances from all instances (topic?)
+- goto PYTHON3
+- create a debian package
+
+- publish alfred on pip

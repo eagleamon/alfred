@@ -12,17 +12,11 @@ def read(fname):
 def reqs():
     return [str(i.req) for i in pr(os.path.join(os.path.dirname(__file__), 'requirements.txt'))]
 
-def version():
-    # fd = open('alfred/__init__.py')
-    # fd.readline()
-    # fd.readline()
-    # return fd.readline().split('=')[1].strip().strip("'")
-    import alfred
-    return alfred.version
+import alfred
 
 setup(
     name = "alfred",
-    version = version(),
+    version = alfred.version,
     author = "Joseph Piron",
     author_email = "joseph.piron@gmail.com",
     description = ("An interpretation of OpenHab, Domogik, and other great domotic projects."),

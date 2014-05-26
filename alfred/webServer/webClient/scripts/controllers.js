@@ -43,6 +43,7 @@ alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
 
     }
 
+    // Get Items and parse dates
     $scope.items = {}
     Item.query(function(data){
         angular.forEach(data, function(d){
@@ -203,7 +204,7 @@ alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
         $scope.data = [];
         $scope.chart = {
             chart:{
-                zoomType: 'x'
+                zoomType: 'x',
             },
             animation: {duration:800},
             title: {
@@ -211,6 +212,7 @@ alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
             },
             series: [{
                 data: $scope.data,
+                // step: 'left',
                 name: $scope.item.name + ($scope.item.unit ? ' (' + $scope.item.unit + ')': ''),
                 // marker: {enabled:false},
                 animation:{duration:1000}
@@ -230,8 +232,11 @@ alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
         }
 
         $resource('/api/values/item_id/:item_id').query({'item_id': $scope.item._id.$oid}, function(data){
+            if ($scope.item.type == 'switch')
+                $scope.chart.series[0].step = 'left';
+
             angular.forEach(data, function(d){
-                $scope.data.push([getTimeStamp(d._id.$oid), d.value])
+                $scope.data.push([getTimeStamp(d._id.$oid), typeof(d.value) == 'number' ? d.value: d.value|0])
             })
             $scope.chart.loading = false;
         })
