@@ -1,26 +1,43 @@
 from tornado.web import RequestHandler, HTTPError, authenticated
 from tornado.websocket import WebSocketHandler
-from alfred import config, itemManager, version, db, getHost
-from bson import json_util
+from alfred import config, itemManager, version, db, getHost, logging
+from bson.json_util import dumps, loads
 from bson.objectid import ObjectId
 from dateutil import tz
 from dateutil.parser import parse
 import alfred
-import logging
-import json
 import datetime
-import socket
 import sha
 import os
 import copy
+import traceback
+
 
 class BaseHandler(RequestHandler):
 
     def initialize(self):
-        self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger(type(self).__name__)
 
     def get_current_user(self):
         return self.get_secure_cookie('user')
+
+    def write_error(self, status_code, **kwargs):
+        """ Custom error display as no html should ever be sent """
+
+        self.set_header('Content-Type', 'text/plain')
+        if self.settings.get("debug") and "exc_info" in kwargs:
+            # in debug mode, try to send a traceback
+            for line in traceback.format_exception(*kwargs["exc_info"]):
+                self.write(line)
+            self.finish()
+        else:
+            self.finish("%(code)d: %(message)s" % {
+                "code": status_code,
+                "message": self._reason,
+            })
+
+    def httperror(self, status_code, err):
+        raise HTTPError(status_code, err, reason=err)
 
     # @property
     # def zmq(self):
@@ -31,20 +48,15 @@ class AuthBaseHandler(BaseHandler):
 
     def prepare(self):
         # User must be authenticated
-        if not self.current_user:
-            self.send_error(401)
-            return
+        if not self.current_user: raise HTTPError(401)
 
         self.set_cookie('username', self.current_user)
         self.set_header('Content-Type', 'application/json')
         self.now = datetime.datetime.now(tz.tzutc())
 
-    def ajax_error(self, code, error):
-        self.set_status(code)
-        self.write(error)
+        self.data = loads(self.request.body or '{}')
 
-# Handlers
-
+# Base Handlers
 
 class MainHandler(BaseHandler):
 
@@ -62,11 +74,10 @@ class AuthLoginHandler(BaseHandler):
         return alfred.db.users.find_one({'username': username, 'hash': phash})
 
     def post(self):
-        cred = json.loads(self.request.body)
+        cred = loads(self.request.body)
         res = self.verifyUser(**cred)
         if res:
             self.set_secure_cookie('user', cred.get('username'))
-            # self.set_cookie('username', cred.get('username'))
             self.log.info('User %s logged in' % cred.get('username'))
         else:
             self.send_error(401)
@@ -89,8 +100,8 @@ class WSHandler(BaseHandler, WebSocketHandler):
         if msg.topic.startswith('alfred/log'):
             data = msg.payload
         else:
-            payload = json.loads(msg.payload)
-            data = json.dumps(dict(topic=msg.topic, value=payload['value'], time=payload['time']))
+            payload = loads(msg.payload)
+            data = dumps(dict(topic=msg.topic, value=payload['value'], time=payload['time']))
         for c in WSHandler.clients:
             c.write_message(data)
 
@@ -108,128 +119,104 @@ class WSHandler(BaseHandler, WebSocketHandler):
         self.log.debug("WebSocket closed: %s user(s) online" % len(WSHandler.clients))
 
 
-class RestHandler(AuthBaseHandler):
-    # NOTE: Eventually fo to tornado rest handler to fix things ? (but maybe not possible)
-    collections = ['items', 'values', 'config', 'commands', 'bindings']
+# Rest Handlers
 
-    def get(self, args):
-        """
-        Get list and individual resource present in the database
-        """
-        args = args.split('/')
-        if args[0] not in RestHandler.collections:
-            raise HTTPError(404, "%s not available in API" % args[0])
+class ApiHandler(AuthBaseHandler):
+    def get(self):
+        self.write(dumps(filter(lambda x:x.startswith('/api/'), map(lambda x:x[0], self.application.myhandlers))))
 
-        if args[0] == 'bindings':
-            self.getBindings(args)
-            return
+class ItemHandler(AuthBaseHandler):
 
-        filter = {}
-        # General id filter
-        if len(args) == 2:
-            filter['_id'] = ObjectId(args[1])
-        # Other filters
-        if len(args) == 3:
-            filter[args[1]] = ObjectId(args[2]) if '_id' in args[1] else args[2]
+    def get(self, itemId):
+        self.write(dumps(db.items.find({'_id': ObjectId(itemId)} if itemId else None)))
 
-        if args[0] == 'values':
-            filter['_id'] = {
-                '$gt': ObjectId.from_datetime(parse(self.get_argument('from')) if self.get_argument('from', '') else (self.now - datetime.timedelta(1))),
-                '$lte': ObjectId.from_datetime(parse(self.get_argument('to')) if self.get_argument('to', '') else self.now)
-            }
+    def put(self, itemId):
+        if self.data.get('name') and db.items.find_one({'name': self.data.get('name')}):
+            self.httperror(412, 'An item with the name %s already exists' % self.data.get('name'))
+        if not self.data: self.httperror(409, 'Incorrect dataset')
 
-        # Each Alfred can only update its own config
-        if args[0] == 'config':
-            filter['name'] = socket.gethostname().split('.')[0]
+        res = db.items.update({'_id': ObjectId(itemId)}, {'$set': self.data})
+        if res.get('err'):
+            self.httperror(500, res.get('err'))
+        # else:
+        #     alfred.webserver.bus.publish('config/items', dumps({'action': 'edit', 'data': self.data}))
 
-        res = list(alfred.db[args[0]].find(filter))
-        if len(res) == 1:
-            res = res[0]
-        self.write(json.dumps(res, default=json_util.default))
+    def post(self, itemId):
+        if db.items.find_one({'name': self.data.get('name')}):
+            self.httperror(412, 'An item with the name %s already exists' % self.data.get('name'))
+        res = db.items.insert(self.data)
+        if not res:
+            self.httperror(412, 'Item %s already exists' % self.data.get('name'))
+        # else:
+        #     alfred.webserver.bus.publish('config/items', dumps({'action': 'insert', 'data': self.data}))
 
-    def getBindings(self, args):
-        res = {'available': itemManager.getAvailableBindings(),
-               'installed': copy.deepcopy(config.get('bindings'))}
+    def delete(self, itemId):
+        res = db.items.remove({'_id': ObjectId(itemId)})
+        if res.get('err'):
+            self.httperror(500, res.get('err'))
+        # else:
+        #     alfred.webserver.bus.publish('config/items', dumps({'action': 'delete', 'data': itemId}))
 
-        for k in res['installed']:
-            if k in itemManager.activeBindings:
-                res['installed'][k]['active'] = True
-            if k in res['available']:
-                res['available'].remove(k)
 
-        self.write(json.dumps(res, default=json_util.default))
+class ValueHandler(AuthBaseHandler):
 
-    def post(self, args):
-        """
-        Creates new resource or send commands on the bus
-        """
-        args = args.split('/')
-        if args[0] not in RestHandler.collections:
-            raise HTTPError(404, "%s not available in API" % args[0])
+    def get(self, itemId):
+        ffrom, to = self.get_argument('from', None), self.get_argument('to', None)
+        filt = {'item_id': ObjectId(itemId), '_id': {
+            '$gt': ObjectId.from_datetime(parse(ffrom) if ffrom else (self.now - datetime.timedelta(1))),
+            '$lte': ObjectId.from_datetime(parse(to) if to else self.now)
+        }}
+        self.write(dumps(db.values.find(filt)))
 
-        if self.request.body:
-            data = json.loads(self.request.body)
 
-        if args[0] == 'commands':
-            self.log.info('Sending command "%s" to %s' % (data['command'], data['name']))
-            alfred.webserver.bus.publish('commands/%s' % data['name'],
-                                         json.dumps({'command': data['command'], 'time': self.now.isoformat()}))
+class ConfigHandler(AuthBaseHandler):
+    def get(self):
+        self.write(dumps(db.config.find({'name': getHost()})[0].get('config')))
 
-        elif args[0] == 'bindings':
-            if len(args) != 3:
-                self.ajax_error(400, "No command or binding name given")
-                # raise HTTPError(400, "No command or binding name given")
-            if args[2] not in ['install', 'uninstall', 'start', 'stop']:
-                self.ajax_error(405, "Command %s not allowed" % args[2])
-                # raise HTTPError(405)
-            else:
-                err = getattr(itemManager, '%sBinding' % args[2])(args[1])
-                if err:
-                    self.ajax_error(400, err)
-
-    def put(self, args):
-        """
-        Mofify an existing resource
-        """
-        args = args.split('/')
-        if args[0] not in RestHandler.collections:
-            raise HTTPError(404, "%s not available in API" % args[0])
-        if len(args) != 2:
-            raise HTTPError(400, "No id given in request")
-
-        data = json.loads(self.request.body)
-        if '_id' in data:
-            del data['_id']
-
-        if args[0] == 'bindings':
-            config.get('bindings').get(args[1]).update(data)
-            db.config.update({'name': getHost()}, {'$set': {'config': config}})
-        else:
-            res = alfred.db[args[0]].update({'_id': ObjectId(args[1])}, {'$set': data})
-            if res['err']:
-                self.write(dict(error=res['err']))
-            else:
-                data.update({'_id': args[1]})
-                alfred.webserver.bus.publish('config/%s' % args[0], json.dumps({'action': 'edit', 'data': data}))
-
-                # Restart if general config modified
-                if args[0] == 'config':
-                    self.log.info("Caught a config modification, restarting...")
-                    self.finish()
-                    alfred.stop()
-
-    def delete(self, args):
-        """
-        Delete an existig resource
-        """
-        args = args.split('/')
-        if args[0] not in RestHandler.collections:
-            raise HTTPError(404, "%s not available in API" % args[0])
-        if len(args) != 2:
-            raise HTTPError(400, "No id given in request")
-
-        res = alfred.db[args[0]].remove({'_id': ObjectId(args[1])})
+    def put(self):
+        if not self.data: self.httperror(412, "No config data found")
+        res = db.config.update({'name': getHost()}, {'$set': {'config': self.data}})
         if res['err']:
             self.write(dict(error=res['err']))
         else:
-            alfred.webserver.bus.publish('config/%s' % args[0], json.dumps({'action': 'delete', 'data': args[1]}))
+            # alfred.webserver.bus.publish('config/config', dumps({'action': 'edit', 'data': self.data}))
+            self.log.info("Caught a config modification, restarting...")
+            self.finish()
+            alfred.stop()
+
+
+class CommandHandler(AuthBaseHandler):
+    def post(self, itemName, command):
+        if not all[itemName, command]: self.httperror(409, 'No itemName or Command')
+        self.log.info('Sending command "%s" to %s' % (command, itemName))
+        alfred.webserver.bus.publish('commands/%s' % itemName,
+            dumps({'command': command, 'data': self.data, 'time': self.now.isoformat()}))
+
+
+class PluginHandler(AuthBaseHandler):
+    def get(self, plugin):
+        if not plugin:
+            res = {'available': itemManager.getAvailableBindings(),
+                   'installed': copy.deepcopy(config.get('bindings'))}
+
+            for k in res['installed']:
+                if k in itemManager.activeBindings:
+                    res['installed'][k]['active'] = True
+                if k in res['available']:
+                    res['available'].remove(k)
+
+            self.write(dumps(res))  # default=json_util.default))
+        else:
+            res = db.config.find({'name': getHost()})[0].get('config').get('bindings').get(plugin)
+            self.write(dumps(res)) if res else self.httperror(404, 'No binding %s installed' % plugin)
+
+    def put(self, plugin):
+        if not self.data: self.httperror(409, "No data given")
+        config.get('bindings').get(plugin).update(self.data)
+        db.config.update({'name': getHost()}, {'$set': {'config': config}})
+
+
+class PluginStateHandler(AuthBaseHandler):
+    def post(self, binding, command):
+        err = getattr(itemManager, '%sBinding' % command)(binding)
+        if err: self.httperror(400, err)

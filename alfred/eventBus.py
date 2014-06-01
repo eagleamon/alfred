@@ -15,7 +15,7 @@ class Bus(object):
     def __init__(self, brokerHost, brokerPort, base_topic='alfred', client_id=None, start=True):
         assert alfred.config.get('broker').get('host'), "No broker configuration provided"
 
-        self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger(type(self).__name__)
         self.brokerPort = brokerPort
         self.brokerHost = brokerHost
         self.base_topic = base_topic

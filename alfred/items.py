@@ -7,9 +7,6 @@ import dateutil
 from dateutil import tz
 import json
 
-log = logging.getLogger(__name__)
-
-
 class Item(object):
 
     """
@@ -19,6 +16,7 @@ class Item(object):
     __metaclass__ = PluginMount
 
     def __init__(self, **kwargs):
+        self.log = logging.getLogger(type(self).__name__)
         self.name = kwargs.get('name')
         self._value = kwargs.get('value', None)
         self.time = kwargs.get('time', None)
@@ -53,7 +51,7 @@ class Item(object):
         self._value = value
         # Datetimes only in UTC
         self.time = datetime.now(tz.tzutc())
-        log.debug("Value of '%s' changed: %s" % (self.name, value))
+        self.log.debug("Value of '%s' changed: %s" % (self.name, value))
         if self.bus:
             self.bus.publish('items/%s' % self.name,
                              json.dumps(dict(value=value, time=self.time.isoformat())))
@@ -62,7 +60,7 @@ class Item(object):
                     self.bus.publish('groups/%s/%s' % (g, self.name),
                                      json.dumps(dict(value=value, time=self.time.isoformat())))
         else:
-            log.warn("No bus defined")
+            self.log.warn("No bus defined")
 
     def command(self, cmd):
         """

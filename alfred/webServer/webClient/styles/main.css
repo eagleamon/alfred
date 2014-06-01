@@ -161,8 +161,8 @@ ul.dropdown-menu a.disabled {
    on the base class as well (.repeat-item) */
 .repeat-item.ng-enter,
 .repeat-item.ng-leave {
-  -webkit-transition:0.4s linear all;
-  transition:0.4s linear all;
+  -webkit-transition:0.9s linear all;
+  transition:0.9s linear all;
 }
 
 .repeat-item.ng-enter,

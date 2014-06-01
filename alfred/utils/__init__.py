@@ -13,6 +13,7 @@ baseConfig = dict(
     http=dict(port=8000, debug=True, secret=os.urandom(16).encode('hex')),
     items=[],
     groups={},
+    heartbeatInterval = 30, # in seconds
     mail=dict(fromAddress='', server=''),
     persistence=dict(items=[], groups=[])
 )
@@ -73,7 +74,7 @@ class RecursiveDictionary(dict):
 
 class MqttHandler(logging.Handler):
 
-    """"""
+    """ Mqtt Handler for logging """
 
     def __init__(self):
         logging.Handler.__init__(self)

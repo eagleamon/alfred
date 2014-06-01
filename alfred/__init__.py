@@ -4,13 +4,13 @@ Modules that are thread like have start/stop methods, others have init/dispose m
 
 __author__ = 'Joseph Piron'
 
-version_info = (0, 3, 8, 4)
+version_info = (0, 4, 0, 0)
 version = '.'.join(map(str, version_info))
 
 import threading
 import logging
 import os
-import sys
+import sys, time, json
 import signal
 import socket
 from pymongo import MongoClient
@@ -80,11 +80,24 @@ def start(args):
     ruleHandler.loadRules(os.path.join(os.path.dirname(__file__), 'rules'))
     ruleHandler.start()
 
+    # Sends heartbeats
+    sys.startTime = time.asctime()
+    signal.signal(signal.SIGALRM, heartbeat)
+    signal.alarm(config.get('heartbeatInterval'))
+
     # Let's have an interface :)
     import webserver
     webserver.start()
 
     # signal.pause()
+
+
+
+def heartbeat(signum, frame):
+    info = {'version': version, 'startTime': sys.startTime}
+    if signum == signal.SIGALRM:
+        itemManager.bus.publish('heartbeat/%s' % getHost(), json.dumps(info))
+        signal.alarm(config.get('heartbeatInterval'))
 
 
 def stop():

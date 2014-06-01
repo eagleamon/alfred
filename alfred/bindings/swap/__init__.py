@@ -22,7 +22,7 @@ class Swap(SwapInterface, Binding):
     baseDir = os.path.dirname(__file__)
 
     def __init__(self, *args, **kwargs):
-        self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger(type(self).__name__) # needed as this does not require a new thread
         self.server = None
         # Prepare config files
         try:

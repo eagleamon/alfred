@@ -1,10 +1,10 @@
 __author__ = 'joseph'
 
 from tornado import web, httpserver, ioloop
+from alfred import config, eventBus, getHost
+import handlers as v1
 import logging
 import os
-from alfred import config, eventBus, getHost
-import handlers as h
 
 __webServer = bus = None
 
@@ -12,31 +12,34 @@ __webServer = bus = None
 class WebServer(web.Application):
 
     def __init__(self):
-        self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger(type(self).__name__)
         settings = dict(
-            # debug=config.get('http', 'debug'),
-            debug=config.get('http').get('debug', False),
+            debug=config.get('http').get('debug'), #.lower() == 'true',
             static_path=os.path.join(os.path.dirname(__file__), 'webClient/'),
             login_url='/auth/login',
             cookie_secret=config.get('http').get('secret')
         )
-
-        handlers = [
-            (r'/auth/logout', h.AuthLogoutHandler),
-            (r'/auth/login', h.AuthLoginHandler),
-            (r'/live', h.WSHandler),
-            (r'/api/?(.*)', h.RestHandler),
-            # (r'/', web.RedirectHandler, dict(url='/index.html')),
-            (r'/', h.MainHandler),
-            (r'/(.*)$', web.StaticFileHandler, dict(path=settings.get('static_path')))
-        ]
         self.log.debug('Static path: %s' % settings.get('static_path'))
 
-        web.Application.__init__(self, handlers, **settings)
+        self.myhandlers = [
+            (r'/auth/logout', v1.AuthLogoutHandler),
+            (r'/auth/login', v1.AuthLoginHandler),
+            (r'/live', v1.WSHandler),
+            (r'/api', v1.ApiHandler),
+            (r'/api/v1/item/([a-f0-9]+)/values', v1.ValueHandler),
+            (r'/api/v1/item/(.*)/command/(.*)', v1.CommandHandler), # By name here, handier, already thought of, ok but not to replace oid's (name change)
+            (r'/api/v1/item/?([a-f0-9]*)', v1.ItemHandler), # , db = alfred.db)
+            (r'/api/v1/config/?', v1.ConfigHandler),
+            (r'/api/v1/plugin/(.*)/(install|uninstall|start|stop)', v1.PluginStateHandler),
+            (r'/api/v1/plugin/?(.*)', v1.PluginHandler),
+            (r'/(?:index|index.html)?', v1.MainHandler),
+            (r'/(.*)$', web.StaticFileHandler, dict(path=settings.get('static_path')))
+        ]
+
+        web.Application.__init__(self, self.myhandlers, **settings)
 
         self.bus = eventBus.create(self.__module__.split('.')[-1])
         self.bus.subscribe('items/#')
-        # self.bus.subscribe('log/%s/#' % getHost())
         self.bus.subscribe('log/#')
         self.bus.on_message = self.on_message
 
@@ -54,7 +57,7 @@ class WebServer(web.Application):
         inst.add_callback_from_signal(lambda x: x.stop(), inst)
 
     def on_message(self, msg):
-        h.WSHandler.dispatch(msg)
+        v1.WSHandler.dispatch(msg)
 
 # To keep a coherent interface with other modules
 

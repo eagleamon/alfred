@@ -8,7 +8,11 @@ alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 'ngA
                 })
                 .when('/items', {
                     templateUrl: 'views/items.html',
-                    controller: 'ItemCtrl'
+                    controller: 'ItemsCtrl'
+                })
+                .when('/editItem', {
+                    templateUrl:'views/editItem.html',
+                    controller: 'EditItemCtrl'
                 })
                 .when('/editItem/:_id', {
                     templateUrl: 'views/editItem.html',
@@ -62,16 +66,11 @@ alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 'ngA
             socket.onopen = function() {
                 console.info('Socket connected!');
                 $rootScope.$broadcast('websocket:connected');
-                // $rootScope.connected = 'Connected'
-                // $rootScope.$apply()
             }
             socket.onerror = function(event) {
                 console.info('WebSocket error: ' + event);
             }
             socket.onclose = function(event) {
-                // console.log(event)
-                // $rootScope.connected = 'Connecting...'
-                // $rootScope.$apply()
                 $rootScope.$broadcast('websocket:disconnected');
                 console.error('Socket closed, reconnecting in 5 seconds... ' + (event.reason ? '(' + event.reason + ')' : ''))
                 setTimeout(function() {
@@ -135,7 +134,6 @@ alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 'ngA
     return {
         alerts: [],
 
-        // Timeout to automatically remove alerts after a defined period
         add: function(alert) {
             var $this = this;
             this.alerts.push(alert);
@@ -153,7 +151,7 @@ alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 'ngA
 })
 
 .factory('Item', function($resource) {
-    return $resource('/api/items/:_id', {
+    return $resource('/api/v1/item/:_id', {
         _id: '@_id.$oid'
     }, {
         update: {

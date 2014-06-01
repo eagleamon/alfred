@@ -35,12 +35,11 @@ alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
     window.old = $scope.older
 })
 
-.controller('ItemCtrl' , function($scope, Item,  WebSocket, Commands,  $modal){
+.controller('ItemsCtrl' , function($scope, Item,  WebSocket, Commands,  $modal, AlertService){
 
     $scope.commands={
         'switch': ['On', 'Off', 'Toggle'],
         'number': ['Increase', 'Decrease', 'Set']
-
     }
 
     // Get Items and parse dates
@@ -67,15 +66,15 @@ alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
             templateUrl:'deleteDialog.html',
         })
         .result.then(function(){
-            var i = Item.get({_id:itemId}, function(item){
-                item.$delete(function(res){
-                    if (res.error)
-                        AlertService.add({msg: 'Error while deleting: ' + res.error, type:'danger'})
-                    else
-                        delete $scope.items[itemName]
+            Item.get({_id:itemId}, function(item){
+                item.$delete(function(){
+                    delete $scope.items[itemName]
+                }, function(error){
+                    AlertService.add({msg: 'Error while deleting: ' + error.data, type:'danger'})
                 })
             })
         },function(){
+            console.log('canceled')
         })
     }
 
@@ -249,7 +248,11 @@ alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
 })
 
 .controller('EditItemCtrl', function($scope, $routeParams, $location, AlertService, Item){
-    $scope.item = Item.get({'_id': $routeParams._id})
+    if ($routeParams._id)
+        $scope.item = Item.get({'_id': $routeParams._id})
+    else
+        $scope.item = new Item();
+
     $scope.types = ['number', 'switch', 'string']
 
     $scope.submit = function(){
@@ -259,16 +262,27 @@ alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
         if ($scope.item.groups && !$scope.item.groups.push) // If it is not an array
             $scope.item.groups = $scope.item.groups.split(',')
 
-        $scope.item.$update(function(res){
-            if (res.error)
-                AlertService.add({msg: "Error while updating: " + res.error, type:'danger'})
-            else
-                $location.path('/')
-        }, function(err){
-            str = err.data.split('(').pop();
-            str = str.trim().substring(0, str.length - 2)
-            AlertService.add({msg: "Error while updating: " + str, type:'danger'})
-        })
+        if ($scope.item._id)
+        {
+            $scope.item.$update(function(res){
+                if (res.error)
+                    AlertService.add({msg: "Error while updating: " + res.error, type:'danger'})
+                else
+                    $location.path('/')
+            }, function(err){
+                str = err.data.split('(').pop();
+                str = str.trim().substring(0, str.length - 2)
+                AlertService.add({msg: "Error while updating: " + str, type:'danger'})
+            })
+        }
+        else
+        {
+            $scope.item.$save(function(){
+                $location.path('/items');
+            }, function(error){
+                AlertService.add({msg: "Error while saving: " + error.data, type:'danger'});
+            })
+        }
     }
 })
 
@@ -304,7 +318,6 @@ alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
 .controller('ConfigCtrl', function($scope, Config, $location, Item, AlertService){
     $scope.settings = Config.get()
 
-    // $scope.select2 = ['ok','ko']
     $scope.itemsOptions = {
         multiple: true,
         simple_tags: true,

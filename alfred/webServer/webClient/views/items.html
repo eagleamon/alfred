@@ -1,5 +1,5 @@
 <div class="row">
-    <div class="col-sm-4"><a href='#'>Add an item</a>    {{searchText}}</div>
+    <div class="col-sm-4"><a href='#editItem/'>Add an item</a> </div>
     <div class="col-sm-4 col-sm-offset-4"><input type='search' placeholder='Search in all properties...' class='form-control' ng-model='searchText'/></div>
 </div>
 
@@ -33,7 +33,7 @@
                 <span class="pull-right" show-on-hover>
                     <a class='btn btn-default btn-xs' href='#editItem/{{item._id.$oid}}'>Edit</a>
                     <a class='btn btn-danger btn-xs' href=''
-                        ng-click='showDeleteDlg("{{item._id.$oid}}", "{{item.name}}")'>Delete</a>
+                        ng-click='showDeleteDlg(item._id.$oid, item.name)'>Delete</a>
                 </span>
             </td>
         </tr>

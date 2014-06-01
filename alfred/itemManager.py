@@ -1,7 +1,7 @@
 import logging
 import os
 import json
-import eventBus
+import eventBus, signal
 import alfred
 from alfred.bindings import Binding
 from alfred import persistence, config, getHost, db
@@ -46,6 +46,7 @@ def init():
         log.debug('%s items: %s' % (k, v.items.keys()))
 
 # TODO: migrate to new config form
+
 
 
 def dispose():

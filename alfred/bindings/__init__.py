@@ -14,7 +14,7 @@ class Binding(Thread):
     validTypes = ['number', 'switch', 'string']
 
     def __init__(self):
-        self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger(type(self).__name__)
         self.stopEvent = Event()
         self.bus = eventBus.create(self.__module__.split('.')[-1])
         self.items = {}
