@@ -4,17 +4,17 @@ Modules that are thread like have start/stop methods, others have init/dispose m
 
 __author__ = 'Joseph Piron'
 
-version_info = (0, 4, 0, 0)
+version_info = (0, 4, 1, 0)
 version = '.'.join(map(str, version_info))
 
+from pymongo import MongoClient
+from utils import RecursiveDictionary, baseConfig
 import threading
 import logging
 import os
 import sys, time, json
 import signal
 import socket
-from pymongo import MongoClient
-from utils import RecursiveDictionary, baseConfig
 
 log = logging.getLogger(__name__)
 db = config = None
@@ -58,8 +58,8 @@ def init(db_host, db_port=27017, db_name='alfred', **kwargs):
     dbConnect(db_host, db_port, db_name)
     loadConfig()
 
-    import itemManager
-    itemManager.init()
+    import manager
+    manager.init()
 
 
 def start(args):
@@ -96,18 +96,18 @@ def start(args):
 def heartbeat(signum, frame):
     info = {'version': version, 'startTime': sys.startTime}
     if signum == signal.SIGALRM:
-        itemManager.bus.publish('heartbeat/%s' % getHost(), json.dumps(info))
+        manager.bus.publish('heartbeat/%s' % getHost(), json.dumps(info))
         signal.alarm(config.get('heartbeatInterval'))
 
 
 def stop():
     webserver.stop()
-    import ruleHandler
+    # import ruleHandler
     ruleHandler.stop()
-    import persistence
+    # import persistence
     persistence.stop()
-    import itemManager
-    itemManager.dispose()
+    # import manager
+    manager.dispose()
 
     log.debug('Number of threads still active: %s' % threading.activeCount())
     log.info('Bye!')

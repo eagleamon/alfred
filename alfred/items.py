@@ -22,7 +22,7 @@ class Item(object):
         self.time = kwargs.get('time', None)
         self.bus = None
         self.groups = set(kwargs.get('groups')) if kwargs.get('groups') else set()
-        self.binding = kwargs.get('binding')
+        self.plugin = kwargs.get('plugin')
         self._icon = kwargs.get('icon', None)
         self.unit = kwargs.get('unit', None)
         self._id = kwargs.get('_id', None)
@@ -30,7 +30,7 @@ class Item(object):
 
     @property
     def icon(self):
-        return self._icon or (iter(self.groups).next().lower() if len(self.groups) > 0 else None) or self.binding.split(':')[0]
+        return self._icon or (iter(self.groups).next().lower() if len(self.groups) > 0 else None) or self.plugin.split(':')[0]
 
     @icon.setter
     def icon(self, value):
@@ -64,10 +64,10 @@ class Item(object):
 
     def command(self, cmd):
         """
-        Generic call to pass a command to the itemManager
+        Generic call to pass a command to the manager
         """
-        from alfred import itemManager
-        itemManager.sendCommand(self.name, self.commands[cmd])
+        from alfred import manager
+        manager.sendCommand(self.name, self.commands[cmd])
 
 
 class StringItem(Item):

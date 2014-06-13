@@ -5,7 +5,7 @@ import json
 
 # Default configuration values
 baseConfig = dict(
-    bindings=dict(
+    plugins=dict(
         random=dict(autoStart=True, config=dict())
     ),
     boxcar=dict(secret='', key=''),
@@ -14,7 +14,7 @@ baseConfig = dict(
     items=[],
     groups={},
     heartbeatInterval = 30, # in seconds
-    mail=dict(fromAddress='', server=''),
+    # mail=dict(fromAddress='', server=''),
     persistence=dict(items=[], groups=[])
 )
 

@@ -1,0 +1,1 @@
+svn+http://panstamp.googlecode.com/svn/trunk/python/pyswap/src/

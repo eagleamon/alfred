@@ -28,7 +28,7 @@ setup(
     install_requires=reqs(),
     long_description=read('README.md'),
     data_files=[
-        ('/etc/init', ['data/alfred.conf'])
+        ('/etc/init', ['package/alfred.conf'])
     ],
     include_package_data=True,
     classifiers=[

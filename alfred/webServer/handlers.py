@@ -1,6 +1,6 @@
 from tornado.web import RequestHandler, HTTPError, authenticated
 from tornado.websocket import WebSocketHandler
-from alfred import config, itemManager, version, db, getHost, logging
+from alfred import config, manager, version, db, getHost, logging
 from bson.json_util import dumps, loads
 from bson.objectid import ObjectId
 from dateutil import tz
@@ -128,9 +128,10 @@ class ApiHandler(AuthBaseHandler):
 class ItemHandler(AuthBaseHandler):
 
     def get(self, itemId):
-        self.write(dumps(db.items.find({'_id': ObjectId(itemId)} if itemId else None)))
+        self.write(dumps(db.items.find_one({'_id': ObjectId(itemId)}) if itemId else db.items.find()))
 
     def put(self, itemId):
+        self.httperror(502, 'nope')
         if self.data.get('name') and db.items.find_one({'name': self.data.get('name')}):
             self.httperror(412, 'An item with the name %s already exists' % self.data.get('name'))
         if not self.data: self.httperror(409, 'Incorrect dataset')
@@ -171,11 +172,12 @@ class ValueHandler(AuthBaseHandler):
 
 class ConfigHandler(AuthBaseHandler):
     def get(self):
-        self.write(dumps(db.config.find({'name': getHost()})[0].get('config')))
+        self.write(dumps(db.config.find({'name': getHost()})[0]))
 
     def put(self):
+        print self.data
         if not self.data: self.httperror(412, "No config data found")
-        res = db.config.update({'name': getHost()}, {'$set': {'config': self.data}})
+        res = db.config.update({'name': getHost()}, {'$set': {'config': self.data.get('config')}})
         if res['err']:
             self.write(dict(error=res['err']))
         else:
@@ -187,7 +189,7 @@ class ConfigHandler(AuthBaseHandler):
 
 class CommandHandler(AuthBaseHandler):
     def post(self, itemName, command):
-        if not all[itemName, command]: self.httperror(409, 'No itemName or Command')
+        if not all([itemName, command]): self.httperror(409, 'No itemName or Command')
         self.log.info('Sending command "%s" to %s' % (command, itemName))
         alfred.webserver.bus.publish('commands/%s' % itemName,
             dumps({'command': command, 'data': self.data, 'time': self.now.isoformat()}))
@@ -196,27 +198,27 @@ class CommandHandler(AuthBaseHandler):
 class PluginHandler(AuthBaseHandler):
     def get(self, plugin):
         if not plugin:
-            res = {'available': itemManager.getAvailableBindings(),
-                   'installed': copy.deepcopy(config.get('bindings'))}
+            res = {'available': manager.getAvailablePlugins(),
+                   'installed': copy.deepcopy(config.get('plugins'))}
 
             for k in res['installed']:
-                if k in itemManager.activeBindings:
+                if k in manager.activePlugins:
                     res['installed'][k]['active'] = True
                 if k in res['available']:
                     res['available'].remove(k)
 
             self.write(dumps(res))  # default=json_util.default))
         else:
-            res = db.config.find({'name': getHost()})[0].get('config').get('bindings').get(plugin)
-            self.write(dumps(res)) if res else self.httperror(404, 'No binding %s installed' % plugin)
+            res = db.config.find({'name': getHost()})[0].get('config').get('plugins').get(plugin)
+            self.write(dumps(res)) if res else self.httperror(404, 'No plugin %s installed' % plugin)
 
     def put(self, plugin):
         if not self.data: self.httperror(409, "No data given")
-        config.get('bindings').get(plugin).update(self.data)
+        config.get('plugins').get(plugin).update(self.data)
         db.config.update({'name': getHost()}, {'$set': {'config': config}})
 
 
 class PluginStateHandler(AuthBaseHandler):
-    def post(self, binding, command):
-        err = getattr(itemManager, '%sBinding' % command)(binding)
+    def post(self, plugin, command):
+        err = getattr(manager, '%sPlugin' % command)(plugin)
         if err: self.httperror(400, err)

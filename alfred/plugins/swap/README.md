@@ -1,0 +1,1 @@
+Interface from and to swap packets emitted by panstamp systems.

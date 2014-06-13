@@ -1,28 +1,29 @@
 import logging
 import os
 import json
-import eventBus, signal
+import eventBus
+import signal
 import alfred
-from alfred.bindings import Binding
+from alfred.plugins import Plugin
 from alfred import persistence, config, getHost, db
 
 items = {}
-activeBindings = {}
+activePlugins = {}
 
 bus = None
 log = logging.getLogger(__name__)
 
 
-def getAvailableBindings():
+def getAvailablePlugins():
     """
-    Check for all bindings available
+    Check for all plugins available
     TODO: make this more robust
     """
 
     import alfred
-    res, bindingPath = [], os.path.join(os.path.dirname(alfred.__file__), 'bindings')
-    for d in os.listdir(bindingPath):
-        if os.path.isdir(os.path.join(bindingPath, d)) and not d.endswith('egg-info'):
+    res, pluginPath = [], os.path.join(os.path.dirname(alfred.__file__), 'plugins')
+    for d in os.listdir(pluginPath):
+        if os.path.isdir(os.path.join(pluginPath, d)) and not d.endswith('egg-info'):
             res.append(d)
     return res
 
@@ -34,87 +35,86 @@ def init():
     bus.subscribe('config/#')
     bus.on_message = on_message
 
-    log.info("Available bindings: %s" % getAvailableBindings())
-    for i in filter(lambda i: i[1]['autoStart'], config.get('bindings').items()):
-        startBinding(i[0])
+    log.info("Available plugins: %s" % getAvailablePlugins())
+    for i in filter(lambda i: i[1]['autoStart'], config.get('plugins').items()):
+        startPlugin(i[0])
 
     # Then register needed items
     for name in config.get('items'):
         register(name)
 
-    for k, v in activeBindings.items():
+    for k, v in activePlugins.items():
         log.debug('%s items: %s' % (k, v.items.keys()))
 
 # TODO: migrate to new config form
 
 
-
 def dispose():
-    for b in activeBindings:
-        activeBindings[b].stop()
+    for b in activePlugins:
+        activePlugins[b].stop()
     items.clear()
-    activeBindings.clear()
+    activePlugins.clear()
     bus.stop()
 
 
-def installBinding(bindingName):
+def installPlugin(pluginName):
     try:
-        mod = __import__('alfred.bindings.%s' % bindingName, fromlist='alfred')
+        mod = __import__('alfred.plugins.%s' % pluginName, fromlist='alfred')
     except Exception, E:
         try:
             import pip
-            pip.main('install -r {0}/bindings/{1}/requirements.txt'.format(os.path.dirname(__file__), bindingName).split())
-            mod = __import__('alfred.bindings.%s' % bindingName, fromlist='alfred')
+            pip.main('install -r {0}/plugins/{1}/requirements.txt'.format(os.path.dirname(__file__), pluginName).split())
+            mod = __import__('alfred.plugins.%s' % pluginName, fromlist='alfred')
         except:
-            res = 'Cannot install binding: %s' % E.message
+            res = 'Cannot install plugin: %s' % E.message
             log.error(res)
             return res
 
-    if not bindingName in config.get('bindings'):
-        log.info('Installing binding %s' % bindingName)
-        config['bindings'][bindingName] = dict(
+    if not pluginName in config.get('plugins'):
+        log.info('Installing plugin %s' % pluginName)
+        config['plugins'][pluginName] = dict(
             autoStart=False,
             config=getattr(mod, 'defaultConfig', {})
         )
         db.config.update({'name': getHost()}, {'$set': {'config': config}})
 
 
-def uninstallBinding(bindingName):
-    if bindingName in activeBindings:
-        stopBinding(bindingName)
-    log.info('Uninstalling binding %s' % bindingName)
-    del config['bindings'][bindingName]
+def uninstallPlugin(pluginName):
+    if pluginName in activePlugins:
+        stopPlugin(pluginName)
+    log.info('Uninstalling plugin %s' % pluginName)
+    del config['plugins'][pluginName]
     db.config.update({'name': getHost()}, {'$set': {'config': config}})
 
 
-def startBinding(bindingName):
-    if not bindingName in config.get('bindings'):
-        res = 'Binding %s not installed' % bindingName
+def startPlugin(pluginName):
+    if not pluginName in config.get('plugins'):
+        res = 'Plugin %s not installed' % pluginName
         log.error(res)
         return res
 
-    log.info("Starting binding %s" % bindingName)
-    __import__('alfred.bindings.%s' % bindingName)
-    instance = Binding.plugins[bindingName]()
-    activeBindings[bindingName] = instance
+    log.info("Starting plugin %s" % pluginName)
+    __import__('alfred.plugins.%s' % pluginName)
+    instance = Plugin.plugins[pluginName]()
+    activePlugins[pluginName] = instance
     for item in config.get('items'):
         register(item)
     instance.start()
 
 
-def stopBinding(bindingName):
-    if not bindingName in activeBindings:
-        res = 'Binding %s not installed' % bindingName
+def stopPlugin(pluginName):
+    if not pluginName in activePlugins:
+        res = 'Plugin %s not installed' % pluginName
         log.error(res)
         return res
 
-    log.info('Stopping binding %s' % bindingName)
-    ins = activeBindings[bindingName]
+    log.info('Stopping plugin %s' % pluginName)
+    ins = activePlugins[pluginName]
     ins.stop()
-    del activeBindings[bindingName]
+    del activePlugins[pluginName]
 
 
-# def register(name, type, binding, groups=None, icon=None, **kwargs):
+# def register(name, type, plugin, groups=None, icon=None, **kwargs):
 def register(name):
 
     # Get informations
@@ -122,17 +122,17 @@ def register(name):
     if not itemDef:
         log.error('No definition found for item %s' % name)
         return
-    bind = itemDef.get('binding').split(':')[0]
+    bind = itemDef.get('plugin').split(':')[0]
 
     # Memory only item
     if not bind:
-        item = Binding.getClass(itemDef.get('type'))(**itemDef)
+        item = Plugin.getClass(itemDef.get('type'))(**itemDef)
 
-    elif bind not in activeBindings:
-        log.error('Binding %s not installed or started' % bind)
+    elif bind not in activePlugins:
+        log.error('Plugin %s not installed or started' % bind)
         return
     else:
-        item = activeBindings[bind].register(**itemDef)
+        item = activePlugins[bind].register(**itemDef)
         item.bus = bus
         # Small tip to get icons
         if not itemDef.get('icon'):
@@ -144,11 +144,12 @@ def register(name):
     log.debug('Item %s registered' % item.name)
     return item
 
+
 def unregister(_id):
     item = filter(lambda x: str(x._id) == _id, items.values()).pop()
-    bind = item.binding.split(':')[0]
+    bind = item.plugin.split(':')[0]
     if bind:
-        activeBindings[bind].unregister(_id)
+        activePlugins[bind].unregister(_id)
     del items[item.name]
     log.debug('Item %s unregistered' % item.name)
 
@@ -184,11 +185,11 @@ def on_message(msg):
 
 def sendCommand(name, command):
     """
-    Handling of the command request to the binding (from the item)
+    Handling of the command request to the plugin (from the item)
     """
-    binding = activeBindings.get(command.split(':')[0], None)
-    if not binding:
-        log.error("No %s binding defined" % binding)
+    plugin = activePlugins.get(command.split(':')[0], None)
+    if not plugin:
+        log.error("No %s plugin defined" % plugin)
     else:
         try:
             function = command.split(':')[1]
@@ -197,9 +198,9 @@ def sendCommand(name, command):
             # try to get the function otherwise call the generic sendCommand function
             try:
                 # Careful, list comprehension !
-                getattr(binding, function)(*command.split(':')[2:])
+                getattr(plugin, function)(*command.split(':')[2:])
             except AttributeError:
-                binding.sendCommand(command.split(':')[1:])
+                plugin.sendCommand(command.split(':')[1:])
 
         except Exception, E:
             log.exception('Error while executing %s for %s' % (command, name))
