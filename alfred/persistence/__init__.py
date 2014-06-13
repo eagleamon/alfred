@@ -38,7 +38,7 @@ def stop():
 
 def on_message(msg):
     try:
-        from alfred import itemManager
+        from alfred import manager
         from dateutil import parser
 
         # Persist last value
@@ -59,7 +59,7 @@ def on_message(msg):
             group = msg.topic.split('/')[2]
             # if group in getIncludingGroups(group, config.get('groups')):
             item = msg.topic.split('/')[-1]
-            _id = itemManager.items[item]._id
+            _id = manager.items[item]._id
             # save('values', dict(item_id=_id, time=data.get('time'), value=data.get('value')))
             save('values', dict(item_id=_id, value=data.get('value')))
 

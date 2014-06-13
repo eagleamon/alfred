@@ -1,0 +1,42 @@
+<form name='editForm' id='editForm' role='form' method='post' ng-submit='submit()'>
+    <legend>Fill in properties</legend>
+    <div class='form-group'>
+        <label for='name'>Name</label>
+        <input type='text' required class='form-control' ng-model='item.name' name='name' placeholder='Enter name'></input>
+    </div>
+
+    <div class='form-group'>
+        <label for='name'>Binding</label>
+        <input type='text' class='form-control' ng-model='item.plugin' name='plugin' placeholder='Enter plugin config'></input>
+    </div>
+
+    <div class='form-group'>
+        <label for='name'>Commands</label>
+        <input type='text' class='form-control' ng-model='item.commands' name='commands' placeholder='Enter commands plugins'></input>
+    </div>
+
+    <div class='form-group'>
+        <label for='name'>Type</label>
+        <select required class='form-control' ng-model='item.type' name='type'placeholder='Select item type' ng-options='t for t in types'></select>
+    </div>
+
+    <div class='form-group'>
+        <label for='name'>Unit</label>
+        <input type='text' class='form-control' ng-model='item.unit' name='unit' placeholder='Enter unit'></input>
+    </div>
+
+    <div class='form-group'>
+        <label for='name'>Icon</label>
+        <div class='input-group'>
+            <span class='input-group-addon {{item.icon}}' style='background-position: center'></span>
+            <input type='text' class='form-control' ng-model='item.icon' name='icon' placeholder='Enter icon'></input>
+        </div>
+    </div>
+
+    <div class='form-group'>
+        <label for='name'>Groups</label>
+        <input type='text' class='form-control' ng-model='item.groups' name='groups' placeholder='Enter a comma separated list of group'></input>
+    </div>
+
+    <input type='submit' class='btn btn-primary pull-right' ng-disabled='editForm.$invalid' value='submit'></input>
+</form>

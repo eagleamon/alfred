@@ -14,15 +14,15 @@ def parseArgs(sysArgs=''):
     parser.add_argument('-d', '--debug', action='store_true',
                         help='Activate debug logging for the application')
     parser.add_argument('--log_file', help='Path to log file (needs write access on directory - /tmp/alfred.log)',
-                        default='/var/log/alfred.log')
+                        default='/tmp/alfred.log')
 
     group = parser.add_argument_group('Database')
     group.add_argument('--db_host', help='Database server address', required=True)
     group.add_argument('--db_port', help='Database server port (27017)', default=27017, type=int)
     group.add_argument('--db_name', help='Database environment name (alfred)', default='alfred')
 
-    group = parser.add_argument_group('Config file (deprecated)')
-    group.add_argument('-c', '--conf_file', help='Config file')
+    group = parser.add_argument_group('Database administration')
+    group.add_argument('--create-user', help='Add a user in the database')
 
     return parser.parse_args(sysArgs)
 
@@ -48,6 +48,7 @@ root.handlers[0].setFormatter(ColoredFormatter(
             'CRITICAL': 'red',
         }
     ))
+print args.log_file
 root.addHandler(RotatingFileHandler(args.log_file, maxBytes=1024 * 1024 * 10, backupCount=3))
 form = logging.Formatter('%(asctime)s [%(name)s] %(levelname)s %(message)s')
 root.handlers[1].setFormatter(form)

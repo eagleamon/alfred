@@ -13,7 +13,7 @@ baseConfig = dict(
     http=dict(port=8000, debug=True, secret=os.urandom(16).encode('hex')),
     items=[],
     groups={},
-    heartbeatInterval = 30, # in seconds
+    heartbeatInterval=30,  # in seconds
     # mail=dict(fromAddress='', server=''),
     persistence=dict(items=[], groups=[])
 )
@@ -82,7 +82,6 @@ class MqttHandler(logging.Handler):
         self.host = alfred.getHost()
     #     self.bus = eventBus.create()
 
-
     @property
     def bus(self):
         if not self._bus:
@@ -92,7 +91,27 @@ class MqttHandler(logging.Handler):
 
     def emit(self, record):
         if record.name != 'alfred.eventBus':
-            res = {'message': record.message, 'time': record.created, 'name': record.name, 'host': self.host, 'level': record.levelname}
-            self.bus.publish('log/%s/%s'% (self.host, record.levelname), json.dumps(res))
+            res = {'message': record.message, 'time': record.created, 'name':
+                   record.name, 'host': self.host, 'level': record.levelname}
+            self.bus.publish('log/%s/%s' % (self.host, record.levelname), json.dumps(res))
 
         # self.bus.publish('log/host/%s' % record.levelname, str(record.getMessage()))
+
+
+class MockMondodb():
+
+    def __init__(self):
+        self.config = Mock()
+        self.item = Mock()
+        self.config.find_one = lambda x: {}
+        self.config.save = lambda x: None
+        self.users = Mock()
+        self.users.count = lambda : 1
+        self.users.find_one  = lambda x: {'username': 'yep'}
+        self.items = Mock()
+        from bson.objectid import ObjectId
+        self.items.find = lambda : [{'name': 'item', 'type': 'number', '_id': ObjectId()}]
+
+
+class Mock():
+    pass

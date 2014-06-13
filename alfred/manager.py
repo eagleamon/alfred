@@ -188,9 +188,7 @@ def sendCommand(name, command):
     Handling of the command request to the plugin (from the item)
     """
     plugin = activePlugins.get(command.split(':')[0], None)
-    if not plugin:
-        log.error("No %s plugin defined" % plugin)
-    else:
+    if plugin:
         try:
             function = command.split(':')[1]
             log.info('Executing %s for %s' % (command, name))
@@ -204,3 +202,6 @@ def sendCommand(name, command):
 
         except Exception, E:
             log.exception('Error while executing %s for %s' % (command, name))
+    else:
+
+        log.error("No %s plugin defined" % plugin)

@@ -1,7 +1,7 @@
 __author__ = 'Joseph Piron'
 
 import logging
-from alfred.utils import PluginMount
+from alfred import utils, logging
 from datetime import datetime
 import dateutil
 from dateutil import tz
@@ -13,7 +13,7 @@ class Item(object):
     General representation of a piece of information
     Converntion: all commands should be camelcase
     """
-    __metaclass__ = PluginMount
+    __metaclass__ = utils.PluginMount
 
     def __init__(self, **kwargs):
         self.log = logging.getLogger(type(self).__name__)
@@ -21,7 +21,7 @@ class Item(object):
         self._value = kwargs.get('value', None)
         self.time = kwargs.get('time', None)
         self.bus = None
-        self.groups = set(kwargs.get('groups')) if kwargs.get('groups') else set()
+        self.groups = set(kwargs.get('groups', []))
         self.plugin = kwargs.get('plugin')
         self._icon = kwargs.get('icon', None)
         self.unit = kwargs.get('unit', None)

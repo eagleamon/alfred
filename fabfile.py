@@ -3,6 +3,7 @@ from fabric.decorators import hosts
 
 import os
 
+
 def clean():
     local('find . -name "*.pyc" -delete')
     local('rm -rf alfred.log dist build *.egg-info')
@@ -16,9 +17,11 @@ def install():
         sudo('python setup.py develop')
         sudo('pip install -r requirements.txt')
 
+
 def build():
     clean()
     local('python setup.py sdist')
+
 
 def deps():
     print "Todo"
@@ -33,12 +36,16 @@ def publish():
     sudo('restart alfred')
     sudo('uname -a')
 
-def run(where='home'):
-    if where=='home':
-    	local('python -m alfred --db_host hal -d --log_file alfred.log')
-    if where=='work':
-    	local('python -m alfred --db_host lutvms017 --db_name new_test -d --log_file alfred.log')
+
+def run(where='test'):
+    if where == 'test':
+        local('python -m alfred --db_host hal --db_name test -d')
+    elif where == 'prod':
+        local('python -m alfred --db_host hal -d')
+    elif where == 'work':
+        local('python -m alfred --db_host lutvms017 --db_name test -d')
+
 
 def test(toTest=''):
-	" Passes argument like -> fab test:tests/items.py "
-	local('nosetests --with-watch %s' % toTest)
+    " Passes argument like -> fab test:tests/items.py "
+    local('nosetests --with-watch %s' % toTest)

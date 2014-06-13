@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from alfred.ruleHandler import timeEvent, busEvent, logging, eventBus
-from alfred.utils.notifications import sendMail
+from alfred.plugins.mail import sendMail
 from alfred import persistence
 import json
 

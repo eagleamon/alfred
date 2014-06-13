@@ -6,7 +6,7 @@ A bit more: everything should be a module that each instance of alfred could ins
 
 For the webserver, there should be module as well, for ex a module to interrogate database of movies in xbmc :)
 
-##Topics
+## Topics
 
 Description of all topics used here:
 - config
@@ -14,3 +14,7 @@ Description of all topics used here:
 - heartbeats
 - items
 - logs
+
+## Items
+
+## Cameras

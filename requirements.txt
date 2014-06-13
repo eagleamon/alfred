@@ -5,3 +5,4 @@ colorlog>=2.0.0
 python-boxcar>=0.1.2
 tornado>=3.1
 python-dateutil>=2.2
+requests>=1.2.3

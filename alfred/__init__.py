@@ -20,10 +20,14 @@ log = logging.getLogger(__name__)
 db = config = None
 
 
-def dbConnect(dbHost, dbPort, dbName):
+def dbConnect(dbHost, dbPort, dbName, mock=True):
     """ Configure db to be used for config, items, etc... """
     global db
-    db = getattr(MongoClient(dbHost, port=dbPort), dbName)
+    if mock:
+        from utils import MockMondodb
+        db = MockMondodb()
+    else:
+        db = getattr(MongoClient(dbHost, port=dbPort), dbName)
 
 
 def loadConfig():
@@ -68,6 +72,13 @@ def start(args):
     """
     args = vars(args)
     init(**args)
+
+    print args
+    if args.get('create_user'):
+        import getpass, sha
+        db.users.insert({'username': args.get('create_user'), 'hash': sha.sha(getpass.getpass()).hexdigest()})
+        exit()
+
     log.info('Starting alfred {0}'.format(version))
     signal.signal(signal.SIGINT, signalHandler)
 

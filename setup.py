@@ -32,7 +32,6 @@ setup(
     ],
     include_package_data=True,
     classifiers=[
-        "Development Status :: 2 - PreAlpha",
         "Topic :: Home Automation",
         "License :: OSI Approved :: BSD License",
     ],

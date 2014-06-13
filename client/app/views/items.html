@@ -1,0 +1,57 @@
+<div class="row">
+    <div class="col-sm-4"><a href='#editItem/'>Add an item</a> </div>
+    <div class="col-sm-4 col-sm-offset-4"><input type='search' placeholder='Search in all properties...' class='form-control' ng-model='searchText'/></div>
+</div>
+
+<table class="table table-striped table-hover center">
+    <thead>
+        <th>Name</th>
+        <th>Binding</th>
+        <th>Type</th>
+        <th>Value</th>
+        <th>Last Update</th>
+    </thead>
+    <tbody>
+        <tr ng-repeat="item in items | array | orderBy:'name' | filter:searchText " class='repeat-item'>
+            <td class="{{item.icon}}">{{item.name}}</td>
+            <td>{{item.plugin|limitTo:15}}</td>
+            <td>
+                <span class='dropdown'>
+                    <a href='' class='dropdown-toggle'>{{item.type}} <span class='caret'/></a>
+                    <ul class='dropdown-menu'>
+                        <li ng-repeat='command in commands[item.type]'>
+                            <a href='' ng-class='{disabled:!item.commands[command.toLowerCase()]}' ng-click='sendCommand(item.name, command)'>{{command}}</a>
+                        </li>
+                    </ul>
+                </span>
+            </td>
+            <td><a href='#/graph/{{item._id.$oid}}'>{{item.value|number}} {{item.unit}}</a></td>
+            <td>
+                <span tooltip="{{item.time|date:'medium'}}" am-time-ago='item.time'></span>
+            </td>
+            <td class='actions'>
+                <span class="pull-right" show-on-hover>
+                    <a class='btn btn-default btn-xs' href='#editItem/{{item._id.$oid}}'>Edit</a>
+                    <a class='btn btn-danger btn-xs' href=''
+                        ng-click='showDeleteDlg(item._id.$oid, item.name)'>Delete</a>
+                </span>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<script type="text/ng-template" id="deleteDialog.html">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Are you sure ?</h3>
+            </div>
+            <div class="modal-body">
+                The item will not be recoverable... {{items}}
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" ng-click="$close(ok)">Delete</button>
+                <button class="btn btn-default" ng-click="$dismiss(nope)">Cancel</button>
+            </div>
+        </div>
+</script>
+
