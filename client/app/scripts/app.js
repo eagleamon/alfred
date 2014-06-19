@@ -48,11 +48,11 @@ var alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 
             $httpProvider.interceptors.push(function($q, $location) {
                 return {
                     'responseError': function(rejection) {
-                        if (rejection.status == 401)
-                            $location.path("/login")
-                        return $q.reject(rejection)
+                        if (rejection.status === 401)
+                            $location.path('/login');
+                        return $q.reject(rejection);
                     }
-                }
+                };
             });
 
         }
@@ -62,47 +62,47 @@ var alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 
     return {
         connect: function() {
             var $this = this;
-            console.info('Trying to connect to WebSocket..')
+            console.info('Trying to connect to WebSocket..');
             var socket = new WebSocket('ws://' + location.host + '/live');
             socket.onopen = function() {
                 console.info('Socket connected!');
                 $rootScope.$broadcast('websocket:connected');
-            }
+            };
             socket.onerror = function(event) {
                 console.info('WebSocket error: ' + event);
-            }
+            };
             socket.onclose = function(event) {
                 $rootScope.$broadcast('websocket:disconnected');
-                console.error('Socket closed, reconnecting in 5 seconds... ' + (event.reason ? '(' + event.reason + ')' : ''))
+                console.error('Socket closed, reconnecting in 5 seconds... ' + (event.reason ? '(' + event.reason + ')' : ''));
                 setTimeout(function() {
-                    $this.connect()
-                }, 5000)
-            }
+                    $this.connect();
+                }, 5000);
+            };
             socket.onmessage = function(msg) {
-                var msg = JSON.parse(msg.data);
+                msg = JSON.parse(msg.data);
                 if (msg.level) {
                     var tmp = msg.host + '@:' + msg.time + ' - ' + msg.message;
-                    if (msg.level == 'DEBUG')
+                    if (msg.level === 'DEBUG')
                         $log.debug(tmp);
-                    else if (msg.level == 'INFO')
+                    else if (msg.level === 'INFO')
                         $log.info(tmp);
-                    else if (msg.level == 'WARN')
+                    else if (msg.level === 'WARN')
                         $log.warn(tmp);
                     else
                         $log.error(tmp);
                 } else {
                     $rootScope.$apply(
                         $this.onmessage(msg)
-                    )
+                    );
                 }
-            }
+            };
         },
-        onmessage: function(callback) {}
-    }
+        // onmessage: function(callback) {}
+    };
 })
 
 // Service to handle atuthentication against backend validation
-.factory('Auth', function($http, $location, $rootScope, $cookieStore) {
+.factory('Auth', function($http, $location, $rootScope) { //$cookieStore
     return {
         user: {
             username: ''
@@ -113,21 +113,21 @@ var alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 
                     username: username,
                     password: password
                 })
-                .success(function(data) {
-                    $this.user.username = username
-                    $rootScope.$broadcast('auth:login', $this.user)
-                })
+                .success(function() {
+                    $this.user.username = username;
+                    $rootScope.$broadcast('auth:login', $this.user);
+                });
         },
         logout: function() {
             var $this = this;
             $http.get('/auth/logout')
                 .success(function() {
                     $this.user.username = null;
-                    $rootScope.$broadcast('auth:logout')
-                    $location.path('/')
-                })
+                    $rootScope.$broadcast('auth:logout');
+                    $location.path('/');
+                });
         }
-    }
+    };
 })
 
 // Simple service to handle the alerts
@@ -140,7 +140,7 @@ var alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 
             this.alerts.push(alert);
             if ('timeout' in alert) {
                 $timeout(function() {
-                    $this.close($this.alerts.length - 1)
+                    $this.close($this.alerts.length - 1);
                 }, alert.timeout);
             }
         },
@@ -148,7 +148,7 @@ var alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 
         close: function(index) {
             this.alerts.splice(index, 1);
         }
-    }
+    };
 })
 
 .factory('Item', function($resource) {
@@ -158,7 +158,7 @@ var alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 
         update: {
             method: 'PUT'
         }
-    })
+    });
 })
 
 .factory('Config', function($resource) {
@@ -166,16 +166,16 @@ var alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 
         update: {
             method: 'PUT'
         }
-    })
+    });
 })
 
 .factory('Commands', function($http, $log) {
     return {
         send: function(itemName, command) {
             $log.info('Sending ' + command + ' to ' + itemName);
-            $http.post('/api/v1/item/' + itemName + '/command/' + command.toLowerCase())
+            $http.post('/api/v1/item/' + itemName + '/command/' + command.toLowerCase());
         }
-    }
+    };
 })
 
 // Can't map directly to REST as plugins are part of config by host and config for all hosts like items exists
@@ -197,26 +197,28 @@ var alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 
             return $http.post('/api/v1/plugin/' + name + '/uninstall');
         },
         save: function(name, value) {
-            return $http.put('/api/v1/plugin/' + name, data = {
-                autoStart: value.autoStart,
-                config: value.config
-            })
+            return $http.put('/api/v1/plugin/' + name, {
+                'data': {
+                    autoStart: value.autoStart,
+                    config: value.config
+                }
+            });
         }
-    }
+    };
 })
 
 .directive('showOnHover', function() {
     return {
-        link: function(scope, element, attrs) {
-            element.css('visibility', 'hidden')
+        link: function(scope, element) { //, attrs
+            element.css('visibility', 'hidden');
             element.parent().parent().bind('mouseenter', function() {
                 element.css('visibility', 'visible');
             });
             element.parent().parent().bind('mouseleave', function() {
                 element.css('visibility', 'hidden');
-            })
+            });
         }
-    }
+    };
 })
 
 .directive('switch', function() {
@@ -224,13 +226,13 @@ var alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 
         restrict: 'E',
         replace: true,
         require: '^ngModel',
-        template: "<span class='switch' ng-click='onSwitch()'> {{ngModel}}" +
-            "   <span class='background'></span><span class='mask'></span</span>",
+        template: '<span class="switch" ng-click="onSwitch()""> {{ngModel}}' +
+            '   <span class="background"></span><span class="mask"></span</span>',
         scope: {
             ngModel: '=',
             onSwitch: '&'
         },
-        link: function(scope, elem, attrs) {
+        link: function(scope, elem) {
             elem.bind('click', function() {
                 if (scope.ngModel)
                     elem.find('.background').animate({
@@ -241,7 +243,7 @@ var alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 
                         left: '0px'
                     }, 200);
             });
-            scope.$watch("ngModel", function(val) {
+            scope.$watch('ngModel', function(val) {
                 if (val)
                     elem.find('.background').animate({
                         left: '0px'
@@ -250,38 +252,38 @@ var alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 
                     elem.find('.background').animate({
                         left: '-57px'
                     }, 200);
-            })
+            });
         },
-    }
+    };
 })
 
 .directive('websocketstatus', function() {
     return {
         restrict: 'EA',
-        template: "<span>{{state}}</span>",
+        template: '<span>{{state}}</span>',
         scope: {},
         link: function(scope) {
-            scope.state = "ok"
+            scope.state = 'ok';
         },
         controller: function($scope) {
             $scope.$on('websocket:connected', function() {
                 $scope.$apply(function() {
-                    $scope.state = "Connected"
-                })
+                    $scope.state = 'Connected';
+                });
             });
             $scope.$on('websocket:disconnected', function() {
                 $scope.$apply(function() {
-                    $scope.state = "Connecting..."
-                })
-            })
+                    $scope.state = 'Connecting...';
+                });
+            });
         }
-    }
+    };
 })
 
 .filter('title', function() {
     return function(str) {
-        return str ? str[0].toUpperCase() + str.substring(1, str.length) : ''
-    }
+        return str ? str[0].toUpperCase() + str.substring(1, str.length) : '';
+    };
 })
 
 // Simple filter to overcome the limitation of filtering objects of object
@@ -302,6 +304,6 @@ alfred.run(function($rootScope, WebSocket, Auth, $log) {
         }
     });
 
-    $rootScope.$log = $log
+    $rootScope.$log = $log;
     WebSocket.connect();
-})
+});

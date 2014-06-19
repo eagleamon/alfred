@@ -21,6 +21,9 @@ def parseArgs(sysArgs=''):
     group.add_argument('--db_port', help='Database server port (27017)', default=27017, type=int)
     group.add_argument('--db_name', help='Database environment name (alfred)', default='alfred')
 
+    group = parser.add_argument_group('Web server')
+    group.add_argument('--client-path', help='Webclient app path ("./client/dist")', default='./client/dist')
+
     group = parser.add_argument_group('Database administration')
     group.add_argument('--create-user', help='Add a user in the database')
 

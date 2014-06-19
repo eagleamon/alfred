@@ -37,13 +37,16 @@ def publish():
     sudo('uname -a')
 
 
-def run(where='test'):
+def run(where='test', client='dist'):
+    client = '--client-path ./client/app' if client == 'app' else ''
+    cmd = 'python -m alfred -d %s --db_host ' % client
+
     if where == 'test':
-        local('python -m alfred --db_host hal --db_name test -d')
+        local(cmd + 'hal --db_name test')
     elif where == 'prod':
-        local('python -m alfred --db_host hal -d')
+        local(cmd + 'hal')
     elif where == 'work':
-        local('python -m alfred --db_host lutvms017 --db_name test -d')
+        local(cmd + 'lutvms017 --db_name test')
 
 
 def test(toTest=''):

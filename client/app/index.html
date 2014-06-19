@@ -14,12 +14,13 @@
         <link rel="apple-touch-icon" href="favicon.png">
 
         <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
-        <link rel="stylesheet" type="text/css" href="bower_components/bootstrap/dist/css/bootstrap.css">
-        <link rel="stylesheet" href="styles/main.css">
-        <link href="/styles/animations.css" rel="stylesheet">
 
-        <!-- build:js scripts/vendor/modernizr.js -->
-        <script src="bower_components/modernizr/modernizr.js"></script>
+        <!-- build:css vendors.css-->
+        <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
+        <!-- endbuild -->
+        <!-- build:css styles.css -->
+        <link rel="stylesheet" href="styles/main.css">
+        <link rel="stylesheet" href="styles/animations.css">
         <!-- endbuild -->
 
     </head>
@@ -75,21 +76,8 @@
 
         </div>
 
-        <!--[if lt IE 7]>
-            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
-        <![endif]-->
-
-        <!-- Google Analytics: change UA-XXXXX-X to be your site's ID.
-        <script>
-            var _gaq=[['_setAccount','UA-XXXXX-X'],['_trackPageview']];
-            (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
-            g.src='//www.google-analytics.com/ga.js';
-            s.parentNode.insertBefore(g,s)}(document,'script'));
-        </script> -->
-
-        <!-- build:js scripts/main.js -->
+        <!-- build:js vendors.js-->
         <script src="bower_components/jquery/jquery.js"></script>
-        <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
         <script src="bower_components/angular/angular.js"></script>
         <script src="bower_components/angular-resource/angular-resource.js"></script>
         <script src="bower_components/angular-route/angular-route.js"></script>
@@ -101,14 +89,19 @@
         <script src="bower_components/highcharts/highcharts.js"></script>
         <script src="bower_components/highcharts-ng/dist/highcharts-ng.js"></script>
         <script src="bower_components/angular-ui-select2/src/select2.js"></script>
+        <!-- endbuild -->
+
+        <!-- build:js main.js-->
         <script src="scripts/app.js"></script>
         <script src="scripts/controllers.js"></script>
         <!-- endbuild -->
 
-        <!-- build:js(.tmp) scripts/coffee.js -->
-        <!-- // <script src="scripts/hello.js"></script> -->
+        <!-- build:remove-->
+        <script src="//localhost:35729/livereload.js"></script>
         <!-- endbuild -->
 
-        <script src="//localhost:35729/livereload.js"></script>
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+        <![endif]-->
 </body>
 </html>

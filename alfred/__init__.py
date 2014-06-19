@@ -20,14 +20,14 @@ log = logging.getLogger(__name__)
 db = config = None
 
 
-def dbConnect(dbHost, dbPort, dbName, mock=True):
+def dbConnect(dbHost, dbPort, dbName):#, mock=False):
     """ Configure db to be used for config, items, etc... """
     global db
-    if mock:
-        from utils import MockMondodb
-        db = MockMondodb()
-    else:
-        db = getattr(MongoClient(dbHost, port=dbPort), dbName)
+    # if mock:
+    #     from utils import MockMondodb
+    #     db = MockMondodb()
+    # else:
+    db = getattr(MongoClient(dbHost, port=dbPort), dbName)
 
 
 def loadConfig():
@@ -57,7 +57,7 @@ def signalHandler(signum, frame):
 def init(db_host, db_port=27017, db_name='alfred', **kwargs):
     """ Separation to get shell access """
 
-    # Configure the db if required
+    # Configure the db
     print 'How can I serve, sir ? :)'
     dbConnect(db_host, db_port, db_name)
     loadConfig()
@@ -98,7 +98,7 @@ def start(args):
 
     # Let's have an interface :)
     import webserver
-    webserver.start()
+    webserver.start(args.get('client_path'))
 
     # signal.pause()
 

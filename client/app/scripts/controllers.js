@@ -1,135 +1,158 @@
-alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
-    $scope.items = {}
+'use strict';
+
+angular.module('alfred').controller('HmiCtrl', function($scope, Item, WebSocket, Commands) {
+    $scope.items = {};
 
     // Listen on updates (TODO: only for items here)
-    WebSocket.onmessage = function(msg){
-        name = msg.topic.split('/').pop();
-        if (name in $scope.items){
+    WebSocket.onmessage = function(msg) {
+        var name = msg.topic.split('/').pop();
+        if (name in $scope.items) {
             $scope.items[name].value = msg.value;
             $scope.items[name].time = new Date(msg.time);
         }
-    }
+    };
 
-    Item.query(function(data){
-        angular.forEach(data, function(d){
+    Item.query(function(data) {
+        angular.forEach(data, function(d) {
             $scope.items[d.name] = d;
             if (d.time)
                 d.time = new Date(d.time.$date);
-        })
-    })
+        });
+    });
 
-    $scope.sendCommand = Commands.send
+    $scope.sendCommand = Commands.send;
 
     // Check if 'old' label should be displayed, 5h old by default
-    $scope.older = function(litems, age){
-        var age = age || 1000 * 60 * 60 * 5,
-            now = new Date();
+    $scope.older = function(litems, pAge) {
+        var age = pAge || 1000 * 60 * 60 * 5,
+            now = new Date(),
             res = false;
 
-        angular.forEach(litems, function(item){
+        angular.forEach(litems, function(item) {
             if ((item in $scope.items) && ($scope.items[item].time) && ((now - $scope.items[item].time) > age))
                 res = true;
-        })
+        });
         return res;
-    }
-    window.old = $scope.older
+    };
+    window.old = $scope.older;
 })
 
-.controller('ItemsCtrl' , function($scope, Item,  WebSocket, Commands,  $modal, AlertService){
+.controller('ItemsCtrl', function($scope, Item, WebSocket, Commands, $modal, AlertService) {
 
-    $scope.commands={
+    $scope.commands = {
         'switch': ['On', 'Off', 'Toggle'],
         'number': ['Increase', 'Decrease', 'Set']
-    }
+    };
 
     // Get Items and parse dates
-    $scope.items = {}
-    Item.query(function(data){
-        angular.forEach(data, function(d){
+    $scope.items = {};
+    Item.query(function(data) {
+        angular.forEach(data, function(d) {
             $scope.items[d.name] = d;
             if (d.time)
-                d.time = new Date(d.time.$date)
-        })
-    })
+                d.time = new Date(d.time.$date);
+        });
+    });
 
     // Listen on updates (TODO: only for items here)
-    WebSocket.onmessage = function(msg){
-        name = msg.topic.split('/').pop();
-        if (name in $scope.items){
+    WebSocket.onmessage = function(msg) {
+        var name = msg.topic.split('/').pop();
+        if (name in $scope.items) {
             $scope.items[name].value = msg.value;
             $scope.items[name].time = new Date(msg.time);
         }
-    }
+    };
 
-    $scope.showDeleteDlg = function(itemId, itemName){
+    $scope.showDeleteDlg = function(itemId, itemName) {
         $modal.open({
-            templateUrl:'deleteDialog.html',
+            templateUrl: 'deleteDialog.html',
         })
-        .result.then(function(){
-            Item.get({_id:itemId}, function(item){
-                item.$delete(function(){
-                    delete $scope.items[itemName]
-                }, function(error){
-                    AlertService.add({msg: 'Error while deleting: ' + error.data, type:'danger'})
-                })
-            })
-        },function(){
-            console.log('Delete canceled')
-        })
-    }
+            .result.then(function() {
+                Item.get({
+                    _id: itemId
+                }, function(item) {
+                    item.$delete(function() {
+                        delete $scope.items[itemName];
+                    }, function(error) {
+                        AlertService.add({
+                            msg: 'Error while deleting: ' + error.data,
+                            type: 'danger'
+                        });
+                    });
+                });
+            }, function() {
+                console.log('Delete canceled');
+            });
+    };
 
-    $scope.sendCommand = Commands.send
+    $scope.sendCommand = Commands.send;
 })
 
-.controller('PluginCtrl', function($scope, $http, Plugin, AlertService){
-    Plugin.query().success(function(data){
+.controller('PluginCtrl', function($scope, $http, Plugin, AlertService) {
+    Plugin.query().success(function(data) {
         $scope.available = data.available;
         $scope.installed = data.installed;
-    })
+    });
     $scope.isc = true;
 
-    $scope.install = function(name){
-        Plugin.install(name).success(function(data){
-            $scope.installed[name] = {active: false, config:{}, autoStart:false }
-            $scope.available.splice($scope.available.indexOf(name),1)
-        }).error(function(data){
-            AlertService.add({msg: data, type: 'danger', timeout: 1500});
-        })
-    }
+    $scope.install = function(name) {
+        Plugin.install(name).success(function() {
+            $scope.installed[name] = {
+                active: false,
+                config: {},
+                autoStart: false
+            };
+            $scope.available.splice($scope.available.indexOf(name), 1);
+        }).error(function(data) {
+            AlertService.add({
+                msg: data,
+                type: 'danger',
+                timeout: 1500
+            });
+        });
+    };
 
-    $scope.uninstall = function(name){
-        Plugin.uninstall(name).success(function(data){
-            delete $scope.installed[name]
-            $scope.available.push(name)
-        })
-    }
+    $scope.uninstall = function(name) {
+        Plugin.uninstall(name).success(function() {
+            delete $scope.installed[name];
+            $scope.available.push(name);
+        });
+    };
 
-    $scope.toggle = function(name){
+    $scope.toggle = function(name) {
         if ($scope.installed[name].active)
             $scope.stop(name);
         else
             $scope.start(name);
-    }
+    };
 
-    $scope.start = function(name){
-        Plugin.start(name).success(function(data){
+    $scope.start = function(name) {
+        Plugin.start(name).success(function() {
             $scope.installed[name].active = true;
-        }).error(function(data){
-            AlertService.add({msg: data, type:'danger', timeout: 1500});
-        })
-    }
+        }).error(function(data) {
+            AlertService.add({
+                msg: data,
+                type: 'danger',
+                timeout: 1500
+            });
+        });
+    };
 
-    $scope.stop = function(name){
-        Plugin.stop(name).success(function(data){
+    $scope.stop = function(name) {
+        Plugin.stop(name).success(function() {
             $scope.installed[name].active = false;
-        }).error(function(data){
-            AlertService.add({msg: data, type:'danger', timeout: 1500});
-        })
-    }
+        }).error(function(data) {
+            AlertService.add({
+                msg: data,
+                type: 'danger',
+                timeout: 1500
+            });
+        });
+    };
 
-    $scope.autoStart = function(name){
+    $scope.autoStart = function(name) {
         Plugin.save(name, $scope.installed[name]);
-    }
+    };
 
     // bean.on(window, 'keydown', function(e){
     //     e.preventDefault();
@@ -188,40 +211,48 @@ alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
     // };
 })
 
-.controller('GraphCtrl', function($scope, $routeParams, WebSocket, Item, $resource){
+.controller('GraphCtrl', function($scope, $routeParams, WebSocket, Item, $resource) {
 
-    WebSocket.onmessage = function(msg){
-        item = msg.topic.split('/').pop()
-        if (item == $scope.item.name){
+    WebSocket.onmessage = function(msg) {
+        var item = msg.topic.split('/').pop();
+        if (item === $scope.item.name) {
             $scope.data.push([new Date(msg.time).getTime(), msg.value]);
-            if ($scope.data.length>50)
+            if ($scope.data.length > 50)
                 $scope.data.shift();
         }
-    }
-    window.item = Item
+    };
+    window.item = Item;
 
-    $scope.item = Item.get({_id: $routeParams._id}, function(){
+    $scope.item = Item.get({
+        _id: $routeParams._id
+    }, function() {
         $scope.data = [];
         $scope.chart = {
-            chart:{
+            chart: {
                 zoomType: 'x',
             },
-            animation: {duration:800},
+            animation: {
+                duration: 800
+            },
             title: {
-                text: "Last day values for " + $scope.item.name,
+                text: 'Last day values for ' + $scope.item.name,
             },
             series: [{
                 data: $scope.data,
                 // step: 'left',
-                name: $scope.item.name + ($scope.item.unit ? ' (' + $scope.item.unit + ')': ''),
+                name: $scope.item.name + ($scope.item.unit ? ' (' + $scope.item.unit + ')' : ''),
                 // marker: {enabled:false},
-                animation:{duration:1000}
+                animation: {
+                    duration: 1000
+                }
             }],
-            xAxis:{
+            xAxis: {
                 type: 'datetime'
             },
-            yAxis:{
-                title:{ text: $scope.item.unit }
+            yAxis: {
+                title: {
+                    text: $scope.item.unit
+                }
             },
             tooltip: {
                 shared: true
@@ -229,121 +260,152 @@ alfred.controller('HmiCtrl', function($scope, Item, WebSocket, Commands){
             legend: false,
             // useHighStocks: true
             loading: true
-        }
+        };
 
-        $resource('/api/v1/item/:item_id/values').query({'item_id': $scope.item._id.$oid}, function(data){
-            if ($scope.item.type == 'switch')
+        $resource('/api/v1/item/:item_id/values').query({
+            'item_id': $scope.item._id.$oid
+        }, function(data) {
+            if ($scope.item.type === 'switch')
                 $scope.chart.series[0].step = 'left';
 
-            angular.forEach(data, function(d){
-                $scope.data.push([getTimeStamp(d._id.$oid), typeof(d.value) == 'number' ? d.value: d.value|0])
-            })
+            angular.forEach(data, function(d) {
+                $scope.data.push([getTimeStamp(d._id.$oid), typeof(d.value) === 'number' ? d.value : d.value || 0]);
+            });
             $scope.chart.loading = false;
-        })
+        });
     });
 
-    getTimeStamp = function(_id){
-        return parseInt(_id.toString().slice(0,8), 16)*1000;
-    }
+    var getTimeStamp = function(_id) {
+        return parseInt(_id.toString().slice(0, 8), 16) * 1000;
+    };
 
 })
 
-.controller('EditItemCtrl', function($scope, $routeParams, $location, AlertService, Item){
+.controller('EditItemCtrl', function($scope, $routeParams, $location, AlertService, Item) {
     if ($routeParams._id)
-        $scope.item = Item.get({'_id': $routeParams._id})
+        $scope.item = Item.get({
+            '_id': $routeParams._id
+        });
     else
         $scope.item = new Item();
 
-    $scope.types = ['number', 'switch', 'string']
+    $scope.types = ['number', 'switch', 'string'];
 
-    $scope.submit = function(){
+    $scope.submit = function() {
         delete $scope.item.time; // Do not update those ones here :)
         delete $scope.item.value;
 
         if ($scope.item.groups && !$scope.item.groups.push) // If it is not an array
-            $scope.item.groups = $scope.item.groups.split(',')
+            $scope.item.groups = $scope.item.groups.split(',');
 
-        if ($scope.item._id)
-        {
-            console.log($scope.item)
-            $scope.item.$update(function(){
-                $location.path('/items')
-            }, function(err){
-                AlertService.add({msg: "Error while updating: " + err.data, type:'danger'})
-            })
-        }
-        else
-        {
-            $scope.item.$save(function(){
+        if ($scope.item._id) {
+            $scope.item.$update(function() {
                 $location.path('/items');
-            }, function(err){
-                AlertService.add({msg: "Error while saving: " + err.data, type:'danger'});
-            })
+            }, function(err) {
+                AlertService.add({
+                    msg: 'Error while updating: ' + err.data,
+                    type: 'danger'
+                });
+            });
+        } else {
+            $scope.item.$save(function() {
+                $location.path('/items');
+            }, function(err) {
+                AlertService.add({
+                    msg: 'Error while saving: ' + err.data,
+                    type: 'danger'
+                });
+            });
         }
-    }
+    };
 })
 
-.controller('LoginCtrl', function($scope, $location, AlertService, Auth){
+.controller('LoginCtrl', function($scope, $location, AlertService, Auth) {
 
-    $scope.login = function(){
-        window.user = $scope.loginForm.username
+    $scope.login = function() {
+        window.user = $scope.loginForm.username;
         Auth.login($scope.username, $scope.password)
-        .success(function(data){
-            AlertService.add({msg: Auth.user.username + ", you've been logged in", type:'success', timeout: 200000})
-            $location.path('/')
-        })
-        .error(function(data){
-            AlertService.add({msg: "Bad username and/or password", type:'danger', timeout: 2000})
-        })
-    }
+            .success(function() {
+                AlertService.add({
+                    msg: Auth.user.username + ', you\'ve been logged in',
+                    type: 'success',
+                    timeout: 200000
+                });
+                $location.path('/');
+            })
+            .error(function() {
+                AlertService.add({
+                    msg: 'Bad username and/or password',
+                    type: 'danger',
+                    timeout: 2000
+                });
+            });
+    };
 })
 
-.controller('AuthCtrl', function($scope, Auth, $cookies){
-    $scope.user = {username: $cookies.username || null}
-    $scope.$on('auth:login', function(ev, user){
+.controller('AuthCtrl', function($scope, Auth, $cookies) {
+    $scope.user = {
+        username: $cookies.username || null
+    };
+    $scope.$on('auth:login', function(ev, user) {
         $scope.user = user;
-    })
+    });
 
-    $scope.logout = Auth.logout
+    $scope.logout = Auth.logout;
 })
 
-.controller('AlertCtrl', function($scope, AlertService){
+.controller('AlertCtrl', function($scope, AlertService) {
     $scope.alerts = AlertService.alerts;
     $scope.close = AlertService.close;
 })
 
-.controller('ConfigCtrl', function($scope, Config, $location, Item, AlertService){
-    window.c = Config
-    $scope.settings = Config.get()
+.controller('ConfigCtrl', function($scope, Config, $location, Item, AlertService) {
+    $scope.settings = Config.get();
 
     $scope.itemsOptions = {
         multiple: true,
         simple_tags: true,
         closeOnSelect: false,
-        tags: function(){return $scope.items},
-        createSearchChoice: function() { return null; },
+        tags: function() {
+            return $scope.items;
+        },
+        createSearchChoice: function() {
+            return null;
+        },
     };
 
-    $scope.submit = function(){
-        ssc = $scope.settings.config;
-        ssc.http.debug = ssc.http.debug || ssc.http.debug.toLowerCase() == 'true'
+    $scope.submit = function() {
+        var ssc = $scope.settings.config;
+        ssc.http.debug = ssc.http.debug || ssc.http.debug.toLowerCase() === 'true';
 
         if (!ssc.items.pop)
-            ssc.items = ssc.items.split(',').map(function(l){return l.trim()})
+            ssc.items = ssc.items.split(',').map(function(l) {
+                return l.trim();
+            });
         if (!ssc.persistence.items.pop)
-            ssc.persistence.items = ssc.persistence.items.split(',').map(function(l){return l.trim()})
+            ssc.persistence.items = ssc.persistence.items.split(',').map(function(l) {
+                return l.trim();
+            });
         if (!ssc.persistence.groups.pop)
-            ssc.persistence.groups = ssc.persistence.groups.split(',').map(function(l){return l.trim()})
+            ssc.persistence.groups = ssc.persistence.groups.split(',').map(function(l) {
+                return l.trim();
+            });
 
-        $scope.settings.$update(function(res){
+        $scope.settings.$update(function(res) {
             if (res.error)
-                AlertService.add({msg: "Error while updating: " + res.error, type:'danger'})
+                AlertService.add({
+                    msg: 'Error while updating: ' + res.error,
+                    type: 'danger'
+                });
             else
-                $location.path('/')
-        }, function(err){
-            str = err.data.split('(').pop();
-            str = str.trim().substring(0, str.length - 2)
-            AlertService.add({msg: "Error while updating: " + str, type:'danger'})
-        })
-    }
-})
+                $location.path('/');
+        }, function(err) {
+            var str = err.data.split('(').pop();
+            str = str.trim().substring(0, str.length - 2);
+            AlertService.add({
+                msg: 'Error while updating: ' + str,
+                type: 'danger'
+            });
+        });
+    };
+});

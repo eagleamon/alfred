@@ -11,11 +11,12 @@ __webServer = bus = None
 
 class WebServer(web.Application):
 
-    def __init__(self):
+    def __init__(self, clientPath):
         self.log = logging.getLogger(type(self).__name__)
         settings = dict(
             debug=config.get('http').get('debug'), #.lower() == 'true',
-            static_path=os.path.join(os.path.dirname(__file__), '..' ,'client/dist/'),
+            # static_path=os.path.join(os.path.dirname(__file__), '..' ,'client/dist/'),
+            static_path = clientPath,
             login_url='/auth/login',
             cookie_secret=config.get('http').get('secret')
         )
@@ -62,9 +63,9 @@ class WebServer(web.Application):
 # To keep a coherent interface with other modules
 
 
-def start():
+def start(clientPath):
     global bus, __webServer
-    __webServer = WebServer()
+    __webServer = WebServer(clientPath)
     bus = __webServer.bus
     __webServer.start()
 
