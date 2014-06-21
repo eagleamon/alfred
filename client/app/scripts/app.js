@@ -57,7 +57,6 @@ var alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 
 
         }
     ])
-
 .factory('WebSocket', function($rootScope, $log) {
     return {
         connect: function() {
@@ -273,7 +272,7 @@ var alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 
             });
             $scope.$on('websocket:disconnected', function() {
                 $scope.$apply(function() {
-                    $scope.state = 'Connecting...';
+                    $scope.state = 'Connecting... :(';
                 });
             });
         }

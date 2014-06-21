@@ -8,7 +8,7 @@ var gulp = require('gulp'),
             jade: 'app/jades/**/*.jade',
             views: 'app/views/**/*.html',
             images: 'app/images/**/*',
-            scripts: ['app/scripts/**/*.js', 'gulpfile.js'],
+            scripts: 'app/scripts/**/*.js',
             styles: 'app/styles/**/*.css',
             index: 'app/index.html',
             assets: ['app/favicon.png', 'app/robots.txt'],
@@ -29,8 +29,9 @@ gulp.task('clean', function() {
 });
 
 gulp.task('scripts', function() {
-    return gulp.src(path.src.scripts)
+    return gulp.src([path.src.scripts, './gulpfile.js'])
         .pipe(p.cached())
+        .pipe(p.filesize())
         .pipe(p.jshint())
         .pipe(p.jshint.reporter('jshint-stylish'));
 });
@@ -50,6 +51,7 @@ gulp.task('jade', function() {
             pretty: true
         }))
         .pipe(p.filesize())
+        // Add a rename, as for scss etc to prevent versioning of the result: ae.scss.css or aeze.jade.html
         .pipe(gulp.dest(path.dst.jade));
 });
 
@@ -79,11 +81,19 @@ gulp.task('useref', function() {
         .pipe(p.if('*.js', p.uglify()))
         .pipe(p.useref.restore())
         .pipe(p.useref())
-        .pipe(p.if('*.html', p.minifyHtml({
-            conditionals: true
-        })))
+        // .pipe(p.if('*.html', p.minifyHtml({
+        //     conditionals: true
+        // })))
         .pipe(p.filesize())
         .pipe(gulp.dest('dist'));
+});
+
+gulp.task('ng', function(){
+    return gulp.src(path.src.scripts)
+        .pipe(p.filesize())
+        .pipe(p.ngmin())
+        .pipe(p.filesize())
+        .pipe(gulp.dest('dist/'));
 });
 
 gulp.task('default', ['dev']);
@@ -102,7 +112,7 @@ gulp.task('watch', function() {
     gulp.src(path.src.index).pipe(p.open('', {
         url: 'http://localhost:8000'
     }));
-    gulp.watch(path.src.scripts, ['scripts']).on('change', change);
+    gulp.watch([path.src.scripts, './gulpfile.js'], ['scripts']).on('change', change);
     gulp.watch(path.src.jade, ['jade']).on('change', change);
     gulp.watch(path.src.styles, ['styles']).on('change', change);
 

@@ -1,16 +1,21 @@
-from alfred.plugins import Plugin
-from alfred import config
-import time
+from alfred import plugins, config
 from telnetlib import Telnet
 from threading import Lock
+import time
 
 defaultConfig = {
-    'host': 'localhost',
-    'port': 1234,
-    'refresh': 30
+    'netName1': {
+        'host': 'netip/name',
+        'port': 1234,
+        'refresh': 30
+    }
 }
 
-class Netio(Plugin):
+
+class Netio(plugin.Plugin):
+    '''
+    Item binding/command should be of the form: 'netio:netName:port
+    '''
 
     def run(self):
         refresh = self.config.get('refresh')
