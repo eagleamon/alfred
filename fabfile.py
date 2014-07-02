@@ -1,8 +1,17 @@
-from fabric.api import local, run, cd, sudo, put
-from fabric.decorators import hosts
+from fabric.api import local, run, cd, sudo, put, env
+from fabric.context_managers import prefix, shell_env
+from contextlib import contextmanager
 
 import os
 
+env.pythonpath = '/Users/joseph/.virtualenvs/alfred/lib/python2.7/site-packages/'
+env.hosts = ['hal', 'pi@raspbmc']
+
+
+@contextmanager
+def source_venv():
+    with prefix('source ' + '/Users/joseph/.virtualenvs/alfred/bin/activate'):
+        yield
 
 def clean():
     local('find . -name "*.pyc" -delete')
@@ -10,7 +19,6 @@ def clean():
 
 
 # TODO: change to package
-@hosts('pi@raspbmc')
 def install():
     run('test -e alfred || git clone https://github.com/eagleamon/alfred.git')
     with(cd('alfred')):
@@ -50,5 +58,6 @@ def run(where='test', client='dist'):
 
 
 def test(toTest=''):
-    " Passes argument like -> fab test:tests/items.py "
-    local('nosetests --with-watch %s' % toTest)
+    " Chose tests like -> fab test:tests/items.py "
+    with source_venv(), shell_env(PYTHONPATH=env.pythonpath):
+        local('nosetests %s --with-watch -v' % toTest)

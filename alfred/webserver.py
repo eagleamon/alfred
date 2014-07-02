@@ -1,12 +1,10 @@
-__author__ = 'joseph'
-
 from tornado import web, httpserver, ioloop
-from alfred import config, eventBus, getHost
 import handlers as v1
 import logging
 import os
+import alfred
 
-__webServer = bus = None
+__webServer = None
 
 
 class WebServer(web.Application):
@@ -14,11 +12,10 @@ class WebServer(web.Application):
     def __init__(self, clientPath):
         self.log = logging.getLogger(type(self).__name__)
         settings = dict(
-            debug=config.get('http').get('debug'), #.lower() == 'true',
-            # static_path=os.path.join(os.path.dirname(__file__), '..' ,'client/dist/'),
+            debug=alfred.config.get('http').get('debug'),
             static_path = clientPath,
             login_url='/auth/login',
-            cookie_secret=config.get('http').get('secret')
+            cookie_secret=alfred.config.get('http').get('secret')
         )
         self.log.debug('Static path: %s' % settings.get('static_path'))
 
@@ -39,15 +36,15 @@ class WebServer(web.Application):
 
         web.Application.__init__(self, self.myhandlers, **settings)
 
-        self.bus = eventBus.create(self.__module__.split('.')[-1])
-        self.bus.subscribe('items/#')
-        self.bus.subscribe('log/#')
-        self.bus.on_message = self.on_message
+        self.bus = alfred.bus.Bus()
+        self.bus.on('items/#', self.on_message)
+        self.bus.on('log/#', self.on_message)
 
     def start(self):
-        self.log.info("Starting webserver on port: %s" % config.get('http').get('port'))
+        port = alfred.config.get('http').get('port')
+        self.log.info("Starting webserver on port: %s" % port)
         self.server = httpserver.HTTPServer(self)
-        self.server.listen(config.get('http').get('port'))
+        self.server.listen(port)
 
         ioloop.IOLoop.instance().start()
 
@@ -64,9 +61,7 @@ class WebServer(web.Application):
 
 
 def start(clientPath):
-    global bus, __webServer
     __webServer = WebServer(clientPath)
-    bus = __webServer.bus
     __webServer.start()
 
 

@@ -1,11 +1,11 @@
 import logging
 import os
+import imp
 import json
-import eventBus
 import signal
 import alfred
 from alfred.plugins import Plugin
-from alfred import persistence, config, getHost, db
+from alfred import persistence
 
 items = {}
 activePlugins = {}
@@ -14,33 +14,45 @@ bus = None
 log = logging.getLogger(__name__)
 
 
-def getAvailablePlugins():
-    """
-    Check for all plugins available
-    TODO: make this more robust
-    """
+def find_plugins():
+    """ List all available plugins as package/modules in instance plugin dir"""
 
-    import alfred
-    res, pluginPath = [], os.path.join(os.path.dirname(alfred.__file__), 'plugins')
-    for d in os.listdir(pluginPath):
-        if os.path.isdir(os.path.join(pluginPath, d)) and not d.endswith('egg-info'):
-            res.append(d)
+    plugins, basePath = {}, os.path.join(os.path.dirname(alfred.__file__), 'plugins')
+    for i in os.listdir(basePath):
+        i = i.split('.')[0]
+        if i == "__init__": continue
+        try:
+            plugins[i] = imp.find_module(i, [basePath])
+        except ImportError:
+            pass
+    return plugins
+
+def load_plugins():
+    """ Load all available plugins as listed by get_plugins() """
+    res = {}
+    for name, info in find_plugins().items():
+        try:
+            res[name] = imp.load_module(name,*info)
+        except ImportError, E:
+            log.exception("Cannot load plugin %s" % E.message)
     return res
 
+def get_plugins():
+    """ Return instanciable classes defined in plugins """
+    return Plugin.plugins
 
 def init():
     global bus
-    bus = eventBus.create(__name__.split('.')[-1])
-    bus.subscribe('commands/#')
-    bus.subscribe('config/#')
-    bus.on_message = on_message
+    bus = alfred.bus.Bus()
+    bus.on('commands/#', on_message)
+    bus.on('config/#', on_message)
 
-    log.info("Available plugins: %s" % getAvailablePlugins())
-    for i in filter(lambda i: i[1]['autoStart'], config.get('plugins').items()):
+    log.info("Available plugins: %s" % get_plugins())
+    for i in filter(lambda i: i[1]['autoStart'], alfred.config.get('plugins').items()):
         startPlugin(i[0])
 
     # Then register needed items
-    for name in config.get('items'):
+    for name in alfred.config.get('items'):
         register(name)
 
     for k, v in activePlugins.items():
@@ -49,12 +61,11 @@ def init():
 # TODO: migrate to new config form
 
 
-def dispose():
+def stop():
     for b in activePlugins:
         activePlugins[b].stop()
     items.clear()
     activePlugins.clear()
-    bus.stop()
 
 
 def installPlugin(pluginName):
@@ -70,25 +81,25 @@ def installPlugin(pluginName):
             log.error(res)
             return res
 
-    if not pluginName in config.get('plugins'):
+    if not pluginName in alfred.config.get('plugins'):
         log.info('Installing plugin %s' % pluginName)
-        config['plugins'][pluginName] = dict(
+        alfred.config['plugins'][pluginName] = dict(
             autoStart=False,
             config=getattr(mod, 'defaultConfig', {})
         )
-        db.config.update({'name': getHost()}, {'$set': {'config': config}})
+        alfred.db.config.update({'name': alfred.getHost()}, {'$set': {'config': config}})
 
 
 def uninstallPlugin(pluginName):
     if pluginName in activePlugins:
         stopPlugin(pluginName)
     log.info('Uninstalling plugin %s' % pluginName)
-    del config['plugins'][pluginName]
-    db.config.update({'name': getHost()}, {'$set': {'config': config}})
+    del alfred.config['plugins'][pluginName]
+    alfred.db.config.update({'name': alfred.getHost()}, {'$set': {'config': config}})
 
 
 def startPlugin(pluginName):
-    if not pluginName in config.get('plugins'):
+    if not pluginName in alfred.config.get('plugins'):
         res = 'Plugin %s not installed' % pluginName
         log.error(res)
         return res
@@ -97,7 +108,7 @@ def startPlugin(pluginName):
     __import__('alfred.plugins.%s' % pluginName)
     instance = Plugin.plugins[pluginName]()
     activePlugins[pluginName] = instance
-    for item in config.get('items'):
+    for item in alfred.config.get('items'):
         register(item)
     instance.start()
 
@@ -118,7 +129,7 @@ def stopPlugin(pluginName):
 def register(name):
 
     # Get informations
-    itemDef = db.items.find_one(dict(name=name))
+    itemDef = alfred.db.items.find_one(dict(name=name))
     if not itemDef:
         log.error('No definition found for item %s' % name)
         return
@@ -136,7 +147,7 @@ def register(name):
         item.bus = bus
         # Small tip to get icons
         if not itemDef.get('icon'):
-            db.items.update(dict(name=item.name), {'$set': {'icon': item.icon}})
+            alfred.db.items.update(dict(name=item.name), {'$set': {'icon': item.icon}})
 
     # Check for a previous registration
     if name not in items:

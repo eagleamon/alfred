@@ -1,7 +1,7 @@
 __author__ = 'Joseph Piron'
 
 import logging
-from alfred import utils, logging
+from alfred import utils
 from datetime import datetime
 import dateutil
 from dateutil import tz

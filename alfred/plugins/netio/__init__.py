@@ -12,7 +12,7 @@ defaultConfig = {
 }
 
 
-class Netio(plugin.Plugin):
+class Netio(plugins.Plugin):
     '''
     Item binding/command should be of the form: 'netio:netName:port
     '''

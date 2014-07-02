@@ -2,6 +2,11 @@ import smtplib
 from alfred import config
 from email.mime.text import MIMEText
 
+defaultConfig = {
+    'fromAddress': '',
+    'server': ''
+}
+
 
 def sendMail(to, message, subject="Nouvelles de la maison.."):
     """ Sends a mail.. yep.. :) """

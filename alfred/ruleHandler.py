@@ -2,7 +2,7 @@ import logging
 import crython
 import os
 import json
-from alfred import eventBus
+import alfred
 
 log = logging.getLogger(__name__)
 
@@ -15,9 +15,9 @@ log = logging.getLogger(__name__)
 def busEvent(topic):
     """ Decorator: triggers the function run when a message is received matching topic """
     def wrapper(f):
-        bus = eventBus.create(__name__.split('.')[-1])
+        bus = alfred.bus.Bus()
         bus.on_subscribe = lambda: log.debug("Subscribed to topic %s" % topic)
-        bus.subscribe(topic.replace('*', '#'))
+        bus.on(topic.replace('*', '#'), handle_message)
         # context = Context()
         # context.bus = bus
 
@@ -27,7 +27,6 @@ def busEvent(topic):
             except Exception, E:
                 log.exception('Exception while executing rule: %s' % E.message)
 
-        bus.on_message = handle_message
         return f
     return wrapper
 

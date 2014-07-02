@@ -1,7 +1,6 @@
 from alfred.plugins import Plugin
 import random
 
-
 class Random(Plugin):
 
     def run(self):

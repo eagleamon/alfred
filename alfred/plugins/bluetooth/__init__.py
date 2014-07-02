@@ -1,6 +1,6 @@
 # Fake bluetooth binding to start and work with the definition
 
-from alfred.plugins import Pinding
+from alfred.plugins import Plugin
 import random
 
 class Bluetooth(Plugin):

@@ -1,6 +1,5 @@
 from tornado.web import RequestHandler, HTTPError, authenticated
 from tornado.websocket import WebSocketHandler
-from alfred import config, manager, version, db, getHost, logging
 from bson.json_util import dumps, loads
 from bson.objectid import ObjectId
 from dateutil import tz
@@ -11,7 +10,8 @@ import sha
 import os
 import copy
 import traceback
-
+import logging
+import alfred
 
 class BaseHandler(RequestHandler):
 
@@ -64,7 +64,7 @@ class MainHandler(BaseHandler):
 
     def get(self):
         with (open(self.path + '/index.html')) as f:
-            self.write(f.read() % {'version': version})
+            self.write(f.read() % {'version': alfred.__version__})
 
 
 class AuthLoginHandler(BaseHandler):

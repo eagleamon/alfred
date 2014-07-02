@@ -1,8 +1,10 @@
+colorlog>=2.0.0
+crython>=0.0.1
 mosquitto>=1.2
 pymongo>=2.6.1
-crython>=0.0.1
-colorlog>=2.0.0
-python-boxcar>=0.1.2
-tornado>=3.1
 python-dateutil>=2.2
 requests>=1.2.3
+tornado>=3.1
+pyee-topics>=0.0.10
+pyserial==2.7.0
+http://panstamp.googlecode.com/svn/trunk/python/pyswap/src/#egg=pyswap

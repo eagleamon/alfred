@@ -1,6 +1,6 @@
 import logging
 import os
-import alfred
+import alfred.bus
 import json
 
 # Default configuration values
@@ -24,12 +24,13 @@ class PluginMount(type):
     """ MetaClass to define plugins """
 
     def __init__(cls, name, bases, attrs):
-        cls.logger = logging.getLogger(attrs.get('__module__').split('.')[-1])
-
-        if not hasattr(cls, 'plugins'):
-            cls.plugins = {}
+        # cls.logger = logging.getLogger(attrs.get('__module__').split('.')[-1])
+        if bases[0] == object:
+            return
+        if not hasattr(bases[0], 'plugins'):
+            bases[0].plugins = {}
         else:
-            cls.plugins[name.lower()] = cls
+            bases[0].plugins[name.lower()] = cls
 
 
 # Gist: https://gist.github.com/Xjs/114831
@@ -74,44 +75,30 @@ class RecursiveDictionary(dict):
 
 class MqttHandler(logging.Handler):
 
-    """ Mqtt Handler for logging """
+    """
+    Mqtt Handler for logging
+
+    Remark: maybe interesting to have a second mqtt client dedicated to logging ?
+    """
 
     def __init__(self):
         logging.Handler.__init__(self)
-        self._bus = None
+        self.bus = alfred.bus.Bus()
         self.host = alfred.getHost()
     #     self.bus = eventBus.create()
 
-    @property
-    def bus(self):
-        if not self._bus:
-            from alfred import eventBus
-            self._bus = eventBus.create('logger')
-        return self._bus
+    # @property
+    # def bus(self):
+    #     if not self._bus:
+    #         from alfred import eventBus
+    #         self._bus = eventBus.create('logger')
+    #     return self._bus
 
     def emit(self, record):
-        if record.name != 'alfred.eventBus':
+        # if record.name != 'alfred.bus':
+        if self.bus.client:
             res = {'message': record.message, 'time': record.created, 'name':
                    record.name, 'host': self.host, 'level': record.levelname}
-            self.bus.publish('log/%s/%s' % (self.host, record.levelname), json.dumps(res))
+            self.bus.emit('log/%s/%s' % (self.host, record.levelname), json.dumps(res))
 
         # self.bus.publish('log/host/%s' % record.levelname, str(record.getMessage()))
-
-
-class MockMondodb():
-
-    def __init__(self):
-        self.config = Mock()
-        self.item = Mock()
-        self.config.find_one = lambda x: {}
-        self.config.save = lambda x: None
-        self.users = Mock()
-        self.users.count = lambda : 1
-        self.users.find_one  = lambda x: {'username': 'yep'}
-        self.items = Mock()
-        from bson.objectid import ObjectId
-        self.items.find = lambda : [{'name': 'item', 'type': 'number', '_id': ObjectId()}]
-
-
-class Mock():
-    pass

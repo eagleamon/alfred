@@ -1,29 +1,30 @@
-__author__ = 'Joseph Piron'
-
 from alfred.items import Item
 from alfred.utils import PluginMount
-from alfred import eventBus, config as aconfig, logging
 from threading import Thread, Event
+import alfred
+import logging
+
 # Going on with Thread, if stop needed will switch to Process, but should look at Concurrrence of Gevent
 # for better concurrency
 
 
 class Plugin(Thread):
     __metaclass__ = PluginMount
+
     validTypes = ['number', 'switch', 'string']
+    defaultConfig = {}
 
     def __init__(self):
-        self.log = logging.getLogger(type(self).__name__)
+        self.log = logging.getLogger(type(self).__name__.lower())
         self.stopEvent = Event()
-        self.bus = eventBus.create(self.__module__.split('.')[-1])
-        self.items = {}
+        self.bus = alfred.bus.Bus()
+        self.items, self.activeConfig = {}, {}
 
         Thread.__init__(self)
         self.setDaemon(True)
 
     def stop(self):
         self.stopEvent.set()
-        self.bus.stop()
 
     def register(self, **kwargs):
         if not kwargs.get('type') in Plugin.validTypes:
@@ -46,7 +47,7 @@ class Plugin(Thread):
 
     @property
     def config(self):
-        return aconfig.get('plugins').get(self.__class__.__name__.lower()).get('config')
+        return alfred.config.get('plugins').get(self.__class__.__name__.lower()).get('config')
 
     def sendCommand(self, cmd):
         raise NotImplementedError('Should be overwritten (%s)' % cmd)

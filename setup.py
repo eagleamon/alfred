@@ -16,7 +16,7 @@ import alfred
 
 setup(
     name = "alfred",
-    version = alfred.version,
+    version = alfred.__version__,
     author = "Joseph Piron",
     author_email = "joseph.piron@gmail.com",
     description = ("An interpretation of OpenHab, Domogik, and other great domotic projects."),
@@ -28,7 +28,7 @@ setup(
     install_requires=reqs(),
     long_description=read('README.md'),
     data_files=[
-        ('/etc/init', ['package/alfred.conf'])
+        ('/etc/init', ['misc/alfred.conf'])
     ],
     include_package_data=True,
     classifiers=[
