@@ -21,9 +21,7 @@ def update(collection, who, data, *args, **kwargs):
 
 
 def start():
-    from alfred import eventBus
-
-    bus = alfred.bus.Bus()
+    bus = alfred.bus
     bus.on('items/#', on_message)
 
     for group in alfred.config.get('persistence').get('groups'):

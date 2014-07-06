@@ -1,6 +1,7 @@
 import nose.tools as nt
 import mock
-
+import mosquitto
+import pyee
 import alfred
 
 class ItWorked(Exception):
@@ -24,21 +25,18 @@ def test_load_config():
     assert alfred.load_config()
 
 
-@mock.patch('alfred.bus.startMqtt', autospec=True)
+@mock.patch('alfred.bus.start_mqtt', autospec=True)
 def test_bus_module(mock_start):
     alfred.bus.init('host', 'port')
     mock_start.assert_called_with('host', 'port')
 
 
-@mock.patch('alfred.bus.startMqtt', autospec=True)
+@mock.patch('alfred.bus.start_mqtt', autospec=True)
 def test_bus_instance(mock_start):
-    import mosquitto
-    import pyee
     alfred.bus.init('host', 'port')
-    e = alfred.bus.Bus()
-    # nt.assert_equal(e.client, alfred.bus.client)
+    e = alfred.bus
     nt.assert_is_instance(alfred.bus.client, mosquitto.Mosquitto)
-    nt.assert_is_instance(e, pyee.EventEmitter)
+    nt.assert_is_instance(e._ee, pyee.EventEmitter)
 
 
 @mock.patch('mosquitto.Mosquitto.subscribe')
@@ -57,14 +55,14 @@ def test_base_topic_publish(mock_pub):
 
 @mock.patch('alfred.bus.subscribe')
 def test_bus_subscribe(mock_sub):
-    e = alfred.bus.Bus()
+    e = alfred.bus
     e.on('topic')
     mock_sub.assert_called_with('topic')
 
 
 @mock.patch('alfred.bus.publish')
 def test_bus_publish(mock_pub):
-    e = alfred.bus.Bus()
+    e = alfred.bus
     e.emit('topic', 'ok')
     mock_pub.assert_called_with('topic', 'ok')
 
@@ -76,6 +74,14 @@ def test_emit_inter_objects():
     p2.bus.on('event', fct)
     with nt.assert_raises(ItWorked):
         p1.bus.emit('event')
+
+def test_emit_event_passed():
+    def fct(ev, msg):
+        nt.assert_equal(ev, 'ev')
+        nt.assert_equal(msg, 'ok')
+
+    alfred.bus.on('ev', fct)
+    alfred.bus.emit('ev','ok')
 
 #############################################
 # Manager

@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from alfred.ruleHandler import timeEvent, busEvent, logging, eventBus
+from alfred.ruleHandler import timeEvent, busEvent
 from alfred.plugins.mail import sendMail
 from alfred import persistence
 import json
+import logging
 
 log = logging.getLogger(__name__)
 

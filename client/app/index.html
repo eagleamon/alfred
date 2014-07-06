@@ -2,7 +2,7 @@
 <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
 <!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
 <!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
-<!--[if gt IE 8]><!--> <html ng-app="alfred" class="no-js"> <!--<![endif]-->
+<!--[if gt IE 8]><!--> <html ng-app="alfred" class="no-js" ng-cloak> <!--<![endif]-->
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
@@ -53,16 +53,19 @@
                     </ul>
 
                     <!-- User and authentication stuffs -->
-                    <ul class="nav navbar-nav pull-right" ng-controller='AuthCtrl' ng-show='user.username'>
-                        <li class='dropdown'>
-                            <a href='#' class='dropdown-toggle'>{{user.username|title}}<span class='caret'></span></a>
+                    <ul class="nav navbar-nav pull-right" ng-controller='AuthCtrl'>
+                        <li class='dropdown' ng-show='user.username'>
+                            <a href='#' class='dropdown-toggle'>
+                                {{user.username|title}}<span class='caret'></span>
+                            </a>
                             <ul class="dropdown-menu">
                                 <li><a href="">Version %(version)s</a></li>
                                 <li><a href="#">Profile</a></li>
                                 <li class="divider"></li>
-                                <li><a href='' ng-click='logout()'>Logout</a></li>
+                                <li ng-show="user.username"><a href='/auth/logout'>Logout</a></li>
                             </ul>
                         </li>
+                        <li ng-hide="user.username"><a href='/#login'>Login</a></li>
                         <li><p class='navbar-text' websocketStatus></p></li>
                     </ul>
                 </div><!--/.nav-collapse -->
@@ -76,8 +79,11 @@
 
         </div>
 
+        <!-- TODO: Get rid completely of bootstrap -->
+
         <!-- build:js vendors.js-->
         <script src="bower_components/jquery/jquery.js"></script>
+        <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
         <script src="bower_components/angular/angular.js"></script>
         <script src="bower_components/angular-resource/angular-resource.js"></script>
         <script src="bower_components/angular-route/angular-route.js"></script>

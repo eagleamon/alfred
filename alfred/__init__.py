@@ -9,6 +9,8 @@ __version__ = '.'.join(map(str, __version_info__))
 
 from pymongo import MongoClient
 from utils import RecursiveDictionary, baseConfig
+import getpass
+import sha
 import threading
 import logging
 import os
@@ -77,8 +79,6 @@ def start(args):
     init(**args)
 
     if args.get('create_user'):
-        import getpass
-        import sha
         db.users.insert({'username': args.get(
             'create_user'), 'hash': sha.sha(getpass.getpass()).hexdigest()})
         exit()
@@ -86,12 +86,7 @@ def start(args):
     log.info('Starting alfred {0}'.format(__version__))
     signal.signal(signal.SIGINT, signalHandler)
 
-    # Start the persistence handler
-    # import persistence
     persistence.start()
-
-    # Import all the rules
-    # import ruleHandler
     ruleHandler.loadRules(os.path.join(os.path.dirname(__file__), 'rules'))
     ruleHandler.start()
 
@@ -108,7 +103,7 @@ def start(args):
 
 
 def heartbeat(signum, frame):
-    info = {'version': __version__, 'startTime': sys.startTime}
+    info = {'version': __version__, 'startTime': sys.startTime, 'host': getHost()}
     if signum == signal.SIGALRM:
         manager.bus.emit('heartbeat/%s' % getHost(), json.dumps(info))
         signal.alarm(config.get('heartbeatInterval'))

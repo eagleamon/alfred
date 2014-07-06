@@ -1,11 +1,12 @@
 __author__ = 'Joseph Piron'
 
 import logging
-from alfred import utils
+import alfred
 from datetime import datetime
 import dateutil
 from dateutil import tz
 import json
+
 
 class Item(object):
 
@@ -13,14 +14,14 @@ class Item(object):
     General representation of a piece of information
     Converntion: all commands should be camelcase
     """
-    __metaclass__ = utils.PluginMount
+    __metaclass__ = alfred.utils.PluginMount
+    bus = alfred.bus
 
     def __init__(self, **kwargs):
         self.log = logging.getLogger(type(self).__name__)
         self.name = kwargs.get('name')
         self._value = kwargs.get('value', None)
         self.time = kwargs.get('time', None)
-        self.bus = None
         self.groups = set(kwargs.get('groups', []))
         self.plugin = kwargs.get('plugin')
         self._icon = kwargs.get('icon', None)
@@ -52,15 +53,12 @@ class Item(object):
         # Datetimes only in UTC
         self.time = datetime.now(tz.tzutc())
         self.log.debug("Value of '%s' changed: %s" % (self.name, value))
-        if self.bus:
-            self.bus.publish('items/%s' % self.name,
-                             json.dumps(dict(value=value, time=self.time.isoformat())))
-            if self.groups:
-                for g in self.groups:
-                    self.bus.publish('groups/%s/%s' % (g, self.name),
-                                     json.dumps(dict(value=value, time=self.time.isoformat())))
-        else:
-            self.log.warn("No bus defined")
+        self.bus.emit('items/%s' % self.name,
+                         json.dumps(dict(value=value, time=self.time.isoformat())))
+        if self.groups:
+            for g in self.groups:
+                self.bus.emit('groups/%s/%s' % (g, self.name),
+                                 json.dumps(dict(value=value, time=self.time.isoformat())))
 
     def command(self, cmd):
         """
@@ -79,6 +77,7 @@ class NumberItem(Item):
 
 
 class SwitchItem(Item):
+
     def on(self):
         self.command('on')
 

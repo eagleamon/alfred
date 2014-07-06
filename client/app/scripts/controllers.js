@@ -320,38 +320,11 @@ angular.module('alfred').controller('HmiCtrl', function($scope, Item, WebSocket,
     };
 })
 
-.controller('LoginCtrl', function($scope, $location, AlertService, Auth) {
 
-    $scope.login = function() {
-        window.user = $scope.loginForm.username;
-        Auth.login($scope.username, $scope.password)
-            .success(function() {
-                AlertService.add({
-                    msg: Auth.user.username + ', you\'ve been logged in',
-                    type: 'success',
-                    timeout: 200000
-                });
-                $location.path('/');
-            })
-            .error(function() {
-                AlertService.add({
-                    msg: 'Bad username and/or password',
-                    type: 'danger',
-                    timeout: 2000
-                });
-            });
-    };
-})
-
-.controller('AuthCtrl', function($scope, Auth, $cookies) {
+.controller('AuthCtrl', function($scope, $cookies) {
     $scope.user = {
         username: $cookies.username || null
     };
-    $scope.$on('auth:login', function(ev, user) {
-        $scope.user = user;
-    });
-
-    $scope.logout = Auth.logout;
 })
 
 .controller('AlertCtrl', function($scope, AlertService) {

@@ -13,11 +13,11 @@ class Plugin(Thread):
 
     validTypes = ['number', 'switch', 'string']
     defaultConfig = {}
+    bus = alfred.bus
 
     def __init__(self):
         self.log = logging.getLogger(type(self).__name__.lower())
         self.stopEvent = Event()
-        self.bus = alfred.bus.Bus()
         self.items, self.activeConfig = {}, {}
 
         Thread.__init__(self)
@@ -27,7 +27,7 @@ class Plugin(Thread):
         self.stopEvent.set()
 
     def register(self, **kwargs):
-        if not kwargs.get('type') in Plugin.validTypes:
+        if not kwargs.get('type') in self.__class__.validTypes:
             raise AttributeError('%s not in valid types: %s' % (kwargs.get('type'), Plugin.validTypes))
 
         if kwargs.get('name') in self.items:

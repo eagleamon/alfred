@@ -8,7 +8,7 @@ baseConfig = dict(
     plugins=dict(
         random=dict(autoStart=True, config=dict())
     ),
-    boxcar=dict(secret='', key=''),
+    # boxcar=dict(secret='', key=''),
     broker=dict(host='localhost', port=1883),
     http=dict(port=8000, debug=True, secret=os.urandom(16).encode('hex')),
     items=[],
@@ -29,8 +29,8 @@ class PluginMount(type):
             return
         if not hasattr(bases[0], 'plugins'):
             bases[0].plugins = {}
-        else:
-            bases[0].plugins[name.lower()] = cls
+
+        bases[0].plugins[name.lower()] = cls
 
 
 # Gist: https://gist.github.com/Xjs/114831
@@ -83,22 +83,15 @@ class MqttHandler(logging.Handler):
 
     def __init__(self):
         logging.Handler.__init__(self)
-        self.bus = alfred.bus.Bus()
+        self.bus = alfred.bus
         self.host = alfred.getHost()
-    #     self.bus = eventBus.create()
-
-    # @property
-    # def bus(self):
-    #     if not self._bus:
-    #         from alfred import eventBus
-    #         self._bus = eventBus.create('logger')
-    #     return self._bus
 
     def emit(self, record):
-        # if record.name != 'alfred.bus':
-        if self.bus.client:
+        print record.name
+        if record.name == "alfred.bus": return
+        print record
+        if alfred.bus.client:
             res = {'message': record.message, 'time': record.created, 'name':
                    record.name, 'host': self.host, 'level': record.levelname}
-            self.bus.emit('log/%s/%s' % (self.host, record.levelname), json.dumps(res))
-
-        # self.bus.publish('log/host/%s' % record.levelname, str(record.getMessage()))
+            self.bus.emit('log/%s/%s' %
+                          (self.host, record.levelname), json.dumps(res))

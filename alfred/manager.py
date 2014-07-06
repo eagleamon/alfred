@@ -43,7 +43,7 @@ def get_plugins():
 
 def init():
     global bus
-    bus = alfred.bus.Bus()
+    bus = alfred.bus
     bus.on('commands/#', on_message)
     bus.on('config/#', on_message)
 

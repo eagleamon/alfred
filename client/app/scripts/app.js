@@ -37,7 +37,6 @@ var alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 
                 })
                 .when('/login', {
                     templateUrl: 'views/login.html',
-                    controller: 'LoginCtrl'
                 })
                 .otherwise({
                     redirectTo: '/hmi'
@@ -45,11 +44,17 @@ var alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 
 
 
             // If the server needs an authentication, redirect to the login page
-            $httpProvider.interceptors.push(function($q, $location) {
+            $httpProvider.interceptors.push(function($q, $window, AlertService) {
                 return {
                     'responseError': function(rejection) {
                         if (rejection.status === 401)
-                            $location.path('/login');
+                            $window.location = '/#login?next=' + $window.location.href;
+
+                        if (rejection.status != 200)
+                                AlertService.add({
+                                    msg: 'Error (' + rejection.status + '): ' + rejection.statusText,
+                                    type: 'danger'
+                                });
                         return $q.reject(rejection);
                     }
                 };
@@ -97,35 +102,6 @@ var alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 
             };
         },
         // onmessage: function(callback) {}
-    };
-})
-
-// Service to handle atuthentication against backend validation
-.factory('Auth', function($http, $location, $rootScope) { //$cookieStore
-    return {
-        user: {
-            username: ''
-        },
-        login: function(username, password) {
-            var $this = this;
-            return $http.post('/auth/login', {
-                    username: username,
-                    password: password
-                })
-                .success(function() {
-                    $this.user.username = username;
-                    $rootScope.$broadcast('auth:login', $this.user);
-                });
-        },
-        logout: function() {
-            var $this = this;
-            $http.get('/auth/logout')
-                .success(function() {
-                    $this.user.username = null;
-                    $rootScope.$broadcast('auth:logout');
-                    $location.path('/');
-                });
-        }
     };
 })
 
@@ -296,7 +272,7 @@ var alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 
     };
 });
 
-alfred.run(function($rootScope, WebSocket, Auth, $log) {
+alfred.run(function($rootScope, WebSocket, /*Auth,*/ $log) {
     Highcharts.setOptions({ // This is for all plots, change Date axis to local timezone
         global: {
             useUTC: false

@@ -1,4 +1,4 @@
-from tornado.web import RequestHandler, HTTPError, authenticated
+from tornado.web import RequestHandler, HTTPError, urlparse, urlencode
 from tornado.websocket import WebSocketHandler
 from bson.json_util import dumps, loads
 from bson.objectid import ObjectId
@@ -12,31 +12,68 @@ import copy
 import traceback
 import logging
 import alfred
+import functools
+import socket,struct
+
+def addressInNetwork(ip,net):
+   """ Check if IpParam is an address in a network (works for ipv6 ::1)"""
+
+   ipaddr = struct.unpack('I',socket.inet_aton(ip))[0]
+   netaddr,bits = net.split('/')
+   netmask = struct.unpack('I',socket.inet_aton(netaddr))[0] & ((2L<<int(bits)-1) - 1)
+   return ipaddr & netmask == netmask
+
+def restricted(localAccess=False):
+    """ Decorate request handler with this to require access from local network
+    or user login.
+
+    If the user is not logged in, he will be redirected to the configured
+    `login url <RequestHandler.get_login_url>`.
+    """
+
+    def decorator(method):
+        @functools.wraps(method)
+        def f(self, *args, **kwargs): # self = requestHandler
+            if localAccess and (self.request.remote_ip in ('::1', '127.0.0.1') or \
+                    addressInNetwork(self.request.remote_ip, '192.168.1.0/24')):
+                return method(self, *args, **kwargs)
+
+            if not self.current_user:
+                if self.request.method in ("GET", "HEAD"):
+                    url = self.get_login_url()
+                    if "?" not in url:
+                        if urlparse.urlsplit(url).scheme:
+                            # if login url is absolute, make next absolute too
+                            next_url = self.request.full_url()
+                        else:
+                            next_url = self.request.uri
+                        url += "?" + urlencode(dict(next=next_url))
+                    if 'application/json' in self.request.headers.get('Accept'):
+                        raise HTTPError(401)
+                    else:
+                        self.redirect(url)
+                    return
+                raise HTTPError(403)
+            return method(self, *args, **kwargs)
+
+        return f
+    return decorator
 
 class BaseHandler(RequestHandler):
 
     def initialize(self, **kwargs):
         for i in kwargs:
             setattr(self, i, kwargs[i])
+
         self.log = logging.getLogger(type(self).__name__)
+        self.now = datetime.datetime.now(tz.tzutc())
+        if self.request.body.startswith('{'):
+            self.data = loads(self.request.body or '{}')
+        else:
+            self.data = None
 
     def get_current_user(self):
-        return self.get_secure_cookie('user')
-
-    def write_error(self, status_code, **kwargs):
-        """ Custom error display as no html should ever be sent """
-
-        self.set_header('Content-Type', 'text/plain')
-        if self.settings.get("debug") and "exc_info" in kwargs:
-            # in debug mode, try to send a traceback
-            for line in traceback.format_exception(*kwargs["exc_info"]):
-                self.write(line)
-            self.finish()
-        else:
-            self.finish("%(code)d: %(message)s" % {
-                "code": status_code,
-                "message": self._reason,
-            })
+        return self.get_secure_cookie('secret')
 
     def httperror(self, status_code, err):
         raise HTTPError(status_code, err, reason=err)
@@ -45,29 +82,16 @@ class BaseHandler(RequestHandler):
     # def zmq(self):
     #     return self.application.zmqStream
 
-
-class AuthBaseHandler(BaseHandler):
-
-    def prepare(self):
-        # User must be authenticated
-        if not self.current_user: raise HTTPError(401)
-
-        self.set_cookie('username', self.current_user)
-        self.set_header('Content-Type', 'application/json')
-        self.now = datetime.datetime.now(tz.tzutc())
-
-        self.data = loads(self.request.body or '{}')
-
-# Base Handlers
-
 class MainHandler(BaseHandler):
-
     def get(self):
         with (open(self.path + '/index.html')) as f:
             self.write(f.read() % {'version': alfred.__version__})
 
-
 class AuthLoginHandler(BaseHandler):
+    """ There are 2 cookies
+    - a secure one: secret, encoded username to check for permission
+    - a normal one: username, to be used by client app for information
+    """
 
     def verifyUser(self, username=None, password=None):
         if not all([username, password]):
@@ -77,11 +101,13 @@ class AuthLoginHandler(BaseHandler):
         return alfred.db.users.find_one({'username': username, 'hash': sha.sha(password).hexdigest()})
 
     def post(self):
-        cred = loads(self.request.body)
-        res = self.verifyUser(**cred)
+        username, password = self.get_argument('username'), self.get_argument('password')
+        res = self.verifyUser(username, password)
         if res:
-            self.set_secure_cookie('user', cred.get('username'))
-            self.log.info('User %s logged in' % cred.get('username'))
+            self.set_secure_cookie('secret', username)
+            self.set_cookie('username', username)
+            self.log.info('User %s logged in' % username)
+            self.redirect(self.get_argument('next', '/'))
         else:
             self.send_error(401)
 
@@ -90,7 +116,7 @@ class AuthLogoutHandler(BaseHandler):
 
     def get(self):
         self.log.info('User %s logged out' % self.current_user)
-        self.clear_cookie('user')
+        self.clear_cookie('secret')
         self.clear_cookie('username')
         self.redirect(self.get_argument('next', '/'))
 
@@ -121,20 +147,20 @@ class WSHandler(BaseHandler, WebSocketHandler):
             WSHandler.clients.remove(self)
         self.log.debug("WebSocket closed: %s user(s) online" % len(WSHandler.clients))
 
-
 # Rest Handlers
 
-class ApiHandler(AuthBaseHandler):
+class ApiHandler(BaseHandler):
     def get(self):
         self.write(dumps(filter(lambda x:x.startswith('/api/'), map(lambda x:x[0], self.application.myhandlers))))
 
-class ItemHandler(AuthBaseHandler):
+class ItemHandler(BaseHandler):
 
+    # @authenticated
     def get(self, itemId):
-        self.write(dumps(db.items.find_one({'_id': ObjectId(itemId)}) if itemId else db.items.find()))
+        self.write(dumps(alfred.db.items.find_one({'_id': ObjectId(itemId)}) if itemId else alfred.db.items.find()))
 
+    @restricted()
     def put(self, itemId):
-        print self.data
         item = db.items.find_one({'name': self.data.get('name')})
         if not self.data: self.httperror(409, 'Incorrect dataset')
         if item and (str(item.get('_id')) != itemId):
@@ -144,8 +170,9 @@ class ItemHandler(AuthBaseHandler):
         if res.get('err'):
             self.httperror(500, res.get('err'))
         # else:
-        #     alfred.webserver.bus.publish('config/items', dumps({'action': 'edit', 'data': self.data}))
+            # alfred.bus.emit('config/items', dumps({'action': 'edit', 'data': self.data})
 
+    @restricted()
     def post(self, itemId):
         if db.items.find_one({'name': self.data.get('name')}):
             self.httperror(412, 'An item with the name %s already exists' % self.data.get('name'))
@@ -155,6 +182,7 @@ class ItemHandler(AuthBaseHandler):
         # else:
         #     alfred.webserver.bus.publish('config/items', dumps({'action': 'insert', 'data': self.data}))
 
+    @restricted()
     def delete(self, itemId):
         res = db.items.remove({'_id': ObjectId(itemId)})
         if res.get('err'):
@@ -163,7 +191,7 @@ class ItemHandler(AuthBaseHandler):
         #     alfred.webserver.bus.publish('config/items', dumps({'action': 'delete', 'data': itemId}))
 
 
-class ValueHandler(AuthBaseHandler):
+class ValueHandler(BaseHandler):
 
     def get(self, itemId):
         ffrom, to = self.get_argument('from', None), self.get_argument('to', None)
@@ -174,10 +202,11 @@ class ValueHandler(AuthBaseHandler):
         self.write(dumps(db.values.find(filt)))
 
 
-class ConfigHandler(AuthBaseHandler):
+class ConfigHandler(BaseHandler):
     def get(self):
         self.write(dumps(db.config.find({'name': getHost()})[0]))
 
+    @restricted()
     def put(self):
         if not self.data: self.httperror(412, "No config data found")
         res = db.config.update({'name': getHost()}, {'$set': {'config': self.data.get('config')}})
@@ -190,38 +219,42 @@ class ConfigHandler(AuthBaseHandler):
             alfred.stop()
 
 
-class CommandHandler(AuthBaseHandler):
+class CommandHandler(BaseHandler):
+    @restricted(True)
     def post(self, itemName, command):
         if not all([itemName, command]): self.httperror(409, 'No itemName or Command')
         self.log.info('Sending command "%s" to %s' % (command, itemName))
-        alfred.webserver.bus.publish('commands/%s' % itemName,
+        alfred.bus.publish('commands/%s' % itemName,
             dumps({'command': command, 'data': self.data, 'time': self.now.isoformat()}))
 
 
-class PluginHandler(AuthBaseHandler):
+class PluginHandler(BaseHandler):
+    @restricted()
     def get(self, plugin):
         if not plugin:
-            res = {'available': manager.getAvailablePlugins(),
-                   'installed': copy.deepcopy(config.get('plugins'))}
+            res = {'available': alfred.manager.get_plugins(),
+                   'installed': copy.deepcopy(alfred.config.get('plugins'))}
 
             for k in res['installed']:
-                if k in manager.activePlugins:
+                if k in alfred.manager.activePlugins:
                     res['installed'][k]['active'] = True
-                if k in res['available']:
-                    res['available'].remove(k)
-
+                # if k in res['available']:
+                #     res['available'].remove(k)
+            res = {}
             self.write(dumps(res))  # default=json_util.default))
         else:
-            res = db.config.find({'name': getHost()})[0].get('config').get('plugins').get(plugin)
+            res = alfred.db.config.find({'name': getHost()})[0].get('config').get('plugins').get(plugin)
             self.write(dumps(res)) if res else self.httperror(404, 'No plugin %s installed' % plugin)
 
+    @restricted()
     def put(self, plugin):
         if not self.data: self.httperror(409, "No data given")
         config.get('plugins').get(plugin).update(self.data)
         db.config.update({'name': getHost()}, {'$set': {'config': config}})
 
 
-class PluginStateHandler(AuthBaseHandler):
+class PluginStateHandler(BaseHandler):
+    @restricted()
     def post(self, plugin, command):
         err = getattr(manager, '%sPlugin' % command)(plugin)
         if err: self.httperror(400, err)

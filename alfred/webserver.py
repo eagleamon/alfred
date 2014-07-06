@@ -14,7 +14,8 @@ class WebServer(web.Application):
         settings = dict(
             debug=alfred.config.get('http').get('debug'),
             static_path = clientPath,
-            login_url='/auth/login',
+            template_path = clientPath,
+            login_url='/#/login',
             cookie_secret=alfred.config.get('http').get('secret')
         )
         self.log.debug('Static path: %s' % settings.get('static_path'))
@@ -36,7 +37,7 @@ class WebServer(web.Application):
 
         web.Application.__init__(self, self.myhandlers, **settings)
 
-        self.bus = alfred.bus.Bus()
+        self.bus = alfred.bus
         self.bus.on('items/#', self.on_message)
         self.bus.on('log/#', self.on_message)
 
@@ -55,6 +56,7 @@ class WebServer(web.Application):
         inst.add_callback_from_signal(lambda x: x.stop(), inst)
 
     def on_message(self, msg):
+        print msg
         v1.WSHandler.dispatch(msg)
 
 # To keep a coherent interface with other modules
