@@ -125,12 +125,12 @@ class WSHandler(BaseHandler, WebSocketHandler):
     clients = set()
 
     @classmethod
-    def dispatch(cls, msg):
-        if msg.topic.startswith('alfred/log'):
-            data = msg.payload
+    def dispatch(cls, topic, msg):
+        if topic.startswith('log'):
+            data = msg
         else:
-            payload = loads(msg.payload)
-            data = dumps(dict(topic=msg.topic, value=payload['value'], time=payload['time']))
+            payload = loads(msg)
+            data = dumps(dict(topic=topic, value=payload['value'], time=payload['time']))
         for c in WSHandler.clients:
             c.write_message(data)
 
@@ -161,12 +161,12 @@ class ItemHandler(BaseHandler):
 
     @restricted()
     def put(self, itemId):
-        item = db.items.find_one({'name': self.data.get('name')})
+        item = alfred.db.items.find_one({'name': self.data.get('name')})
         if not self.data: self.httperror(409, 'Incorrect dataset')
         if item and (str(item.get('_id')) != itemId):
             self.httperror(412, 'An item with the name %s already exists' % self.data.get('name'))
 
-        res = db.items.update({'_id': ObjectId(itemId)}, {'$set': self.data})
+        res = alfred.db.items.update({'_id': ObjectId(itemId)}, {'$set': self.data})
         if res.get('err'):
             self.httperror(500, res.get('err'))
         # else:
@@ -174,9 +174,9 @@ class ItemHandler(BaseHandler):
 
     @restricted()
     def post(self, itemId):
-        if db.items.find_one({'name': self.data.get('name')}):
+        if alfred.db.items.find_one({'name': self.data.get('name')}):
             self.httperror(412, 'An item with the name %s already exists' % self.data.get('name'))
-        res = db.items.insert(self.data)
+        res = alfred.db.items.insert(self.data)
         if not res:
             self.httperror(412, 'Item %s already exists' % self.data.get('name'))
         # else:
@@ -184,7 +184,7 @@ class ItemHandler(BaseHandler):
 
     @restricted()
     def delete(self, itemId):
-        res = db.items.remove({'_id': ObjectId(itemId)})
+        res = alfred.db.items.remove({'_id': ObjectId(itemId)})
         if res.get('err'):
             self.httperror(500, res.get('err'))
         # else:
@@ -199,17 +199,18 @@ class ValueHandler(BaseHandler):
             '$gt': ObjectId.from_datetime(parse(ffrom) if ffrom else (self.now - datetime.timedelta(1))),
             '$lte': ObjectId.from_datetime(parse(to) if to else self.now)
         }}
-        self.write(dumps(db.values.find(filt)))
+        self.write(dumps(alfred.db.values.find(filt)))
 
 
 class ConfigHandler(BaseHandler):
+    @restricted()
     def get(self):
-        self.write(dumps(db.config.find({'name': getHost()})[0]))
+        self.write(dumps(alfred.db.config.find({'name': alfred.getHost()})[0]))
 
     @restricted()
     def put(self):
         if not self.data: self.httperror(412, "No config data found")
-        res = db.config.update({'name': getHost()}, {'$set': {'config': self.data.get('config')}})
+        res = alfred.db.config.update({'name': getHost()}, {'$set': {'config': self.data.get('config')}})
         if res['err']:
             self.write(dict(error=res['err']))
         else:

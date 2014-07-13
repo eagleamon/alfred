@@ -5,7 +5,6 @@ import json
 import signal
 import alfred
 from alfred.plugins import Plugin
-from alfred import persistence
 
 items = {}
 activePlugins = {}
@@ -165,15 +164,15 @@ def unregister(_id):
     log.debug('Item %s unregistered' % item.name)
 
 
-def on_message(msg):
+def on_message(topic, msg):
     """
     Called when a command or config modification is received from the bus
     """
-    topics = msg.topic.split('/')
+    topics = topic.split('/')
     if topics[1] == 'commands':
         item = topics[-1]
         if item in items:
-            data = json.loads(msg.payload)
+            data = json.loads(msg)
             command = data.get('command').lower()
             if hasattr(items[item], command):
                 getattr(items[item], command)()
@@ -181,7 +180,7 @@ def on_message(msg):
                 log.error("%s does not accept %s command" % (item, command))
 
     elif topics[1] == 'config':
-        msg = json.loads(msg.payload)
+        msg = json.loads(msg)
         if msg.get('action') == 'edit':
             itemDef = msg.get('data')
             if filter(lambda x: str(x._id) == itemDef.get('_id'), items.values()):

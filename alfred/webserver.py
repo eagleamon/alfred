@@ -55,9 +55,8 @@ class WebServer(web.Application):
         inst = ioloop.IOLoop.instance()
         inst.add_callback_from_signal(lambda x: x.stop(), inst)
 
-    def on_message(self, msg):
-        print msg
-        v1.WSHandler.dispatch(msg)
+    def on_message(self, ev, msg):
+        v1.WSHandler.dispatch(ev, msg)
 
 # To keep a coherent interface with other modules
 

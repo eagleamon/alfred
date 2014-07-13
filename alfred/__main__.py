@@ -36,6 +36,8 @@ from logging.handlers import RotatingFileHandler
 from colorlog import ColoredFormatter
 from alfred.utils import MqttHandler
 
+logging.getLogger("tornado.access").propagate = False
+
 root = logging.getLogger()
 root.setLevel(logging.__dict__[args.debug and 'DEBUG' or 'INFO'])
 root.addHandler(logging.StreamHandler())
@@ -54,7 +56,7 @@ root.handlers[0].setFormatter(ColoredFormatter(
 form = logging.Formatter('%(asctime)s [%(name)s] %(levelname)s %(message)s')
 root.addHandler(MqttHandler())
 root.handlers[1].setFormatter(form)
-root.handlers[1].addFilter(logging.Filter('alfred'))
+# root.handlers[1].addFilter(logging.Filter('alfred'))
 if args.log_file:
     root.addHandler(RotatingFileHandler(args.log_file, maxBytes=1024 * 1024 * 10, backupCount=3))
     root.handlers[2].setFormatter(form)

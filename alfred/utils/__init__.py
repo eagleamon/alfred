@@ -87,11 +87,9 @@ class MqttHandler(logging.Handler):
         self.host = alfred.getHost()
 
     def emit(self, record):
-        print record.name
         if record.name == "alfred.bus": return
-        print record
         if alfred.bus.client:
             res = {'message': record.message, 'time': record.created, 'name':
                    record.name, 'host': self.host, 'level': record.levelname}
             self.bus.emit('log/%s/%s' %
-                          (self.host, record.levelname), json.dumps(res))
+                (self.host, record.levelname), json.dumps(res))

@@ -17,10 +17,10 @@ def on(event, f=None):
     return _ee.on(event, f)
 
 
-def emit(event, msg=None, f=None):
+def emit(event, msg=None):
     if client:
         publish(event, msg)
-    return _ee.emit(event, msg, f)
+    return _ee.emit(event, msg)
 
 
 def init(brokerHost, brokerPort=1883, baseTopic='alfred', clientId=None, start=True):
@@ -53,7 +53,7 @@ def start_mqtt(brokerHost, brokerPort):
 
 
 def _on_message(mosq, userData, msg):
-    log.debug("Received message: %s -> %s" % (msg.topic, msg.payload))
+    # log.debug("Received message: %s -> %s" % (msg.topic, msg.payload))
     _ee.emit(msg.topic.replace(client.baseTopic+'/', ''), msg.payload)
 
 
