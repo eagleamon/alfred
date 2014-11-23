@@ -1,0 +1,65 @@
+{
+    "config": {
+        "http": {
+            "debug": true,
+            "port": 8000,
+            "secret": "97169956592fc2745eb8c173b66598e3"
+        },
+        "broker": {
+            "host": "hal"
+        },
+        "plugins": {
+            "mail": {
+                "fromAddress": "Alfred <alfred@miom.be>",
+                "server": "smtp.scarlet.be"
+            },
+            "random": {
+
+                "main": {
+                    "refresh": 5
+                },
+                "second": {
+                    "refresh": 10
+                }
+            },
+            "network": {
+                "5s": {
+                    "refresh": 5
+                },
+                "60s": {
+                    "refresh": 59
+                }
+            }
+        },
+        "items": [
+            "random.debug",
+            "living.htpc",
+            "living.pap",
+            "adsl.alive"
+        ]
+    },
+    "items": [{
+        "name": "living.light",
+        "lastChanged": "2014-09-28T10:41:34.707Z",
+        "binding": "random.main:1,155",
+        "type": "number",
+        "value": "144",
+        "attributes": {
+            "icon": "light"
+        }
+    }, {
+        "name": "random.debug",
+        "binding": "random:second",
+        "type": "number"
+
+    }, {
+        "name": "living.htpc",
+        "binding": "network:5s:htpc."
+    }, {
+        "name": "living.pap",
+        "binding": "network:5s:pap."
+    }, {
+        "name": "adsl.alive",
+        "binding": "network:60s:www.google.be"
+    }]
+}

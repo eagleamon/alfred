@@ -1,4 +1,4 @@
-from fabric.api import local, run, cd, sudo, put, env
+from fabric.api import cd, sudo, put, env, hosts
 from fabric.context_managers import prefix, shell_env
 from contextlib import contextmanager
 
@@ -44,17 +44,14 @@ def publish():
     sudo('restart alfred')
     sudo('uname -a')
 
+@hosts('localhost')
+def run(env='dev'):
+    if env == 'dev':
+        client = "--client-path ./client/app"
 
-def run(where='test', client='dist'):
-    client = '--client-path ./client/app' if client == 'app' else ''
-    cmd = 'python -m alfred -d %s --db_host ' % client
-
-    if where == 'test':
-        local(cmd + 'hal --db_name test')
-    elif where == 'prod':
-        local(cmd + 'hal')
-    elif where == 'work':
-        local(cmd + 'lutvms017 --db_name test')
+    cmd = 'python -m alfred -d --db-host hal %s'
+    # local(cmd % client)
+    os.system(cmd % client) # Otherwise when quitting, background process may stay alive
 
 
 def test(toTest=''):
