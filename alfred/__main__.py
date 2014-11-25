@@ -75,7 +75,7 @@ def main():
 
     # Start the process
     from alfred import Alfred
-    Alfred(args).start()
+    Alfred(**vars(args)).start()
 
 if __name__ == '__main__':
     main()

@@ -49,6 +49,7 @@ Description of all topics used here:
 - offer services (action to call)
 - refresh items based on time (one timer for all or one thread for each ?)
 - Must be un/installed/started/stopped through the instance web interface, not by messaging like items
+- Exposed function takes an alfred instance as first argument, and whatever after
 
 ## Groups
 -  are a plugin
