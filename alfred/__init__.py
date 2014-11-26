@@ -1,5 +1,5 @@
 __author__ = 'Joseph Piron (joseph@miom.be)'
-__version__ = (0, 4, 3, 0)
+__version__ = (0, 5, 0, 0)
 
 import imp
 import time
@@ -102,7 +102,6 @@ class Alfred(object):
                             self.log.debug(
                                 'Calling %s with arg: %s' % (action, data))
                             # action(self, data) if self.debug else
-                            # pool.submit(action, self, data)
                             pool.submit(action, self, data)
                 self.stopEvent.wait(1)
 
@@ -187,8 +186,8 @@ class Alfred(object):
         # instance.start()
 
     def stop_plugin(self, pluginName):
-        if not pluginName in self.config:
-            res = 'Plugin %s not ins talled' % pluginName
+        if not pluginName in self.config['plugins']:
+            res = 'Plugin %s not installed' % pluginName
             self.log.error(res)
             return res
 
@@ -332,7 +331,7 @@ class Item(object):
 
     """ Hold the information/state of the different element of the system """
 
-    def __init__(self, bus, name, binding, type="number", attributes={}, value=None, lastChanged=None):
+    def __init__(self, bus, name, binding, type='number', attributes={}, value=None, lastChanged=None):
         self.log = logging.getLogger(__name__)
         self.name = name
         self.bus = bus
@@ -355,7 +354,7 @@ class Item(object):
             return
         self._value = value
         self._lastChanged = datetime.utcnow()
-        self.log.debug(self)
+        self.log.info(self)
         self.bus.emit('items/%s' % self.name,
                       json.dumps(dict(value=value, lastChanged=self.lastChanged.isoformat())))
 
@@ -365,7 +364,7 @@ class Item(object):
 
     def to_jsonable(self):
         res = {p: getattr(self, p)
-               for p in ['type', 'name', 'binding', 'value', 'lastChanged']}
+               for p in ['type', 'name', 'binding', 'value', 'lastChanged', 'attributes']}
         if res['lastChanged']:
             res['lastChanged'] = res['lastChanged'].isoformat()
         return res

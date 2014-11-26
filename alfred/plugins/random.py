@@ -14,7 +14,7 @@ def setup(alfred):
     config = alfred.get_config(__name__)
     for loop in config:
         alfred.schedule(
-            __file__, update, loop, seconds=range(0, 61, config[loop]['refresh']))
+            __file__, update, loop, config[loop])
 
 def stop(alfred):
     alfred.deschedule(__file__)

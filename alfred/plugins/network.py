@@ -14,7 +14,7 @@ def setup(alfred):
     config = alfred.get_config(__name__)
     for loop in config:
         alfred.schedule(
-            __file__, update, loop, seconds=range(0, 60, config[loop]['refresh']))
+            __file__, update, loop, config[loop])
 
 
 def stop(alfred):
@@ -34,7 +34,7 @@ def ping(nameOrIp, count=2, timeout=2):
                                                              nameOrIp))[0] == 0
 
 
-def sendWOL(self, macAddress):
+def sendWOL(alfred, macAddress):
     """ Sends a WOL packet to switch a computer on """
 
     if len(macAddress) == 12 + 5:

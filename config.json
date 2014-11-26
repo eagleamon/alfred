@@ -9,15 +9,24 @@
             "secret": "97169956592fc2745eb8c173b66598e3"
         },
         "items": [
-            "random.debug",
-            "living.htpc",
-            "living.pap",
-            "adsl.alive"
+            "living.light"
         ],
         "plugins": {
             "mail": {
                 "fromAddress": "Alfred <alfred@miom.be>",
                 "server": "smtp.scarlet.be"
+            },
+            "netio": {
+                "living": {
+                    "host": "netio.",
+                    "port": 1234,
+                    "refresh": "*/30"
+                },
+                "office": {
+                    "host": "mynetio.",
+                    "port": 1234,
+                    "refresh": "1,6,9" ok
+                }
             },
             "network": {
                 "5s": "*/5",
@@ -31,27 +40,31 @@
     },
     "items": [
         {
-            "binding": "random.main:1,155",
-            "lastChanged": "2014-09-28T10:41:34.707000",
+            "attributes": {},
+            "binding": "netio:living:1",
+            "lastChanged": "2014-11-26T00:20:18.382296",
             "name": "living.light",
-            "type": "number",
-            "value": "144"
+            "type": "switch",
+            "value": true
         },
         {
+            "attributes": {},
             "binding": "random:second",
-            "lastChanged": "2014-11-25T19:54:40.501811",
+            "lastChanged": "2014-11-26T00:15:30.052159",
             "name": "random.debug",
             "type": "number",
-            "value": 0.47825336316474454
+            "value": 0.5536381063352454
         },
         {
+            "attributes": {},
             "binding": "network:5s:htpc.",
-            "lastChanged": "2014-11-25T19:51:37.224824",
+            "lastChanged": "2014-11-26T00:14:32.140032",
             "name": "living.htpc",
             "type": "number",
             "value": false
         },
         {
+            "attributes": {},
             "binding": "network:5s:pap.",
             "lastChanged": "2014-11-25T19:51:38.242869",
             "name": "living.pap",
@@ -59,6 +72,7 @@
             "value": true
         },
         {
+            "attributes": {},
             "binding": "network:60s:www.google.be",
             "lastChanged": "2014-11-25T19:54:01.444799",
             "name": "adsl.alive",
