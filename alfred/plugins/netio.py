@@ -21,7 +21,6 @@ def setup(alfred):
 
     for client in clients:
         client.stop()
-
     clients.clear()
 
     for netio in config:

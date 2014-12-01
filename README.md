@@ -50,6 +50,7 @@ Description of all topics used here:
 - refresh items based on time (one timer for all or one thread for each ?)
 - Must be un/installed/started/stopped through the instance web interface, not by messaging like items
 - Exposed function takes an alfred instance as first argument, and whatever after
+- Each plugin could expose a dependencies dict to parse before installation
 
 ## Groups
 -  are a plugin

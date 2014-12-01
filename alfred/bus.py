@@ -10,6 +10,7 @@ def init(host, port=1883, baseTopic='alfred', clientId=None, start=True):
     """ Configure the connection to the mqtt broker """
     global client
     client = mosquitto.Mosquitto(clientId)
+    client.connected = False
     client.baseTopic = baseTopic
     client.on_message = _on_message
     client.on_connect = _on_connect
@@ -20,7 +21,7 @@ def init(host, port=1883, baseTopic='alfred', clientId=None, start=True):
 
 def on(event, f=None):
     if client:
-        log.debug('Subscribing to %s' % event)
+        log.debug('subscribing to %s' % event)
         subscribe(event)
     return _ee.on(event, f)
 
@@ -31,8 +32,8 @@ def emit(event, msg=None):
     return _ee.emit(event, msg)
 
 def _on_message(mosq, userData, msg):
-    # log.debug("Received message: %s -> %s" % (msg.topic, msg.payload))
-    _ee.emit(msg.topic.replace(client.baseTopic+'/', ''), msg.payload)
+    log.debug("received message: %s -> %s" % (msg.topic, msg.payload.decode()))
+    _ee.emit(msg.topic.replace(client.baseTopic+'/', ''), msg.payload.decode())
 
 
 def _on_connect(mosq, userData, rc):
@@ -40,7 +41,7 @@ def _on_connect(mosq, userData, rc):
         log.debug("%s connected to broker (%s:%d)" % (
             client._client_id or '', client._host, client._port))
     else:
-        log.error("Cannot connect: %s" % rc)
+        log.error("cannot connect: %s" % rc)
 
 
 def _on_disconnect(mosq, userData, rc):
@@ -58,7 +59,7 @@ def start_mqtt(brokerHost, brokerPort):
         client.connected = True
         client.loop_start()
     except Exception as E:
-        log.exception("Cannot connect: %s " % E)
+        log.exception("cannot connect: %s " % E)
 
 def stop():
     if client.connected:

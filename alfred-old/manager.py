@@ -5,6 +5,7 @@ import json
 import signal
 import alfred
 from alfred.plugins import Plugin
+from bson.objectid import ObjectId
 
 items = {}
 activePlugins = {}
@@ -12,6 +13,27 @@ activePlugins = {}
 bus = None
 log = logging.getLogger(__name__)
 
+def start():
+    global bus
+    bus = alfred.bus
+    bus.on('commands/#', on_message)
+    bus.on('config/#', on_message)
+
+    log.info("Available plugins: %s" % find_plugins().keys())
+    for i in filter(lambda i: i[1]['autoStart'], alfred.config.get('plugins').items()):
+        startPlugin(i[0])
+
+    # Then register needed items
+    for name in alfred.config.get('items'):
+        register(name)
+
+    for k, v in activePlugins.items():
+        log.debug('%s items: %s' % (k, v.items.keys()))
+
+# TODO: migrate to new config form
+
+def get(*args, **kwargs):
+    return items.get(*args, **kwargs)
 
 def find_plugins():
     """ List all available plugins as package/modules in instance plugin dir"""
@@ -40,25 +62,6 @@ def get_plugins():
     """ Return instanciable classes defined in plugins """
     return Plugin.plugins
 
-def init():
-    global bus
-    bus = alfred.bus
-    bus.on('commands/#', on_message)
-    bus.on('config/#', on_message)
-
-    log.info("Available plugins: %s" % get_plugins())
-    for i in filter(lambda i: i[1]['autoStart'], alfred.config.get('plugins').items()):
-        startPlugin(i[0])
-
-    # Then register needed items
-    for name in alfred.config.get('items'):
-        register(name)
-
-    for k, v in activePlugins.items():
-        log.debug('%s items: %s' % (k, v.items.keys()))
-
-# TODO: migrate to new config form
-
 
 def stop():
     for b in activePlugins:
@@ -86,7 +89,7 @@ def installPlugin(pluginName):
             autoStart=False,
             config=getattr(mod, 'defaultConfig', {})
         )
-        alfred.db.config.update({'name': alfred.getHost()}, {'$set': {'config': config}})
+        alfred.db.config.update({'name': alfred.getHost()}, {'$set': {'config': alfred.config}})
 
 
 def uninstallPlugin(pluginName):
@@ -94,7 +97,7 @@ def uninstallPlugin(pluginName):
         stopPlugin(pluginName)
     log.info('Uninstalling plugin %s' % pluginName)
     del alfred.config['plugins'][pluginName]
-    alfred.db.config.update({'name': alfred.getHost()}, {'$set': {'config': config}})
+    alfred.db.config.update({'name': alfred.getHost()}, {'$set': {'config': alfred.config}})
 
 
 def startPlugin(pluginName):
@@ -155,11 +158,11 @@ def register(name):
     return item
 
 
-def unregister(_id):
-    item = filter(lambda x: str(x._id) == _id, items.values()).pop()
+def unregister(item):
     bind = item.plugin.split(':')[0]
     if bind:
-        activePlugins[bind].unregister(_id)
+        print id(item)
+        activePlugins[bind].unregister(item)
     del items[item.name]
     log.debug('Item %s unregistered' % item.name)
 
@@ -169,7 +172,8 @@ def on_message(topic, msg):
     Called when a command or config modification is received from the bus
     """
     topics = topic.split('/')
-    if topics[1] == 'commands':
+
+    if topics[0] == 'commands':
         item = topics[-1]
         if item in items:
             data = json.loads(msg)
@@ -179,18 +183,20 @@ def on_message(topic, msg):
             else:
                 log.error("%s does not accept %s command" % (item, command))
 
-    elif topics[1] == 'config':
-        msg = json.loads(msg)
-        if msg.get('action') == 'edit':
-            itemDef = msg.get('data')
-            if filter(lambda x: str(x._id) == itemDef.get('_id'), items.values()):
-                unregister(itemDef.get('_id'))
-                register(itemDef.get('name'))
+    elif topics[0] == 'config':
+        if topics[1] == 'items':
+            msg = json.loads(msg)
+            if msg.get('action') == 'edit':
+                itemDef = msg.get('data')
+                if filter(lambda x: str(x._id) == itemDef.get('_id'), items.values()):
+                    unregister(itemDef.get('_id'))
+                    register(itemDef.get('name'))
 
-        if msg.get('action') == 'delete':
-            _id = msg.get('data')
-            if filter(lambda x: str(x._id) == _id, items.values()):
-                unregister(_id)
+            if msg.get('action') == 'delete':
+                item = items.get(msg.get('data').get('name'), None)
+                if item:
+                    unregister(item)
+                    alfred.db.items.remove({'_id': ObjectId(item._id)})
 
 
 def sendCommand(name, command):

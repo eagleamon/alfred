@@ -83,6 +83,7 @@ def test_emit_event_passed():
     alfred.bus.on('ev', fct)
     alfred.bus.emit('ev','ok')
 
+
 #############################################
 # Manager
 #############################################
@@ -93,7 +94,7 @@ class TestManager:
     def test_find_plugins(self):
         res = alfred.manager.find_plugins()
         assert res.get('mail')
-        nt.assert_equal(len(alfred.manager.Plugin.__subclasses__()), 0)
+        nt.assert_greater(len(res), 5)
 
     def test_load_plugins(self):
         res = alfred.manager.load_plugins()

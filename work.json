@@ -1,7 +1,7 @@
 {
     "config": {
         "broker": {
-            "host": "hal"
+            "host": "lutvms017"
         },
         "http": {
             "debug": true,
@@ -9,36 +9,23 @@
             "secret": "97169956592fc2745eb8c173b66598e3"
         },
         "items": [
-            "http.test"
+            "living.light"
         ],
         "plugins": {
-            "http": {
-                "weather": {
-                    "refresh": "*/5",
-                    "regex": ".*",
-                    "timeout": 5,
-                    "url": "http://www.random.org/integers/?num=1&min=1&max=6000&col=1&base=10&format=plain&rnd=new"
-                }
-            },
             "mail": {
                 "fromAddress": "Alfred <alfred@miom.be>",
                 "server": "smtp.scarlet.be"
+            },
+            "random": {
+                "main": "1,5,9,11,15,19,29,39,49,52"
             }
         }
     },
     "items": [
         {
             "attributes": {},
-            "binding": "http:weather",
-            "lastChanged": "2014-12-01T14:15:15.549336",
-            "name": "http.test",
-            "type": "number",
-            "value": "3651"
-        },
-        {
-            "attributes": {},
             "binding": "netio:living:1",
-            "lastChanged": "2014-12-01T12:31:00.955483",
+            "lastChanged": "2014-11-26T00:20:18.382296",
             "name": "living.light",
             "type": "switch",
             "value": true

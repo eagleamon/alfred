@@ -34,14 +34,11 @@ def stop():
 
 def on_message(topic, msg):
     try:
-        from alfred import manager
-        from dateutil import parser
-
-        # Persist last value
+        # # Persist last value
         data = json.loads(msg)
         if topic.startswith('items'):
             item = topic.split('/')[-1]
-            update('items', dict(name=item), {'$set': {'value':data.get('value'), 'time': parser.parse(data.get('time'))}}, upsert=True)
+        #     update('items', dict(name=item), {'$set': {'value':data.get('value'), 'time': parser.parse(data.get('time'))}}, upsert=True)
 
         # Persist historic if desired from config of items
             if item in alfred.config.get('persistence').get('items') or "*" in alfred.config.get("persistence").get('items'):
@@ -55,7 +52,7 @@ def on_message(topic, msg):
             group = topic.split('/')[2]
             # if group in getIncludingGroups(group, alfred.config.get('groups')):
             item = topic.split('/')[-1]
-            _id = manager.items[item]._id
+            _id = alfred.manager.items[item]._id
             # save('values', dict(item_id=_id, time=data.get('time'), value=data.get('value')))
             save('values', dict(item_id=_id, value=data.get('value')))
 

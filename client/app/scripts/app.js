@@ -1,6 +1,8 @@
 'use strict';
 
-var alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 'ngAnimate', 'ui.bootstrap', 'highcharts-ng', 'angularMoment', 'ui.select2'])
+var alfred = angular.module('alfred',   ['ngRoute', 'ngResource', 'ngCookies', 'ngAnimate',
+                                        'ui.bootstrap', 'highcharts-ng', 'angularMoment',
+                                        'ui.select2', 'angular-loading-bar'])
     .config(['$routeProvider', '$httpProvider',
         function($routeProvider, $httpProvider) {
             $routeProvider

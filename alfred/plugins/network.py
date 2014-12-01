@@ -14,11 +14,11 @@ def setup(alfred):
     config = alfred.get_config(__name__)
     for loop in config:
         alfred.schedule(
-            __file__, update, loop, config[loop])
+            __name__, update, loop, config[loop])
 
 
 def stop(alfred):
-    alfred.deschedule(__file__)
+    alfred.deschedule(__name__)
 
 
 def update(alfred, data):
@@ -43,11 +43,11 @@ def sendWOL(alfred, macAddress):
         raise ValueError("Incorrect MAC address format: %s" % macAddress)
 
     data = ''.join(['FFFFFFFFFFFF', macAddress * 20])
-    sendData = ''
+    sendData = b''
 
     # Split up the hex and pack
     for i in range(0, len(data), 2):
-        sendData = ''.join(
+        sendData = b''.join(
             [sendData, struct.pack('B', int(data[i: i + 2], 16))])
 
     # Broadcast

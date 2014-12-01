@@ -95,8 +95,14 @@ class TestItemPlugins:
     def test_non_registered_item(self):
         assert self.plugin.get('NonExistent') == None
 
-    def test_create_item_with_plugin(self):
-        test = self.plugin.register(name='test', type='number', plugin='random')
-        test2 = self.plugin.register(name='test2', type='string', plugin='random:60')
-        assert "test" in self.plugin.activeplugins['random'].items
-        assert "test2" in self.plugin.activeplugins['random'].items
+    # def test_create_item_with_plugin(self):
+    #     test = self.plugin.register(name='test', type='number', plugin='random')
+    #     test2 = self.plugin.register(name='test2', type='string', plugin='random:60')
+    #     assert "test" in alfred.manager.activePlugins['random'].items
+    #     assert "test2" in alfred.manager.activePlugins['random'].items
+
+    def test_item_should_update_config():
+        raise
+
+    def test_item_should_update_value():
+        raise

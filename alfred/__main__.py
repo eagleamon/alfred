@@ -8,7 +8,8 @@ def configureLogging(args):
     from logging.handlers import RotatingFileHandler
     from alfred.utils import MqttHandler
 
-    logging.getLogger("tornado.access").propagate = False
+    if not args.debug:
+        logging.getLogger("tornado.access").propagate = False
 
     root = logging.getLogger()
     root.setLevel(logging.__dict__[args.debug and 'DEBUG' or 'INFO'])

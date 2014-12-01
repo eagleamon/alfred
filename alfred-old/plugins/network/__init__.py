@@ -30,22 +30,26 @@ class Network(plugins.Plugin):
 
         return commands.getstatusoutput('ping -t%d -c%d %s' % (timeout, count, nameOrIp))
 
-    def sendWOL(self, macAddress):
+    def sendWOL(self, alfred, macAddress):
         """ Sends a WOL packet to switch a computer on """
 
-        if len(macAddress) == 12 + 5:
-            macAddress = macAddress.replace(macAddress[2], '')
-        if len(macAddress) != 12:
-            raise ValueError("Incorrect MAC address format: %s" % macAddress)
+        import time
+        time.sleep(5)
+        return False
 
-        data = ''.join(['FFFFFFFFFFFF', macAddress * 20])
-        sendData = ''
+        # if len(macAddress) == 12 + 5:
+        #     macAddress = macAddress.replace(macAddress[2], '')
+        # if len(macAddress) != 12:
+        #     raise ValueError("Incorrect MAC address format: %s" % macAddress)
 
-        # Split up the hex and pack
-        for i in range(0, len(data), 2):
-            sendData = ''.join([sendData, struct.pack('B', int(data[i: i + 2], 16))])
+        # data = ''.join(['FFFFFFFFFFFF', macAddress * 20])
+        # sendData = ''
 
-        # Broadcast
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        sock.sendto(sendData, ('<broadcast>', 7))  # 9 works as well
+        # # Split up the hex and pack
+        # for i in range(0, len(data), 2):
+        #     sendData = ''.join([sendData, struct.pack('B', int(data[i: i + 2], 16))])
+
+        # # Broadcast
+        # sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        # sock.sendto(sendData, ('<broadcast>', 7))  # 9 works as well

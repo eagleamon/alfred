@@ -60,12 +60,14 @@ class Item(object):
                 self.bus.emit('groups/%s/%s' % (g, self.name),
                                  json.dumps(dict(value=value, time=self.time.isoformat())))
 
+        # Persist last value
+        alfred.db.items.update({'name': self.name}, {'$set': {'value': value, 'time': self.time}}, upsert = True)
+
     def command(self, cmd):
         """
         Generic call to pass a command to the manager
         """
-        from alfred import manager
-        manager.sendCommand(self.name, self.commands[cmd])
+        alfred.manager.sendCommand(self.name, self.commands[cmd])
 
 
 class StringItem(Item):
@@ -77,7 +79,6 @@ class NumberItem(Item):
 
 
 class SwitchItem(Item):
-
     def on(self):
         self.command('on')
 

@@ -10,13 +10,13 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 def reqs():
-    return [str(i.req) for i in pr(os.path.join(os.path.dirname(__file__), 'requirements.txt'))]
+    return [str(i.req) for i in pr(os.path.join(os.path.dirname(__file__), 'requirements3.txt'))]
 
 import alfred
 
 setup(
     name = "alfred",
-    version = alfred.__version__,
+    version = '.'.join(map(str, alfred.__version__)),
     author = "Joseph Piron",
     author_email = "joseph.piron@gmail.com",
     description = ("An interpretation of OpenHab, Domogik, and other great domotic projects."),

@@ -1,3 +1,4 @@
 mosquitto>=1.2
 pymongo>=2.6.1
 pyee-topics>=0.0.13
+tornado>=3.1

@@ -44,15 +44,18 @@ def publish():
     sudo('restart alfred')
     sudo('uname -a')
 
+# @hosts('localhost')
+# def run(env='dev'):
+#     if env == 'dev':
+#         client = "--client-path ./client/app"
+
+#     cmd = 'python -m alfred -d --db-host hal %s'
+#     # local(cmd % client)
+#     os.system(cmd % client) # Otherwise when quitting, background process may stay alive
+
 @hosts('localhost')
-def run(env='dev'):
-    if env == 'dev':
-        client = "--client-path ./client/app"
-
-    cmd = 'python -m alfred -d --db-host hal %s'
-    # local(cmd % client)
-    os.system(cmd % client) # Otherwise when quitting, background process may stay alive
-
+def dev():
+    os.system('nodemon -e ".py" -x "python3 -m alfred -d --config-file config.json"')
 
 def test(toTest=''):
     " Chose tests like -> fab test:tests/items.py "

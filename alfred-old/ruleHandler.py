@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 def busEvent(topic):
     """ Decorator: triggers the function run when a message is received matching topic """
     def wrapper(f):
-        bus = alfred.bus.Bus()
+        bus = alfred.bus
         bus.on_subscribe = lambda: log.debug("Subscribed to topic %s" % topic)
         bus.on(topic.replace('*', '#'), handle_message)
         # context = Context()
@@ -57,7 +57,8 @@ def loadRules(path):
                 a = __import__('alfred.rules.%s' % f[:-3], fromlist='alfred')
                 ruleModules[a.__name__] = a
             except Exception, E:
-                log.exception('Error while loading rules from %s: %s' % (f, E.message))
+                log.exception(
+                    'Error while loading rules from %s: %s' % (f, E.message))
 
 
 def start():
