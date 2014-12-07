@@ -5,10 +5,10 @@ from threading import Lock
 log = logging.getLogger(__name__)
 
 defaultConfig = {
-    'netio1': {
-        'host': '192.168.1.2',
-        'port': 1234,
-        'refresh': '*/30'
+    "netio1": {
+        "host": "192.168.1.2",
+        "port": 1234,
+        "refresh": "*/30"
     }
 }
 
@@ -17,7 +17,7 @@ config = {}
 
 def setup(alfred):
     config.clear()
-    config.update(alfred.get_config('netio'))
+    config.update(alfred.get_config(__name__))
 
     for client in clients:
         client.stop()
@@ -42,6 +42,17 @@ def stop(alfred):
     for client in clients:
         clients[client].stop()
 
+def send_command(alfred, commandName, item):
+    instance = item.binding.split(':')[1]
+    client = clients.get(instance)
+    position = int(item.binding.split(':')[2])
+    val = list('uuuu')
+    val[position] = '0' if commandName == 'off' else '1'
+    res = client.get('port list %s' % ''.join(val))
+    update(alfred, instance)
+    return res
+
+
 class Client(object):
     """ Simple class to handle Telent communication with the Netio's """
 
@@ -54,6 +65,7 @@ class Client(object):
     def connect(self):
         self.telnet = Telnet(self.host, self.port)
         time.sleep(1)
+        self.get()
         self.get('login admin admin')
 
     def get_state(self):
@@ -70,11 +82,13 @@ class Client(object):
                 if command:
                     if not command.endswith('\r\n'):
                         command += '\r\n'
-                    self.log.debug('Sending %r' % command)
+                    self.log.debug('sending %r' % command)
                     self.telnet.write(command.encode())
 
                 res = self.telnet.read_until('\r\n'.encode()).decode()
-                self.log.debug('Received %r' % res)
+                self.log.debug('received %r' % res)
+                if res.split()[0] not in ('100','250'):
+                    self.log.warn('command error: %r' % res)
                 return res.strip().split()[1]
 
         except Exception as E:

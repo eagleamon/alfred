@@ -5,7 +5,9 @@ import socket
 import logging
 # import commands
 
-defaultConfig = {'refresh': 5}
+defaultConfig = {
+    "5s": "*/5",
+    "60s": "0 *"}
 
 log = logging.getLogger(__name__)
 

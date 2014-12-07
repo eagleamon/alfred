@@ -9,71 +9,67 @@
             "secret": "97169956592fc2745eb8c173b66598e3"
         },
         "items": [
-            "http.test"
+
         ],
         "plugins": {
-            "http": {
-                "weather": {
-                    "refresh": "*/5",
-                    "regex": ".*",
-                    "timeout": 5,
-                    "url": "http://www.random.org/integers/?num=1&min=1&max=6000&col=1&base=10&format=plain&rnd=new"
-                }
-            },
             "mail": {
                 "fromAddress": "Alfred <alfred@miom.be>",
                 "server": "smtp.scarlet.be"
             }
         }
     },
-    "items": [
-        {
-            "attributes": {},
-            "binding": "http:weather",
-            "lastChanged": "2014-12-01T14:15:15.549336",
-            "name": "http.test",
-            "type": "number",
-            "value": "3651"
+    "items": [{
+        "attributes": {},
+        "binding": "http:weather",
+        "commands": {},
+        "lastChanged": "2014-12-01T14:16:15.689499",
+        "name": "http.test",
+        "type": "number",
+        "value": "2811"
+    }, {
+        "attributes": {},
+        "binding": "netio:living:1",
+        "commands": {
+            "off": "netio:living:1:off",
+            "on": "netio:living:1:on"
         },
-        {
-            "attributes": {},
-            "binding": "netio:living:1",
-            "lastChanged": "2014-12-01T12:31:00.955483",
-            "name": "living.light",
-            "type": "switch",
-            "value": true
-        },
-        {
-            "attributes": {},
-            "binding": "random:second",
-            "lastChanged": "2014-11-26T00:15:30.052159",
-            "name": "random.debug",
-            "type": "number",
-            "value": 0.5536381063352454
-        },
-        {
-            "attributes": {},
-            "binding": "network:5s:htpc.",
-            "lastChanged": "2014-11-26T00:14:32.140032",
-            "name": "living.htpc",
-            "type": "number",
-            "value": false
-        },
-        {
-            "attributes": {},
-            "binding": "network:5s:pap.",
-            "lastChanged": "2014-11-25T19:51:38.242869",
-            "name": "living.pap",
-            "type": "number",
-            "value": true
-        },
-        {
-            "attributes": {},
-            "binding": "network:60s:www.google.be",
-            "lastChanged": "2014-11-25T19:54:01.444799",
-            "name": "adsl.alive",
-            "type": "number",
-            "value": true
-        }
-    ]
+        "lastChanged": "2014-12-01T17:02:48.621813",
+        "name": "living.light.right",
+        "type": "switch",
+        "value": true
+    }, {
+        "name": "living.light.left"
+    }, {
+        "attributes": {},
+        "binding": "random:second",
+        "commands": {},
+        "lastChanged": "2014-11-26T00:15:30.052159",
+        "name": "random.debug",
+        "type": "number",
+        "value": 0.5536381063352454
+    }, {
+        "attributes": {},
+        "binding": "network:5s:htpc.",
+        "commands": {},
+        "lastChanged": "2014-11-26T00:14:32.140032",
+        "name": "living.htpc",
+        "type": "number",
+        "value": false
+    }, {
+        "attributes": {},
+        "binding": "network:5s:pap.",
+        "commands": {},
+        "lastChanged": "2014-11-25T19:51:38.242869",
+        "name": "living.pap",
+        "type": "number",
+        "value": true
+    }, {
+        "attributes": {},
+        "binding": "network:60s:www.google.be",
+        "commands": {},
+        "lastChanged": "2014-11-25T19:54:01.444799",
+        "name": "adsl.alive",
+        "type": "number",
+        "value": true
+    }]
 }

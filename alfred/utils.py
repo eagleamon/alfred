@@ -31,15 +31,15 @@ class MqttHandler(logging.Handler):
     Remark: maybe interesting to have a second mqtt client dedicated to logging ?
     """
 
-    def __init__(self, alfred):
+    def __init__(self):
         logging.Handler.__init__(self)
-        self.bus = alfred.bus
-        self.host = alfred.host
+        self.bus = None
+        self.host = None
 
     def emit(self, record):
         if record.name == "alfred.bus":
             return
-        if self.bus.client:
+        if self.bus and self.bus.client:
             res = {'message': record.message, 'time': record.created, 'name':
                    record.name, 'host': self.host, 'level': record.levelname}
             self.bus.emit('log/%s/%s' %

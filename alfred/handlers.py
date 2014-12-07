@@ -1,15 +1,10 @@
 from tornado.web import RequestHandler, HTTPError, urlparse, urlencode
 from tornado import gen
 from tornado.websocket import WebSocketHandler
-# from bson.json_util import dumps, loads
-# from bson.objectid import ObjectId
-# import alfred
 from json import dumps, loads
 import datetime
 import hashlib
 # import os
-# import copy
-# import traceback
 import logging
 import traceback
 import functools
@@ -133,7 +128,7 @@ class AuthLogoutHandler(BaseHandler):
             self.clear_cookie('username')
             self.redirect(self.get_argument('next', '/'))
 
-class MainHandler(BaseHandler):
+class MainHandler(BaseHandler):  # Ou alors redirect handler vers /index.html
 
     def get(self):
         with (open(self.settings.get('static_path') + '/index.html')) as f:
@@ -155,9 +150,8 @@ class ItemHandler(BaseHandler):
 
     @restricted(True)
     def get(self, itemId):
-        self.write(dict(items=[x.to_jsonable() for x in self.alfred.items]))
-        # self.write(dumps(alfred.db.items.find_one(
-        #     {'_id': ObjectId(itemId)}) if itemId else alfred.db.items.find()))
+        self.write(dict(
+            items=[x.to_jsonable() for x in self.alfred.items if (x.name == itemId if itemId else True)]))
 
 
 class ConfigHandler(BaseHandler):
@@ -184,18 +178,14 @@ class PluginHandler(BaseHandler):
 
     @restricted(True)
     def get(self, plugin):
-        self.write(self.alfred.config.get('plugins'))
-        # return
-        # if not plugin:
-        #     res = {'available': alfred.manager.find_plugins().keys(),
-        #            'installed': copy.deepcopy(alfred.config.get('plugins'))}
+        res = {
+            'installed': self.alfred.config.get('plugins'),
+            'available': {p:getattr(self.alfred.plugins[p], 'defaultConfig', {}) for p in self.alfred.plugins}
+        }
+        self.write(res)
 
-        #     for k in res['installed']:
-        #         if k in alfred.manager.activePlugins:
-        #             res['installed'][k]['active'] = True
-        #         # if k in res['available']:
-        #         #     res['available'].remove(k)
-        #     self.write(dumps(res))  # default=json_util.default))
+        # if not plugin:
+
         # else:
         #     res = alfred.db.config.find({'name': alfred.getHost()})[0].get(
         #         'config').get('plugins').get(plugin)
@@ -264,7 +254,7 @@ class ItemCommandHandler(BaseHandler):
     @restricted(True)
     def post(self, itemName, command):
         # self.log.info('sending command %r to %s' % (command, itemName))
-        self.alfred.bus.emit('commands/%s/%s' % (itemName, command), dumps(self.data))
+        self.alfred.bus.publish('commands/%s/%s' % (itemName, command), self.data)
 
 class PluginCommandHandler(BaseHandler):
 
@@ -279,51 +269,35 @@ class PluginCommandHandler(BaseHandler):
         except Exception as E:
             raise HTTPError(500, str(E), reason=str(E))
 
-routes = [
-    (r'/auth/logout', AuthLogoutHandler),
-    (r'/auth/login', AuthLoginHandler),
-    (r'/api', ApiHandler),
-    (r'/api/v1/status', StatusHandler),
-    # By name here, handier, already thought of, ok but not to replace
-    # oid's (name change)
-    (r'/api/v1/item/(.+)/command/(.+)', ItemCommandHandler),
-    (r'/api/v1/plugin/(.+)/command/(.+)', PluginCommandHandler),
-    (r'/api/v1/item/?(.*)', ItemHandler),
-    (r'/api/v1/config/?', ConfigHandler),
-    (r'/api/v1/plugin/?(.*)', PluginHandler),
-    # , db = alfred.db)
-    (r'/(?:index|index.html)?', MainHandler),
-]
 
+# class WSHandler(BaseHandler, WebSocketHandler):
+#     clients = set()
 
-class WSHandler(BaseHandler, WebSocketHandler):
-    clients = set()
+#     @classmethod
+#     def dispatch(cls, topic, msg):
+#         if topic.startswith('log'):
+#             data = msg
+#         # else:
+#         #     payload = loads(msg)
+#         #     data = dumps(
+#         #         dict(topic=topic, value=payload['value'], time=payload['time']))
+#         # for c in WSHandler.clients:
+#         #     c.write_message(data)
 
-    @classmethod
-    def dispatch(cls, topic, msg):
-        if topic.startswith('log'):
-            data = msg
-        # else:
-        #     payload = loads(msg)
-        #     data = dumps(
-        #         dict(topic=topic, value=payload['value'], time=payload['time']))
-        # for c in WSHandler.clients:
-        #     c.write_message(data)
+#     def open(self):
+#         WSHandler.clients.add(self)
+#         self.log.debug("webSocket opened: %s user(s) online" %
+#                        len(WSHandler.clients))
 
-    def open(self):
-        WSHandler.clients.add(self)
-        self.log.debug("webSocket opened: %s user(s) online" %
-                       len(WSHandler.clients))
+#     def on_message(self, message):
+#         self.log.debug(message)
+#         self.write_message(u"You said: " + message)
 
-    def on_message(self, message):
-        self.log.debug(message)
-        self.write_message(u"You said: " + message)
-
-    def on_close(self):
-        if self in WSHandler.clients:
-            WSHandler.clients.remove(self)
-        self.log.debug("webSocket closed: %s user(s) online" %
-                       len(WSHandler.clients))
+#     def on_close(self):
+#         if self in WSHandler.clients:
+#             WSHandler.clients.remove(self)
+#         self.log.debug("webSocket closed: %s user(s) online" %
+#                        len(WSHandler.clients))
 
 # Rest Handlerr
 
@@ -342,20 +316,20 @@ class WSHandler(BaseHandler, WebSocketHandler):
 
 
 
-class ItemCommandHandler(BaseHandler):
+# class ItemCommandHandler(BaseHandler):
 
-    @restricted(True)
-    def post(self, itemName, command):
-        if not all([itemName, command]):
-            self.httperror(409, 'No itemName or Command')
-        self.log.info('Sending command "%s" to %s' % (command, itemName))
-        alfred.bus.publish('commands/%s' % itemName,
-                           dumps({'command': command, 'data': self.data, 'time': self.now.isoformat()}))
+#     @restricted(True)
+#     def post(self, itemName, command):
+#         if not all([itemName, command]):
+#             self.httperror(409, 'No itemName or Command')
+#         self.log.info('Sending command "%s" to %s' % (command, itemName))
+#         alfred.bus.publish('commands/%s' % itemName,
+#                            dumps({'command': command, 'data': self.data, 'time': self.now.isoformat()}))
 
-class PluginStateHandler(BaseHandler):
+# class PluginStateHandler(BaseHandler):
 
-    @restricted()
-    def post(self, plugin, command):
-        err = getattr(alfred.manager, '%sPlugin' % command)(plugin)
-        if err:
-            self.httperror(400, err)
+#     @restricted()
+#     def post(self, plugin, command):
+#         err = getattr(alfred.manager, '%sPlugin' % command)(plugin)
+#         if err:
+#             self.httperror(400, err)

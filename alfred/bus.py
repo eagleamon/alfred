@@ -1,6 +1,7 @@
 import mosquitto
 import logging
 import pyee
+import json
 
 client = None
 log = logging.getLogger(__name__)
@@ -16,6 +17,7 @@ def init(host, port=1883, baseTopic='alfred', clientId=None, start=True):
     client.on_connect = _on_connect
     client.on_disconnect = _on_disconnect
     client.on_subscribe = _on_subscribe
+
     if start:
         start_mqtt(host, port)
 
@@ -32,8 +34,9 @@ def emit(event, msg=None):
     return _ee.emit(event, msg)
 
 def _on_message(mosq, userData, msg):
-    log.debug("received message: %s -> %s" % (msg.topic, msg.payload.decode()))
-    _ee.emit(msg.topic.replace(client.baseTopic+'/', ''), msg.payload.decode())
+    if not msg.topic.startswith('alfred/log'):
+        log.debug("received message: %s -> %s" % (msg.topic, msg.payload.decode()))
+    _ee.emit(msg.topic.replace(client.baseTopic+'/', ''), json.loads(msg.payload.decode()))
 
 
 def _on_connect(mosq, userData, rc):
@@ -75,5 +78,7 @@ def subscribe(topic):
 
 
 def publish(topic, message):
+    if isinstance(message, dict):
+        message = json.dumps(message)
     if client.connected:
         return client.publish('/'.join([client.baseTopic, topic]), message)

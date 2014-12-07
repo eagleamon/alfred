@@ -6,7 +6,7 @@ import logging
 defaultConfig = {
     "http": {
         "weather": {
-            "url": "http://www.google.be",
+            "url": "http://www.random.org/integers/?num=1&min=1&max=6000&col=1&base=10&format=plain&rnd=new",
             "timeout": 5,
             "regex": ".*",
             "refresh": "*/30"

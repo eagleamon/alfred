@@ -66,8 +66,14 @@ class Alfred(object):
 
         self.listeners = {}
 
+        self.commands = {'toggle': toggle}
+
     def get_module(self, module):
         return __import__('alfred.%s' % module, fromlist=['alfred'])
+
+    def get_item(self, itemName):
+        item = [i for i in self.items if i.name == itemName]
+        return item[0] if item else None
 
     def start(self):
         """ Create all required components and start the application """
@@ -77,9 +83,14 @@ class Alfred(object):
 
         if self.bus:
             self.bus.init(**self.config.get('broker'))
-            # print('ok %s ok' % self.bus.client.connected )
             self.bus.on('commands/#', self.on_commands)
             self.bus.on('items/#', self.on_items)
+
+            # get over MQTT log transfer (to rework)
+            for h in logging.getLogger().handlers:
+                if isinstance(h, utils.MqttHandler):
+                    h.bus = self.bus
+                    h.host = self.host
 
         # self.plugins = self.load_plugins(self.find_plugins())
 
@@ -332,17 +343,41 @@ class Alfred(object):
     def on_commands(self, topic, msg):
         """ Handle commands received from the event bus for items """
 
-        # if item in activeItems
-        # print(topic)
-        # print(msg)
+        itemName = topic.split('/')[1]
+        commandName = topic.split('/')[2]
+        if itemName in self.config.get('items'):
+            item = self.get_item(itemName)
+            pluginName = item.binding.split(':')[0]
+            plugin = self.activePlugins[pluginName]
+
+            if commandName in self.commands:
+                try:
+                    self.commands[commandName](self, item, msg)
+                except Exception as E:
+                    self.log.exception(E)
+
+            elif commandName in item.commands:
+                if hasattr(plugin, commandName):
+                    getattr(plugin, commandName)(self, item)
+                else:
+                    if hasattr(plugin, 'send_command'):
+                        plugin.send_command(self, commandName, item)
+                    else:
+                        self.log.error('plugin %s has no send_command defined' % pluginName)
+            else:
+                self.log.error('item %s (%s) has no %s command' % (item.name, item.type, commandName))
 
     def on_items(self, topic, msg):
         """ React to items value changes """
 
         itemName = topic.split('/')[1]
-
+        item = self.get_item(itemName)
         if itemName in self.config.get('items'):
-            self.save_item([i for i in self.items if i.name == itemName][0])
+            self.save_item(item)
+        else:
+            pass
+            # Get it anyway
+            # item._value =
 
     def plugin_command(self, pluginName, command, data):
         """ Send a command to a plugin (local action, no bus involved)
@@ -350,10 +385,10 @@ class Alfred(object):
 
         return getattr(self.activePlugins.get(pluginName), command)(self, **data)
 
-    def send_command(self, itemName, command, data):
+    def send_command(self, itemName, command, data = {}):
         """ Send a command on the event bus """
 
-        self.bus.emit('commands/%s' % command, data)
+        self.bus.publish('commands/%s/%s' % (itemName, command), data)
 
     def schedule(self, pluginName, function, data, pattern):
         """ Helper function to provide time based trigger for plugin
@@ -431,8 +466,9 @@ class Item(object):
 
     """ Hold the information/state of the different element of the system """
 
-    def __init__(self, bus, name, binding, type='number', attributes={}, value=None, lastChanged=None):
+    def __init__(self, bus, name, binding = "", commands= {}, type='number', attributes={}, value=None, lastChanged=None):
         self.log = logging.getLogger(__name__)
+        self.commands = commands
         self.name = name
         self.bus = bus
         self.binding = binding
@@ -442,7 +478,7 @@ class Item(object):
         self._lastChanged = datetime.strptime(lastChanged, "%Y-%m-%dT%H:%M:%S.%f") if lastChanged else None
 
     def __repr__(self):
-        return "<Item %s: %s at %s>" % (self.name, self.value, self.lastChanged)
+        return "<Item %s: %s since %s>" % (self.name, self.value, self.lastChanged)
 
     @property
     def value(self):
@@ -464,7 +500,18 @@ class Item(object):
 
     def to_jsonable(self):
         res = {p: getattr(self, p)
-               for p in ['type', 'name', 'binding', 'value', 'lastChanged', 'attributes']}
+               for p in ['type', 'name', 'binding', 'value', 'lastChanged', 'attributes', 'commands']}
         if res['lastChanged']:
             res['lastChanged'] = res['lastChanged'].isoformat()
         return res
+
+# For now, hold the stateful commands like 'toggle'. Plugins may add commands
+# with duck typing: Item.command = ...
+# Let's see if we have to go deeper and create classes by type of items
+
+def toggle(alfred, item, data = None):
+
+    assert item.type == 'switch', "Toggle command is reserved for 'switch' items"
+    alfred.send_command(item.name, 'off' if item.value else 'on')
+
+
